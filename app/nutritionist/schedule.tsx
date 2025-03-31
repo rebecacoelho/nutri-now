@@ -24,37 +24,37 @@ interface DaySchedule {
 
 export default function NutritionistSchedule(): React.JSX.Element {
   const router = useRouter()
-  const [selectedDate, setSelectedDate] = useState<string>("Mar 15, 2025")
+  const [selectedDate, setSelectedDate] = useState<string>("15 de Mar, 2025")
   const [workingHoursEnabled, setWorkingHoursEnabled] = useState<boolean>(true)
 
-  // Sample data for the schedule
+  // Dados de exemplo para o cronograma
   const weekDates: string[] = [
-    "Mar 15, 2025",
-    "Mar 16, 2025",
-    "Mar 17, 2025",
-    "Mar 18, 2025",
-    "Mar 19, 2025",
-    "Mar 20, 2025",
-    "Mar 21, 2025",
+    "15 de Mar, 2025",
+    "16 de Mar, 2025",
+    "17 de Mar, 2025",
+    "18 de Mar, 2025",
+    "19 de Mar, 2025",
+    "20 de Mar, 2025",
+    "21 de Mar, 2025",
   ]
 
-  const weekDays: string[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+  const weekDays: string[] = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"]
 
-  // Generate schedule data
+  // Gerar dados do cronograma
   const scheduleData: DaySchedule[] = weekDates.map((date, index) => {
-    // Generate time slots for each day
+    // Gerar horários para cada dia
     const slots: TimeSlot[] = []
     for (let hour = 9; hour <= 17; hour++) {
       const time = `${hour > 12 ? hour - 12 : hour}:00 ${hour >= 12 ? "PM" : "AM"}`
 
-      // Randomly determine if a slot is booked
+      // Determinar aleatoriamente se um horário está reservado
       const isBooked = Math.random() > 0.7
       const patientNames = ["Sarah Johnson", "Michael Brown", "Emily Davis", "Robert Wilson"]
 
       slots.push({
         id: `${date}-${hour}`,
         time,
-        available: weekDays[index] !== "Sunday", // Not available on Sundays
+        available: weekDays[index] !== "Domingo", // Não disponível aos domingos
         booked: isBooked,
         patientName: isBooked ? patientNames[Math.floor(Math.random() * patientNames.length)] : undefined,
       })
@@ -67,19 +67,19 @@ export default function NutritionistSchedule(): React.JSX.Element {
     }
   })
 
-  // Find the selected day's schedule
+  // Encontrar o cronograma do dia selecionado
   const selectedDaySchedule = scheduleData.find((day) => day.date === selectedDate)
 
-  // Toggle availability for a time slot
+  // Alterar a disponibilidade de um horário
   const toggleAvailability = (slotId: string): void => {
-    // In a real app, you would update this in your state or backend
-    Alert.alert("Availability Updated", "Your availability has been updated for this time slot.", [{ text: "OK" }])
+    //atualizar isso no seu estado ou backend
+    Alert.alert("Disponibilidade Atualizada", "Sua disponibilidade foi atualizada para este horário.", [{ text: "OK" }])
   }
 
-  // Handle setting working hours
+  // Configurar horário de trabalho
   const handleSetWorkingHours = (): void => {
-    // In a real app, you would open a modal to set working hours
-    Alert.alert("Set Working Hours", "This would open a modal to set your standard working hours.", [{ text: "OK" }])
+    // abriri um modal para configurar o horário de trabalho
+    Alert.alert("Configurar Horário de Trabalho", "Isso abriria um modal para configurar seu horário de trabalho padrão.", [{ text: "OK" }])
   }
 
   return (
@@ -87,7 +87,7 @@ export default function NutritionistSchedule(): React.JSX.Element {
       <StatusBar style="dark" />
       <Stack.Screen
         options={{
-          title: "My Schedule",
+          title: "Agenda",
           headerStyle: {
             backgroundColor: "#fff",
           },
@@ -107,16 +107,16 @@ export default function NutritionistSchedule(): React.JSX.Element {
               style={[
                 styles.dateButton,
                 selectedDate === day.date && styles.selectedDateButton,
-                day.dayOfWeek === "Sunday" && styles.unavailableDateButton,
+                day.dayOfWeek === "Domingo" && styles.unavailableDateButton,
               ]}
               onPress={() => setSelectedDate(day.date)}
-              disabled={day.dayOfWeek === "Sunday"}
+              disabled={day.dayOfWeek === "Domingo"}
             >
               <Text
                 style={[
                   styles.dayOfWeekText,
                   selectedDate === day.date && styles.selectedDayOfWeekText,
-                  day.dayOfWeek === "Sunday" && styles.unavailableDayText,
+                  day.dayOfWeek === "Domingo" && styles.unavailableDayText,
                 ]}
               >
                 {day.dayOfWeek.substring(0, 3)}
@@ -125,10 +125,10 @@ export default function NutritionistSchedule(): React.JSX.Element {
                 style={[
                   styles.dateText,
                   selectedDate === day.date && styles.selectedDateText,
-                  day.dayOfWeek === "Sunday" && styles.unavailableDayText,
+                  day.dayOfWeek === "Domingo" && styles.unavailableDayText,
                 ]}
               >
-                {day.date.split(", ")[0].split(" ")[1]}
+                {day.date.split(", ")[0].split(" ")[0]}
               </Text>
             </TouchableOpacity>
           ))}
@@ -136,7 +136,7 @@ export default function NutritionistSchedule(): React.JSX.Element {
       </View>
 
       <View style={styles.workingHoursToggle}>
-        <Text style={styles.workingHoursText}>Working Hours</Text>
+        <Text style={styles.workingHoursText}>Horário de Trabalho</Text>
         <Switch
           trackColor={{ false: "#ddd", true: "#a5d6a7" }}
           thumbColor={"#4CAF50"}
@@ -175,35 +175,27 @@ export default function NutritionistSchedule(): React.JSX.Element {
                 style={[styles.availabilityToggle, slot.available ? styles.availableToggle : styles.unavailableToggle]}
                 onPress={() => toggleAvailability(slot.id)}
               >
-                <Text style={styles.availabilityToggleText}>{slot.available ? "Available" : "Unavailable"}</Text>
+                <Text style={styles.availabilityToggleText}>{slot.booked ? "Disponível" : "Indisponível"}</Text>
               </TouchableOpacity>
             )}
 
             {slot.booked && (
               <View style={styles.appointmentActions}>
-                <TouchableOpacity style={styles.appointmentAction}>
-                  <Ionicons name="videocam-outline" size={20} color="#4CAF50" />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.appointmentAction}>
-                  <Ionicons name="chatbubble-outline" size={20} color="#4CAF50" />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.appointmentAction}>
-                  <Ionicons name="calendar-outline" size={20} color="#4CAF50" />
-                </TouchableOpacity>
+                <Text style={styles.availabilityToggleText}>Agendado</Text>
               </View>
             )}
           </View>
         ))}
 
-        {selectedDaySchedule?.dayOfWeek === "Sunday" && (
+        {selectedDaySchedule?.dayOfWeek === "Domingo" && (
           <View style={styles.dayOffMessage}>
             <Ionicons name="information-circle-outline" size={24} color="#999" />
-            <Text style={styles.dayOffText}>You are not working on Sundays</Text>
+            <Text style={styles.dayOffText}>Você não está trabalhando aos domingos</Text>
           </View>
         )}
       </ScrollView>
 
-      <NutritionistTabBar activeTab="schedule" />
+      <NutritionistTabBar activeTab="agenda" />
     </SafeAreaView>
   )
 }

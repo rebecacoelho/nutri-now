@@ -5,6 +5,7 @@ import { SafeAreaView, StyleSheet, Text, View, ScrollView, TouchableOpacity, Ima
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
+import PatientTabBar from "../components/patient-tab-bar"
 
 interface MealCardProps {
   title: string
@@ -155,24 +156,7 @@ export default function PatientDashboard(): React.JSX.Element {
         </View>
       </ScrollView>
 
-      <View style={styles.tabBar}>
-        <TouchableOpacity style={styles.tabItem}>
-          <Ionicons name="home" size={24} color="#4CAF50" />
-          <Text style={[styles.tabLabel, styles.tabLabelActive]}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/patient/meal-plans")}>
-          <Ionicons name="restaurant-outline" size={24} color="#999" />
-          <Text style={styles.tabLabel}>Refeições</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/patient/messages")}>
-          <Ionicons name="chatbubbles-outline" size={24} color="#999" />
-          <Text style={styles.tabLabel}>Chat</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/patient/progress")}>
-          <Ionicons name="analytics-outline" size={24} color="#999" />
-          <Text style={styles.tabLabel}>Progresso</Text>
-        </TouchableOpacity>
-      </View>
+    <PatientTabBar activeTab="inicio" /> 
     </SafeAreaView>
   )
 }

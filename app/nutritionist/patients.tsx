@@ -34,82 +34,82 @@ export default function Patients(): React.JSX.Element {
   const [searchQuery, setSearchQuery] = useState<string>("")
   const [filterCondition, setFilterCondition] = useState<string | null>(null)
 
-  // Sample data for patients
+  // Dados de exemplo para pacientes
   const patients: Patient[] = [
     {
       id: "1",
       name: "Sarah Johnson",
       image: "/placeholder.svg?height=60&width=60",
-      condition: "Weight Management",
-      lastVisit: "Mar 10, 2025",
-      nextAppointment: "Mar 17, 2025",
+      condition: "Controle de Peso",
+      lastVisit: "10 de Março de 2025",
+      nextAppointment: "17 de Março de 2025",
       progress: 75,
-      goal: "Lose 15 lbs",
+      goal: "Perder 7 kg",
     },
     {
       id: "2",
       name: "Michael Brown",
       image: "/placeholder.svg?height=60&width=60",
-      condition: "Diabetes Management",
-      lastVisit: "Mar 8, 2025",
-      nextAppointment: "Mar 22, 2025",
+      condition: "Controle de Diabetes",
+      lastVisit: "8 de Março de 2025",
+      nextAppointment: "22 de Março de 2025",
       progress: 60,
-      goal: "Stabilize blood sugar",
+      goal: "Estabilizar glicemia",
     },
     {
       id: "3",
       name: "Emily Davis",
       image: "/placeholder.svg?height=60&width=60",
-      condition: "Sports Nutrition",
-      lastVisit: "Mar 5, 2025",
+      condition: "Nutrição Esportiva",
+      lastVisit: "5 de Março de 2025",
       progress: 85,
-      goal: "Improve performance",
+      goal: "Melhorar desempenho",
     },
     {
       id: "4",
       name: "Robert Wilson",
       image: "/placeholder.svg?height=60&width=60",
-      condition: "Weight Management",
-      lastVisit: "Mar 3, 2025",
-      nextAppointment: "Mar 18, 2025",
+      condition: "Controle de Peso",
+      lastVisit: "3 de Março de 2025",
+      nextAppointment: "18 de Março de 2025",
       progress: 40,
-      goal: "Lose 20 lbs",
+      goal: "Perder 9 kg",
     },
     {
       id: "5",
       name: "Jennifer Lee",
       image: "/placeholder.svg?height=60&width=60",
-      condition: "Pregnancy Nutrition",
-      lastVisit: "Mar 1, 2025",
-      nextAppointment: "Mar 15, 2025",
+      condition: "Nutrição na Gravidez",
+      lastVisit: "1 de Março de 2025",
+      nextAppointment: "15 de Março de 2025",
       progress: 90,
-      goal: "Healthy pregnancy diet",
+      goal: "Dieta saudável na gravidez",
     },
     {
       id: "6",
       name: "David Martinez",
       image: "/placeholder.svg?height=60&width=60",
-      condition: "Diabetes Management",
-      lastVisit: "Feb 28, 2025",
+      condition: "Controle de Diabetes",
+      lastVisit: "28 de Fevereiro de 2025",
       progress: 55,
-      goal: "Lower A1C levels",
+      goal: "Reduzir níveis de A1C",
     },
     {
       id: "7",
       name: "Amanda Taylor",
       image: "/placeholder.svg?height=60&width=60",
-      condition: "Sports Nutrition",
-      lastVisit: "Feb 25, 2025",
-      nextAppointment: "Mar 20, 2025",
+      condition: "Nutrição Esportiva",
+      lastVisit: "25 de Fevereiro de 2025",
+      nextAppointment: "20 de Março de 2025",
       progress: 70,
-      goal: "Increase muscle mass",
+      goal: "Aumentar massa muscular",
     },
   ]
 
-  // Get unique conditions for filter
+  // Obter condições únicas para o filtro
   const conditions = Array.from(new Set(patients.map((patient) => patient.condition)))
 
-  // Filter patients based on search query and condition filter
+  // Filtrar pacientes com base na busca e no filtro de condição
   const filteredPatients = patients.filter((patient) => {
     const matchesSearch =
       patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -119,13 +119,11 @@ export default function Patients(): React.JSX.Element {
     return matchesSearch && matchesCondition
   })
 
-  // Navigate to patient details
+  // Navegar para os detalhes do paciente
   const handlePatientPress = (patientId: string): void => {
-    // In a real app, this would navigate to a patient details screen
-    alert(`Navigate to patient details for ID: ${patientId}`)
+    alert(`Navegar para os detalhes do paciente com ID: ${patientId}`)
   }
 
-  // Navigate to add patient screen
   const handleAddPatient = (): void => {
     router.push("/nutritionist/add-patient")
   }
@@ -135,7 +133,7 @@ export default function Patients(): React.JSX.Element {
       <StatusBar style="dark" />
       <Stack.Screen
         options={{
-          title: "My Patients",
+          title: "Meus Pacientes",
           headerStyle: {
             backgroundColor: "#fff",
           },
@@ -152,7 +150,7 @@ export default function Patients(): React.JSX.Element {
           <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search patients..."
+            placeholder="Buscar pacientes..."
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -171,7 +169,7 @@ export default function Patients(): React.JSX.Element {
             onPress={() => setFilterCondition(null)}
           >
             <Text style={[styles.filterButtonText, filterCondition === null && styles.filterButtonTextActive]}>
-              All
+              Todos
             </Text>
           </TouchableOpacity>
 
@@ -187,6 +185,12 @@ export default function Patients(): React.JSX.Element {
             </TouchableOpacity>
           ))}
         </ScrollView>
+      </View>
+
+      <View style={styles.shareButtonContainer}>
+        <TouchableOpacity style={styles.shareButton} onPress={() => router.push("/nutritionist/share-meal-plan")}>
+          <Text style={styles.shareButtonText}>Compartilhar plano alimentar individual</Text>
+        </TouchableOpacity>
       </View>
 
       <FlatList
@@ -206,13 +210,13 @@ export default function Patients(): React.JSX.Element {
               <View style={styles.patientDetails}>
                 <View style={styles.patientDetail}>
                   <Ionicons name="calendar-outline" size={14} color="#666" />
-                  <Text style={styles.patientDetailText}>Last: {item.lastVisit}</Text>
+                  <Text style={styles.patientDetailText}>Última: {item.lastVisit}</Text>
                 </View>
 
                 {item.nextAppointment && (
                   <View style={styles.patientDetail}>
                     <Ionicons name="time-outline" size={14} color="#666" />
-                    <Text style={styles.patientDetailText}>Next: {item.nextAppointment}</Text>
+                    <Text style={styles.patientDetailText}>Próxima: {item.nextAppointment}</Text>
                   </View>
                 )}
               </View>
@@ -232,7 +236,7 @@ export default function Patients(): React.JSX.Element {
                 <Text style={styles.progressText}>{item.progress}%</Text>
               </View>
 
-              <Text style={styles.patientGoal}>Goal: {item.goal}</Text>
+              <Text style={styles.patientGoal}>Objetivo: {item.goal}</Text>
             </View>
 
             <View style={styles.patientActions}>
@@ -251,13 +255,13 @@ export default function Patients(): React.JSX.Element {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="people-outline" size={48} color="#ddd" />
-            <Text style={styles.emptyText}>No patients found</Text>
-            <Text style={styles.emptySubtext}>Try a different search term or filter</Text>
+            <Text style={styles.emptyText}>Nenhum paciente encontrado</Text>
+            <Text style={styles.emptySubtext}>Tente outro termo de busca ou filtro</Text>
           </View>
         }
       />
 
-      <NutritionistTabBar activeTab="patients" />
+      <NutritionistTabBar activeTab="pacientes" />
     </SafeAreaView>
   )
 }
@@ -301,6 +305,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
+  },
+  shareButtonContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 12,
+  },
+  shareButton: {
+    backgroundColor: "#4CAF50",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+  },
+  shareButtonText: {
+    fontSize: 14,
+    color: "#fff",
   },
   filterButton: {
     paddingHorizontal: 15,

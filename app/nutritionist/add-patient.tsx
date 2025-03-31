@@ -55,7 +55,7 @@ export default function AddPatient(): React.JSX.Element {
     sendWelcomeEmail: true,
   })
 
-  // Update form field
+  // Atualizar campo do formulário
   const updateField = (field: keyof FormData, value: string | boolean): void => {
     setFormData((prev) => ({
       ...prev,
@@ -63,38 +63,37 @@ export default function AddPatient(): React.JSX.Element {
     }))
   }
 
-  // Handle document type selection
   const handleDocumentTypeSelect = (type: "id" | "passport" | "other"): void => {
     updateField("documentType", type)
   }
 
-  // Handle gender selection
   const handleGenderSelect = (gender: "male" | "female" | "other"): void => {
     updateField("gender", gender)
   }
 
-  // Handle form submission
   const handleSubmit = (): void => {
-    // Basic validation
     if (!formData.firstName || !formData.lastName || !formData.documentId || !formData.email) {
-      Alert.alert("Missing Information", "Please fill in all required fields.")
+      Alert.alert("Informações Faltando", "Por favor, preencha todos os campos obrigatórios.")
       return
     }
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(formData.email)) {
-      Alert.alert("Invalid Email", "Please enter a valid email address.")
+      Alert.alert("E-mail Inválido", "Por favor, insira um endereço de e-mail válido.")
       return
     }
 
-    // In a real app, you would send this data to your backend
-    Alert.alert("Patient Added", `${formData.firstName} ${formData.lastName} has been added to your patient list.`, [
-      {
-        text: "OK",
-        onPress: () => router.push("/nutritionist/patients"),
-      },
-    ])
+    // enviar esses dados para o backend
+    Alert.alert(
+      "Paciente Adicionado",
+      `${formData.firstName} ${formData.lastName} foi adicionado à sua lista de pacientes.`,
+      [
+        {
+          text: "OK",
+          onPress: () => router.push("/nutritionist/patients"),
+        },
+      ]
+    )
   }
 
   return (
@@ -102,7 +101,7 @@ export default function AddPatient(): React.JSX.Element {
       <StatusBar style="dark" />
       <Stack.Screen
         options={{
-          title: "Add New Patient",
+          title: "Adicionar Novo Paciente",
           headerStyle: {
             backgroundColor: "#fff",
           },
@@ -111,16 +110,16 @@ export default function AddPatient(): React.JSX.Element {
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Personal Information</Text>
+          <Text style={styles.sectionTitle}>Informações Pessoais</Text>
 
           <View style={styles.formRow}>
             <View style={styles.formColumn}>
               <Text style={styles.inputLabel}>
-                First Name <Text style={styles.requiredStar}>*</Text>
+                Nome <Text style={styles.requiredStar}>*</Text>
               </Text>
               <TextInput
                 style={styles.input}
-                placeholder="John"
+                placeholder="João"
                 value={formData.firstName}
                 onChangeText={(value) => updateField("firstName", value)}
               />
@@ -128,11 +127,11 @@ export default function AddPatient(): React.JSX.Element {
 
             <View style={styles.formColumn}>
               <Text style={styles.inputLabel}>
-                Last Name <Text style={styles.requiredStar}>*</Text>
+                Sobrenome <Text style={styles.requiredStar}>*</Text>
               </Text>
               <TextInput
                 style={styles.input}
-                placeholder="Doe"
+                placeholder="Silva"
                 value={formData.lastName}
                 onChangeText={(value) => updateField("lastName", value)}
               />
@@ -140,7 +139,7 @@ export default function AddPatient(): React.JSX.Element {
           </View>
 
           <Text style={styles.inputLabel}>
-            Document Type <Text style={styles.requiredStar}>*</Text>
+            Tipo de Documento <Text style={styles.requiredStar}>*</Text>
           </Text>
           <View style={styles.optionsRow}>
             <TouchableOpacity
@@ -150,7 +149,7 @@ export default function AddPatient(): React.JSX.Element {
               <Text
                 style={[styles.optionButtonText, formData.documentType === "id" && styles.optionButtonTextSelected]}
               >
-                ID Card
+                RG
               </Text>
             </TouchableOpacity>
 
@@ -164,7 +163,7 @@ export default function AddPatient(): React.JSX.Element {
                   formData.documentType === "passport" && styles.optionButtonTextSelected,
                 ]}
               >
-                Passport
+                Passaporte
               </Text>
             </TouchableOpacity>
 
@@ -175,58 +174,58 @@ export default function AddPatient(): React.JSX.Element {
               <Text
                 style={[styles.optionButtonText, formData.documentType === "other" && styles.optionButtonTextSelected]}
               >
-                Other
+                Outro
               </Text>
             </TouchableOpacity>
           </View>
 
           <Text style={styles.inputLabel}>
-            Document ID <Text style={styles.requiredStar}>*</Text>
+            Número do Documento <Text style={styles.requiredStar}>*</Text>
           </Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter document number"
+            placeholder="Digite o número do documento"
             value={formData.documentId}
             onChangeText={(value) => updateField("documentId", value)}
           />
 
           <Text style={styles.inputLabel}>
-            Email <Text style={styles.requiredStar}>*</Text>
+            E-mail <Text style={styles.requiredStar}>*</Text>
           </Text>
           <TextInput
             style={styles.input}
-            placeholder="email@example.com"
+            placeholder="email@exemplo.com"
             keyboardType="email-address"
             autoCapitalize="none"
             value={formData.email}
             onChangeText={(value) => updateField("email", value)}
           />
 
-          <Text style={styles.inputLabel}>Phone Number</Text>
+          <Text style={styles.inputLabel}>Número de Telefone</Text>
           <TextInput
             style={styles.input}
-            placeholder="+1 (555) 123-4567"
+            placeholder="+55 (11) 91234-5678"
             keyboardType="phone-pad"
             value={formData.phone}
             onChangeText={(value) => updateField("phone", value)}
           />
 
-          <Text style={styles.inputLabel}>Date of Birth</Text>
+          <Text style={styles.inputLabel}>Data de Nascimento</Text>
           <TextInput
             style={styles.input}
-            placeholder="MM/DD/YYYY"
+            placeholder="DD/MM/AAAA"
             value={formData.dateOfBirth}
             onChangeText={(value) => updateField("dateOfBirth", value)}
           />
 
-          <Text style={styles.inputLabel}>Gender</Text>
+          <Text style={styles.inputLabel}>Gênero</Text>
           <View style={styles.optionsRow}>
             <TouchableOpacity
               style={[styles.optionButton, formData.gender === "male" && styles.optionButtonSelected]}
               onPress={() => handleGenderSelect("male")}
             >
               <Text style={[styles.optionButtonText, formData.gender === "male" && styles.optionButtonTextSelected]}>
-                Male
+                Masculino
               </Text>
             </TouchableOpacity>
 
@@ -235,7 +234,7 @@ export default function AddPatient(): React.JSX.Element {
               onPress={() => handleGenderSelect("female")}
             >
               <Text style={[styles.optionButtonText, formData.gender === "female" && styles.optionButtonTextSelected]}>
-                Female
+                Feminino
               </Text>
             </TouchableOpacity>
 
@@ -244,61 +243,61 @@ export default function AddPatient(): React.JSX.Element {
               onPress={() => handleGenderSelect("other")}
             >
               <Text style={[styles.optionButtonText, formData.gender === "other" && styles.optionButtonTextSelected]}>
-                Other
+                Outro
               </Text>
             </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Health Information</Text>
+          <Text style={styles.sectionTitle}>Informações de Saúde</Text>
 
           <View style={styles.formRow}>
             <View style={styles.formColumn}>
-              <Text style={styles.inputLabel}>Height</Text>
+              <Text style={styles.inputLabel}>Altura</Text>
               <TextInput
                 style={styles.input}
-                placeholder="cm or ft/in"
+                placeholder="cm"
                 value={formData.height}
                 onChangeText={(value) => updateField("height", value)}
               />
             </View>
 
             <View style={styles.formColumn}>
-              <Text style={styles.inputLabel}>Weight</Text>
+              <Text style={styles.inputLabel}>Peso</Text>
               <TextInput
                 style={styles.input}
-                placeholder="kg or lbs"
+                placeholder="kg"
                 value={formData.weight}
                 onChangeText={(value) => updateField("weight", value)}
               />
             </View>
           </View>
 
-          <Text style={styles.inputLabel}>Medical Conditions</Text>
+          <Text style={styles.inputLabel}>Condições Médicas</Text>
           <TextInput
             style={[styles.input, styles.textArea]}
-            placeholder="List any medical conditions"
+            placeholder="Liste quaisquer condições médicas"
             multiline
             numberOfLines={3}
             value={formData.medicalConditions}
             onChangeText={(value) => updateField("medicalConditions", value)}
           />
 
-          <Text style={styles.inputLabel}>Allergies</Text>
+          <Text style={styles.inputLabel}>Alergias</Text>
           <TextInput
             style={[styles.input, styles.textArea]}
-            placeholder="List any allergies"
+            placeholder="Liste quaisquer alergias"
             multiline
             numberOfLines={3}
             value={formData.allergies}
             onChangeText={(value) => updateField("allergies", value)}
           />
 
-          <Text style={styles.inputLabel}>Dietary Restrictions</Text>
+          <Text style={styles.inputLabel}>Restrições Alimentares</Text>
           <TextInput
             style={[styles.input, styles.textArea]}
-            placeholder="List any dietary restrictions"
+            placeholder="Liste quaisquer restrições alimentares"
             multiline
             numberOfLines={3}
             value={formData.dietaryRestrictions}
@@ -307,12 +306,12 @@ export default function AddPatient(): React.JSX.Element {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Goals</Text>
+          <Text style={styles.sectionTitle}>Objetivos</Text>
 
-          <Text style={styles.inputLabel}>Fitness/Nutrition Goal</Text>
+          <Text style={styles.inputLabel}>Objetivo de Fitness/Nutrição</Text>
           <TextInput
             style={[styles.input, styles.textArea]}
-            placeholder="Describe the patient's goals"
+            placeholder="Descreva os objetivos do paciente"
             multiline
             numberOfLines={3}
             value={formData.fitnessGoal}
@@ -321,10 +320,10 @@ export default function AddPatient(): React.JSX.Element {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Additional Options</Text>
+          <Text style={styles.sectionTitle}>Opções Adicionais</Text>
 
           <View style={styles.optionItem}>
-            <Text style={styles.optionLabel}>Send welcome email</Text>
+            <Text style={styles.optionLabel}>Enviar e-mail de boas-vindas</Text>
             <Switch
               trackColor={{ false: "#ddd", true: "#a5d6a7" }}
               thumbColor={"#4CAF50"}
@@ -336,12 +335,12 @@ export default function AddPatient(): React.JSX.Element {
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={styles.submitButtonText}>Add Patient</Text>
+            <Text style={styles.submitButtonText}>Adicionar Paciente</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
 
-      <NutritionistTabBar activeTab="patients" />
+      <NutritionistTabBar activeTab="pacientes" />
     </SafeAreaView>
   )
 }

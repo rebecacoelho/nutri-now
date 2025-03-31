@@ -6,7 +6,7 @@ import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 
 interface PatientTabBarProps {
-  activeTab: "home" | "meals" | "messages" | "progress" | "calories" | "appointments"
+  activeTab: "inicio" | "refeicoes" | "mensagens" | "progresso" | "calorias" | "consultas"
 }
 
 export default function PatientTabBar({ activeTab }: PatientTabBarProps): React.JSX.Element {
@@ -16,47 +16,47 @@ export default function PatientTabBar({ activeTab }: PatientTabBarProps): React.
     <View style={styles.tabBar}>
       <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/patient/dashboard")}>
         <Ionicons
-          name={activeTab === "home" ? "home" : "home-outline"}
+          name={activeTab === "inicio" ? "home" : "home-outline"}
           size={24}
-          color={activeTab === "home" ? "#4CAF50" : "#999"}
+          color={activeTab === "inicio" ? "#4CAF50" : "#999"}
         />
-        <Text style={[styles.tabLabel, activeTab === "home" && styles.tabLabelActive]}>Home</Text>
+        <Text style={[styles.tabLabel, activeTab === "inicio" && styles.tabLabelActive]}>Início</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/patient/meal-plans")}>
         <Ionicons
-          name={activeTab === "meals" ? "restaurant" : "restaurant-outline"}
+          name={activeTab === "refeicoes" ? "restaurant" : "restaurant-outline"}
           size={24}
-          color={activeTab === "meals" ? "#4CAF50" : "#999"}
+          color={activeTab === "refeicoes" ? "#4CAF50" : "#999"}
         />
-        <Text style={[styles.tabLabel, activeTab === "meals" && styles.tabLabelActive]}>Meals</Text>
+        <Text style={[styles.tabLabel, activeTab === "refeicoes" && styles.tabLabelActive]}>Refeições</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/patient/messages")}>
         <Ionicons
-          name={activeTab === "messages" ? "chatbubbles" : "chatbubbles-outline"}
+          name={activeTab === "mensagens" ? "chatbubbles" : "chatbubbles-outline"}
           size={24}
-          color={activeTab === "messages" ? "#4CAF50" : "#999"}
+          color={activeTab === "mensagens" ? "#4CAF50" : "#999"}
         />
-        <Text style={[styles.tabLabel, activeTab === "messages" && styles.tabLabelActive]}>Messages</Text>
+        <Text style={[styles.tabLabel, activeTab === "mensagens" && styles.tabLabelActive]}>Mensagens</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/patient/calorie-counter")}>
         <Ionicons
-          name={activeTab === "calories" ? "calculator" : "calculator-outline"}
+          name={activeTab === "calorias" ? "calculator" : "calculator-outline"}
           size={24}
-          color={activeTab === "calories" ? "#4CAF50" : "#999"}
+          color={activeTab === "calorias" ? "#4CAF50" : "#999"}
         />
-        <Text style={[styles.tabLabel, activeTab === "calories" && styles.tabLabelActive]}>Calories</Text>
+        <Text style={[styles.tabLabel, activeTab === "calorias" && styles.tabLabelActive]}>Calorias</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/patient/schedule-appointment")}>
         <Ionicons
-          name={activeTab === "appointments" ? "calendar" : "calendar-outline"}
+          name={activeTab === "consultas" ? "calendar" : "calendar-outline"}
           size={24}
-          color={activeTab === "appointments" ? "#4CAF50" : "#999"}
+          color={activeTab === "consultas" ? "#4CAF50" : "#999"}
         />
-        <Text style={[styles.tabLabel, activeTab === "appointments" && styles.tabLabelActive]}>Appointments</Text>
+        <Text style={[styles.tabLabel, activeTab === "consultas" && styles.tabLabelActive]}>Consultas</Text>
       </TouchableOpacity>
     </View>
   )
@@ -88,4 +88,3 @@ const styles = StyleSheet.create({
     color: "#4CAF50",
   },
 })
-

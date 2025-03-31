@@ -15,6 +15,7 @@ import {
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
+import PatientTabBar from "../components/patient-tab-bar"
 
 // Mock data for progress charts
 interface ProgressData {
@@ -177,7 +178,6 @@ export default function ProgressScreen(): React.JSX.Element {
       return
     }
 
-    // Em um aplicativo real, você enviaria isso para o backend
     Alert.alert("Entrada Adicionada", `Nova entrada de ${currentMetric.name}: ${numValue} ${currentMetric.unit}`, [
       {
         text: "OK",
@@ -437,24 +437,7 @@ export default function ProgressScreen(): React.JSX.Element {
         </View>
       </ScrollView>
 
-      <View style={styles.tabBar}>
-        <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/patient/dashboard")}>
-          <Ionicons name="home-outline" size={24} color="#999" />
-          <Text style={styles.tabLabel}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/patient/meal-plans")}>
-          <Ionicons name="restaurant-outline" size={24} color="#999" />
-          <Text style={styles.tabLabel}>Meals</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/patient/messages")}>
-          <Ionicons name="chatbubbles-outline" size={24} color="#999" />
-          <Text style={styles.tabLabel}>Messages</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabItem}>
-          <Ionicons name="analytics" size={24} color="#4CAF50" />
-          <Text style={[styles.tabLabel, styles.tabLabelActive]}>Progress</Text>
-        </TouchableOpacity>
-      </View>
+      <PatientTabBar activeTab="progresso" />   
     </SafeAreaView>
   )
 }

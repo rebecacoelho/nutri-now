@@ -41,7 +41,6 @@ export default function ShareMealPlan(): React.JSX.Element {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState<boolean>(false)
   const [pdfGenerated, setPdfGenerated] = useState<boolean>(false)
 
-  // Sample data for patients
   const patients: Patient[] = [
     {
       id: "1",
@@ -63,7 +62,6 @@ export default function ShareMealPlan(): React.JSX.Element {
     },
   ]
 
-  // Sample data for meal plans
   const mealPlans: MealPlan[] = [
     {
       id: "1",
@@ -99,7 +97,6 @@ export default function ShareMealPlan(): React.JSX.Element {
 
     setIsGeneratingPDF(true)
 
-    // Simulate PDF generation
     setTimeout(() => {
       setIsGeneratingPDF(false)
       setPdfGenerated(true)
@@ -112,7 +109,6 @@ export default function ShareMealPlan(): React.JSX.Element {
       return
     }
 
-    // In a real app, you would implement sharing functionality here
     Alert.alert("Meal Plan Shared", `The meal plan has been shared with ${selectedPatient?.name}.`, [
       {
         text: "OK",
@@ -253,7 +249,7 @@ export default function ShareMealPlan(): React.JSX.Element {
           <Text style={styles.shareButtonText}>Share Meal Plan</Text>
         </TouchableOpacity>
       </ScrollView>
-      <NutritionistTabBar activeTab="mealPlans" />
+      <NutritionistTabBar activeTab="pacientes" />
     </SafeAreaView>
   )
 }

@@ -6,6 +6,7 @@ import { SafeAreaView, StyleSheet, Text, View, ScrollView, TouchableOpacity, Tex
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
+import NutritionistTabBar from "../components/nutritionist-tab-bar"
 
 interface Patient {
   id: string
@@ -41,22 +42,22 @@ const MealEditor: React.FC<MealEditorProps> = ({ title, defaultTime }) => {
 
       <View style={styles.foodsContainer}>
         <View style={styles.foodHeader}>
-          <Text style={[styles.foodHeaderText, { flex: 2 }]}>Food Item</Text>
-          <Text style={[styles.foodHeaderText, { flex: 1 }]}>Amount</Text>
-          <Text style={[styles.foodHeaderText, { flex: 1 }]}>Calories</Text>
+          <Text style={[styles.foodHeaderText, { flex: 2 }]}>Alimento</Text>
+          <Text style={[styles.foodHeaderText, { flex: 1 }]}>Quantidade</Text>
+          <Text style={[styles.foodHeaderText, { flex: 1 }]}>Calorias</Text>
         </View>
 
         {foods.map((food) => (
           <View key={food.id} style={styles.foodRow}>
-            <TextInput style={[styles.foodInput, { flex: 2 }]} placeholder="e.g. Oatmeal" />
-            <TextInput style={[styles.foodInput, { flex: 1 }]} placeholder="e.g. 1 cup" />
-            <TextInput style={[styles.foodInput, { flex: 1 }]} placeholder="e.g. 150" keyboardType="number-pad" />
+            <TextInput style={[styles.foodInput, { flex: 2 }]} placeholder="ex: Aveia" />
+            <TextInput style={[styles.foodInput, { flex: 1 }]} placeholder="ex: 1 xícara" />
+            <TextInput style={[styles.foodInput, { flex: 1 }]} placeholder="ex: 150" keyboardType="number-pad" />
           </View>
         ))}
 
         <TouchableOpacity style={styles.addFoodButton} onPress={addFood}>
           <Ionicons name="add-circle-outline" size={20} color="#4CAF50" />
-          <Text style={styles.addFoodButtonText}>Add Food Item</Text>
+          <Text style={styles.addFoodButtonText}>Adicionar Alimento</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -66,7 +67,7 @@ const MealEditor: React.FC<MealEditorProps> = ({ title, defaultTime }) => {
 export default function CreateMealPlan(): React.JSX.Element {
   const router = useRouter()
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
-  const [selectedDay, setSelectedDay] = useState<string>("Monday")
+  const [selectedDay, setSelectedDay] = useState<string>("Segunda-feira")
 
   const patients: Patient[] = [
     { id: "1", name: "Sarah Johnson" },
@@ -74,14 +75,14 @@ export default function CreateMealPlan(): React.JSX.Element {
     { id: "3", name: "Emily Davis" },
   ]
 
-  const days: string[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+  const days: string[] = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"]
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
       <Stack.Screen
         options={{
-          title: "Create Meal Plan",
+          title: "Criar Plano Alimentar",
           headerStyle: {
             backgroundColor: "#fff",
           },
@@ -90,7 +91,7 @@ export default function CreateMealPlan(): React.JSX.Element {
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Select Patient</Text>
+          <Text style={styles.sectionTitle}>Selecionar Paciente</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.patientsContainer}>
             {patients.map((patient) => (
               <TouchableOpacity
@@ -110,7 +111,7 @@ export default function CreateMealPlan(): React.JSX.Element {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Select Day</Text>
+          <Text style={styles.sectionTitle}>Selecionar Dia</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.daysContainer}>
             {days.map((day) => (
               <TouchableOpacity
@@ -125,40 +126,40 @@ export default function CreateMealPlan(): React.JSX.Element {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Nutrition Goals</Text>
+          <Text style={styles.sectionTitle}>Metas Nutricionais</Text>
           <View style={styles.nutritionGoalsContainer}>
             <View style={styles.nutritionGoalItem}>
-              <Text style={styles.nutritionGoalLabel}>Calories</Text>
+              <Text style={styles.nutritionGoalLabel}>Calorias</Text>
               <TextInput
                 style={styles.nutritionGoalInput}
-                placeholder="e.g. 1800"
+                placeholder="ex: 1800"
                 keyboardType="number-pad"
                 defaultValue="1850"
               />
             </View>
             <View style={styles.nutritionGoalItem}>
-              <Text style={styles.nutritionGoalLabel}>Protein (g)</Text>
+              <Text style={styles.nutritionGoalLabel}>Proteínas (g)</Text>
               <TextInput
                 style={styles.nutritionGoalInput}
-                placeholder="e.g. 75"
+                placeholder="ex: 75"
                 keyboardType="number-pad"
                 defaultValue="75"
               />
             </View>
             <View style={styles.nutritionGoalItem}>
-              <Text style={styles.nutritionGoalLabel}>Carbs (g)</Text>
+              <Text style={styles.nutritionGoalLabel}>Carboidratos (g)</Text>
               <TextInput
                 style={styles.nutritionGoalInput}
-                placeholder="e.g. 200"
+                placeholder="ex: 200"
                 keyboardType="number-pad"
                 defaultValue="220"
               />
             </View>
             <View style={styles.nutritionGoalItem}>
-              <Text style={styles.nutritionGoalLabel}>Fat (g)</Text>
+              <Text style={styles.nutritionGoalLabel}>Gorduras (g)</Text>
               <TextInput
                 style={styles.nutritionGoalInput}
-                placeholder="e.g. 60"
+                placeholder="ex: 60"
                 keyboardType="number-pad"
                 defaultValue="60"
               />
@@ -166,33 +167,35 @@ export default function CreateMealPlan(): React.JSX.Element {
           </View>
         </View>
 
-        <MealEditor title="Breakfast" defaultTime="7:30 AM" />
-        <MealEditor title="Lunch" defaultTime="12:30 PM" />
-        <MealEditor title="Dinner" defaultTime="7:00 PM" />
-        <MealEditor title="Snacks" defaultTime="Various" />
+        <MealEditor title="Café da Manhã" defaultTime="7:30 AM" />
+        <MealEditor title="Almoço" defaultTime="12:30 PM" />
+        <MealEditor title="Jantar" defaultTime="7:00 PM" />
+        <MealEditor title="Lanches" defaultTime="Vários" />
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Additional Options</Text>
+          <Text style={styles.sectionTitle}>Opções Adicionais</Text>
           <View style={styles.optionItem}>
-            <Text style={styles.optionLabel}>Send notification to patient</Text>
+            <Text style={styles.optionLabel}>Enviar notificação para o paciente</Text>
             <Switch trackColor={{ false: "#ddd", true: "#a5d6a7" }} thumbColor={"#4CAF50"} value={true} />
           </View>
           <View style={styles.optionItem}>
-            <Text style={styles.optionLabel}>Allow meal substitutions</Text>
+            <Text style={styles.optionLabel}>Permitir substituições de refeições</Text>
             <Switch trackColor={{ false: "#ddd", true: "#a5d6a7" }} thumbColor={"#4CAF50"} value={true} />
           </View>
           <View style={styles.optionItem}>
-            <Text style={styles.optionLabel}>Apply to entire week</Text>
+            <Text style={styles.optionLabel}>Aplicar para a semana inteira</Text>
             <Switch trackColor={{ false: "#ddd", true: "#a5d6a7" }} thumbColor={"#4CAF50"} value={false} />
           </View>
         </View>
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.saveButton} onPress={() => router.back()}>
-            <Text style={styles.saveButtonText}>Save Meal Plan</Text>
+            <Text style={styles.saveButtonText}>Salvar Plano Alimentar</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      <NutritionistTabBar activeTab="planoAlimentar"/>
     </SafeAreaView>
   )
 }

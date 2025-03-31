@@ -2,30 +2,29 @@
 
 import type React from "react"
 import { useState } from "react"
-import { SafeAreaView, StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions } from "react-native"
+import { SafeAreaView, StyleSheet, Text, View, ScrollView, TouchableOpacity } from "react-native"
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
 import NutritionistTabBar from "../components/nutritionist-tab-bar"
 
-// Mock data for charts
 const patientProgressData = [
   { month: "Jan", count: 12 },
-  { month: "Feb", count: 15 },
+  { month: "Fev", count: 15 },
   { month: "Mar", count: 18 },
-  { month: "Apr", count: 22 },
-  { month: "May", count: 25 },
+  { month: "Abr", count: 22 },
+  { month: "Mai", count: 25 },
   { month: "Jun", count: 28 },
 ]
 
 const appointmentData = [
-  { day: "Mon", count: 5 },
-  { day: "Tue", count: 7 },
-  { day: "Wed", count: 4 },
-  { day: "Thu", count: 8 },
-  { day: "Fri", count: 6 },
-  { day: "Sat", count: 3 },
-  { day: "Sun", count: 0 },
+  { day: "Seg", count: 5 },
+  { day: "Ter", count: 7 },
+  { day: "Qua", count: 4 },
+  { day: "Qui", count: 8 },
+  { day: "Sex", count: 6 },
+  { day: "Sáb", count: 3 },
+  { day: "Dom", count: 0 },
 ]
 
 const mealPlanComplianceData = {
@@ -34,14 +33,13 @@ const mealPlanComplianceData = {
   nonCompliant: 10,
 }
 
-const screenWidth = Dimensions.get("window").width
-
 interface BarChartProps {
   data: Array<{ month?: string; day?: string; count: number }>
   barColor?: string
   title: string
   subtitle?: string
 }
+
 
 const BarChart: React.FC<BarChartProps> = ({ data, barColor = "#4CAF50", title, subtitle }) => {
   const maxValue = Math.max(...data.map((item) => item.count))
@@ -78,64 +76,6 @@ const BarChart: React.FC<BarChartProps> = ({ data, barColor = "#4CAF50", title, 
   )
 }
 
-interface PieChartProps {
-  data: {
-    compliant: number
-    partial: number
-    nonCompliant: number
-  }
-  title: string
-}
-
-const PieChart: React.FC<PieChartProps> = ({ data, title }) => {
-  const total = data.compliant + data.partial + data.nonCompliant
-
-  return (
-    <View style={styles.chartContainer}>
-      <Text style={styles.chartTitle}>{title}</Text>
-
-      <View style={styles.pieChartContainer}>
-        <View style={styles.pieChart}>
-          <View
-            style={[
-              styles.pieSlice,
-              styles.compliantSlice,
-              { transform: [{ rotate: `${((data.partial + data.nonCompliant) / total) * 360}deg` }] },
-            ]}
-          />
-          <View
-            style={[
-              styles.pieSlice,
-              styles.partialSlice,
-              { transform: [{ rotate: `${(data.nonCompliant / total) * 360}deg` }] },
-            ]}
-          />
-          <View style={[styles.pieSlice, styles.nonCompliantSlice]} />
-          <View style={styles.pieCenter}>
-            <Text style={styles.pieCenterText}>{total}</Text>
-            <Text style={styles.pieCenterSubtext}>Patients</Text>
-          </View>
-        </View>
-
-        <View style={styles.pieLegend}>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendColor, { backgroundColor: "#4CAF50" }]} />
-            <Text style={styles.legendText}>Compliant ({data.compliant}%)</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendColor, { backgroundColor: "#FFC107" }]} />
-            <Text style={styles.legendText}>Partial ({data.partial}%)</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendColor, { backgroundColor: "#F44336" }]} />
-            <Text style={styles.legendText}>Non-compliant ({data.nonCompliant}%)</Text>
-          </View>
-        </View>
-      </View>
-    </View>
-  )
-}
-
 interface StatCardProps {
   title: string
   value: string
@@ -164,21 +104,10 @@ export default function Reports(): React.JSX.Element {
       <StatusBar style="dark" />
       <Stack.Screen
         options={{
-          title: "Reports & Analytics",
+          title: "Relatórios",
           headerStyle: {
             backgroundColor: "#fff",
           },
-          headerRight: () => (
-            <TouchableOpacity
-              style={styles.headerButton}
-              onPress={() => {
-                // In a real app, this would open a share or export dialog
-                alert("Export report functionality would go here")
-              }}
-            >
-              <Ionicons name="download-outline" size={24} color="#4CAF50" />
-            </TouchableOpacity>
-          ),
         }}
       />
 
@@ -188,119 +117,57 @@ export default function Reports(): React.JSX.Element {
             style={[styles.timeRangeButton, timeRange === "week" && styles.timeRangeButtonActive]}
             onPress={() => setTimeRange("week")}
           >
-            <Text style={[styles.timeRangeText, timeRange === "week" && styles.timeRangeTextActive]}>This Week</Text>
+            <Text style={[styles.timeRangeText, timeRange === "week" && styles.timeRangeTextActive]}>Esta Semana</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.timeRangeButton, timeRange === "month" && styles.timeRangeButtonActive]}
             onPress={() => setTimeRange("month")}
           >
-            <Text style={[styles.timeRangeText, timeRange === "month" && styles.timeRangeTextActive]}>This Month</Text>
+            <Text style={[styles.timeRangeText, timeRange === "month" && styles.timeRangeTextActive]}>Este Mês</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.timeRangeButton, timeRange === "quarter" && styles.timeRangeButtonActive]}
             onPress={() => setTimeRange("quarter")}
           >
-            <Text style={[styles.timeRangeText, timeRange === "quarter" && styles.timeRangeTextActive]}>
-              This Quarter
-            </Text>
+            <Text style={[styles.timeRangeText, timeRange === "quarter" && styles.timeRangeTextActive]}>Este Trimestre</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.timeRangeButton, timeRange === "year" && styles.timeRangeButtonActive]}
             onPress={() => setTimeRange("year")}
           >
-            <Text style={[styles.timeRangeText, timeRange === "year" && styles.timeRangeTextActive]}>This Year</Text>
+            <Text style={[styles.timeRangeText, timeRange === "year" && styles.timeRangeTextActive]}>Este Ano</Text>
           </TouchableOpacity>
         </ScrollView>
       </View>
-
+      
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.statsContainer}>
-          <StatCard title="Total Patients" value="32" icon="people" color="#4CAF50" />
-          <StatCard title="Appointments" value="18" icon="calendar" color="#2196F3" />
-          <StatCard title="Meal Plans" value="24" icon="restaurant" color="#FF9800" />
-          <StatCard title="Revenue" value="$2,450" icon="cash" color="#9C27B0" />
+          <StatCard title="Total de Pacientes" value="32" icon="people" color="#4CAF50" />
+          <StatCard title="Consultas" value="18" icon="calendar" color="#2196F3" />
+          <StatCard title="Planos Alimentares" value="24" icon="restaurant" color="#FF9800" />
         </View>
 
-        <BarChart data={patientProgressData} title="Patient Growth" subtitle="Number of patients over time" />
+        <BarChart data={patientProgressData} title="Crescimento de Pacientes" subtitle="Número de pacientes ao longo do tempo" />
 
-        <BarChart data={appointmentData} title="Weekly Appointments" barColor="#2196F3" />
-
-        <PieChart data={mealPlanComplianceData} title="Meal Plan Compliance" />
+        <BarChart data={appointmentData} title="Consultas Semanais" barColor="#2196F3" />
 
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Top Performing Patients</Text>
-            <TouchableOpacity>
-              <Text style={styles.viewAllText}>View All</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.patientProgressItem}>
-            <View style={styles.patientInfo}>
-              <View style={styles.patientAvatar}>
-                <Text style={styles.patientAvatarText}>SJ</Text>
-              </View>
-              <View>
-                <Text style={styles.patientName}>Sarah Johnson</Text>
-                <Text style={styles.patientGoal}>Weight Loss: -12 lbs</Text>
-              </View>
-            </View>
-            <View style={styles.progressBarContainer}>
-              <View style={[styles.progressBar, { width: "80%" }]} />
-            </View>
-            <Text style={styles.progressPercentage}>80%</Text>
-          </View>
-
-          <View style={styles.patientProgressItem}>
-            <View style={styles.patientInfo}>
-              <View style={styles.patientAvatar}>
-                <Text style={styles.patientAvatarText}>MB</Text>
-              </View>
-              <View>
-                <Text style={styles.patientName}>Michael Brown</Text>
-                <Text style={styles.patientGoal}>Blood Sugar: Stable</Text>
-              </View>
-            </View>
-            <View style={styles.progressBarContainer}>
-              <View style={[styles.progressBar, { width: "75%" }]} />
-            </View>
-            <Text style={styles.progressPercentage}>75%</Text>
-          </View>
-
-          <View style={styles.patientProgressItem}>
-            <View style={styles.patientInfo}>
-              <View style={styles.patientAvatar}>
-                <Text style={styles.patientAvatarText}>ED</Text>
-              </View>
-              <View>
-                <Text style={styles.patientName}>Emily Davis</Text>
-                <Text style={styles.patientGoal}>Muscle Gain: +5 lbs</Text>
-              </View>
-            </View>
-            <View style={styles.progressBarContainer}>
-              <View style={[styles.progressBar, { width: "65%" }]} />
-            </View>
-            <Text style={styles.progressPercentage}>65%</Text>
-          </View>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Atividade Recente</Text>
+          <TouchableOpacity>
+            <Text style={styles.viewAllText}>Ver Tudo</Text>
+          </TouchableOpacity>
         </View>
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Activity</Text>
-            <TouchableOpacity>
-              <Text style={styles.viewAllText}>View All</Text>
-            </TouchableOpacity>
-          </View>
 
           <View style={styles.activityItem}>
             <View style={[styles.activityIcon, { backgroundColor: "#E3F2FD" }]}>
-              <Ionicons name="calendar" size={20} color="#2196F3" />
+                <Ionicons name="calendar" size={20} color="#2196F3" />
             </View>
             <View style={styles.activityContent}>
-              <Text style={styles.activityTitle}>New Appointment</Text>
-              <Text style={styles.activityDescription}>Sarah Johnson scheduled for Mar 18, 2:00 PM</Text>
+              <Text style={styles.activityTitle}>Nova Consulta</Text>
+              <Text style={styles.activityDescription}>Sarah Johnson agendou para 18 de março, às 14:00</Text>
             </View>
-            <Text style={styles.activityTime}>2h ago</Text>
+            <Text style={styles.activityTime}>Há 2 horas</Text>
           </View>
 
           <View style={styles.activityItem}>
@@ -308,10 +175,10 @@ export default function Reports(): React.JSX.Element {
               <Ionicons name="restaurant" size={20} color="#4CAF50" />
             </View>
             <View style={styles.activityContent}>
-              <Text style={styles.activityTitle}>Meal Plan Created</Text>
-              <Text style={styles.activityDescription}>Weight Loss Plan created for Michael Brown</Text>
+              <Text style={styles.activityTitle}>Plano Alimentar Criado</Text>
+              <Text style={styles.activityDescription}>Plano de Perda de Peso criado para Michael Brown</Text>
             </View>
-            <Text style={styles.activityTime}>5h ago</Text>
+            <Text style={styles.activityTime}>Há 5 horas</Text>
           </View>
 
           <View style={styles.activityItem}>
@@ -319,15 +186,15 @@ export default function Reports(): React.JSX.Element {
               <Ionicons name="chatbubbles" size={20} color="#FF9800" />
             </View>
             <View style={styles.activityContent}>
-              <Text style={styles.activityTitle}>New Message</Text>
-              <Text style={styles.activityDescription}>Emily Davis sent you a message</Text>
+              <Text style={styles.activityTitle}>Nova Mensagem</Text>
+              <Text style={styles.activityDescription}>Emily Davis enviou uma mensagem para você</Text>
             </View>
-            <Text style={styles.activityTime}>1d ago</Text>
+            <Text style={styles.activityTime}>Há 1 dia</Text>
           </View>
         </View>
       </ScrollView>
 
-      <NutritionistTabBar activeTab="home" />
+      <NutritionistTabBar activeTab="relatorios" />
     </SafeAreaView>
   )
 }
@@ -464,59 +331,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "bold",
     color: "#333",
-  },
-  pieChartContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 15,
-  },
-  pieChart: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: "#f0f0f0",
-    justifyContent: "center",
-    alignItems: "center",
-    position: "relative",
-    overflow: "hidden",
-  },
-  pieSlice: {
-    position: "absolute",
-    width: "100%",
-    height: "100%",
-    transform: [{ rotate: "0deg" }],
-  },
-  compliantSlice: {
-    backgroundColor: "#4CAF50",
-  },
-  partialSlice: {
-    backgroundColor: "#FFC107",
-  },
-  nonCompliantSlice: {
-    backgroundColor: "#F44336",
-  },
-  pieCenter: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 1,
-  },
-  pieCenterText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  pieCenterSubtext: {
-    fontSize: 10,
-    color: "#666",
-  },
-  pieLegend: {
-    flex: 1,
-    marginLeft: 20,
   },
   legendItem: {
     flexDirection: "row",

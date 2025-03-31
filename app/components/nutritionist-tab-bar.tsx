@@ -6,7 +6,7 @@ import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 
 interface NutritionistTabBarProps {
-  activeTab: "home" | "patients" | "messages" | "mealPlans" | "schedule"
+  activeTab: "inicio" | "pacientes" | "mensagens" | "planoAlimentar" | "agenda" | "relatorios"
 }
 
 export default function NutritionistTabBar({ activeTab }: NutritionistTabBarProps): React.JSX.Element {
@@ -16,47 +16,56 @@ export default function NutritionistTabBar({ activeTab }: NutritionistTabBarProp
     <View style={styles.tabBar}>
       <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/nutritionist/dashboard")}>
         <Ionicons
-          name={activeTab === "home" ? "home" : "home-outline"}
+          name={activeTab === "inicio" ? "home" : "home-outline"}
           size={24}
-          color={activeTab === "home" ? "#4CAF50" : "#999"}
+          color={activeTab === "inicio" ? "#4CAF50" : "#999"}
         />
-        <Text style={[styles.tabLabel, activeTab === "home" && styles.tabLabelActive]}>Home</Text>
+        <Text style={[styles.tabLabel, activeTab === "inicio" && styles.tabLabelActive]}>Início</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/nutritionist/patients")}>
         <Ionicons
-          name={activeTab === "patients" ? "people" : "people-outline"}
+          name={activeTab === "pacientes" ? "people" : "people-outline"}
           size={24}
-          color={activeTab === "patients" ? "#4CAF50" : "#999"}
+          color={activeTab === "pacientes" ? "#4CAF50" : "#999"}
         />
-        <Text style={[styles.tabLabel, activeTab === "patients" && styles.tabLabelActive]}>Patients</Text>
+        <Text style={[styles.tabLabel, activeTab === "pacientes" && styles.tabLabelActive]}>Pacientes</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/nutritionist/messages")}>
         <Ionicons
-          name={activeTab === "messages" ? "chatbubbles" : "chatbubbles-outline"}
+          name={activeTab === "mensagens" ? "chatbubbles" : "chatbubbles-outline"}
           size={24}
-          color={activeTab === "messages" ? "#4CAF50" : "#999"}
+          color={activeTab === "mensagens" ? "#4CAF50" : "#999"}
         />
-        <Text style={[styles.tabLabel, activeTab === "messages" && styles.tabLabelActive]}>Messages</Text>
+        <Text style={[styles.tabLabel, activeTab === "mensagens" && styles.tabLabelActive]}>Mensagens</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/nutritionist/meal-plans")}>
+      <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/nutritionist/reports")}>
         <Ionicons
-          name={activeTab === "mealPlans" ? "restaurant" : "restaurant-outline"}
+          name={activeTab === "relatorios" ? "document-text" : "document-text-outline"}
           size={24}
-          color={activeTab === "mealPlans" ? "#4CAF50" : "#999"}
+          color={activeTab === "relatorios" ? "#4CAF50" : "#999"}
         />
-        <Text style={[styles.tabLabel, activeTab === "mealPlans" && styles.tabLabelActive]}>Meal Plans</Text>
+        <Text style={[styles.tabLabel, activeTab === "relatorios" && styles.tabLabelActive]}>Relatórios</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/nutricionist/schedule")}>
+      <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/nutritionist/create-meal-plan")}>
         <Ionicons
-          name={activeTab === "schedule" ? "calendar" : "calendar-outline"}
+          name={activeTab === "planoAlimentar" ? "restaurant" : "restaurant-outline"}
           size={24}
-          color={activeTab === "schedule" ? "#4CAF50" : "#999"}
+          color={activeTab === "planoAlimentar" ? "#4CAF50" : "#999"}
         />
-        <Text style={[styles.tabLabel, activeTab === "schedule" && styles.tabLabelActive]}>Schedule</Text>
+        <Text style={[styles.tabLabel, activeTab === "planoAlimentar" && styles.tabLabelActive]}>Novo plano</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/nutritionist/schedule")}>
+        <Ionicons
+          name={activeTab === "agenda" ? "calendar" : "calendar-outline"}
+          size={24}
+          color={activeTab === "agenda" ? "#4CAF50" : "#999"}
+        />
+        <Text style={[styles.tabLabel, activeTab === "agenda" && styles.tabLabelActive]}>Agenda</Text>
       </TouchableOpacity>
     </View>
   )
@@ -88,4 +97,3 @@ const styles = StyleSheet.create({
     color: "#4CAF50",
   },
 })
-

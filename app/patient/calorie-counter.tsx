@@ -483,7 +483,7 @@ export default function CalorieCounter(): React.JSX.Element {
         </View>
       )}
 
-      <PatientTabBar activeTab="calories" />
+      <PatientTabBar activeTab="calorias" />
     </SafeAreaView>
   )
 }

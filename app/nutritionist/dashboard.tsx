@@ -5,6 +5,7 @@ import { SafeAreaView, StyleSheet, Text, View, ScrollView, TouchableOpacity, Ima
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
+import NutritionistTabBar from "../components/nutritionist-tab-bar"
 
 export default function NutritionistDashboard(): React.JSX.Element {
   const router = useRouter()
@@ -14,7 +15,7 @@ export default function NutritionistDashboard(): React.JSX.Element {
       <StatusBar style="dark" />
       <Stack.Screen
         options={{
-          title: "Dashboard",
+          title: "Painel de Controle",
           headerStyle: {
             backgroundColor: "#fff",
           },
@@ -29,29 +30,29 @@ export default function NutritionistDashboard(): React.JSX.Element {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <View>
-            <Text style={styles.greeting}>Hello, Dr. Johnson</Text>
-            <Text style={styles.date}>Monday, March 13</Text>
+            <Text style={styles.greeting}>Olá, Dr. Johnson</Text>
+            <Text style={styles.date}>Segunda-feira, 13 de Março</Text>
           </View>
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>12</Text>
-              <Text style={styles.statLabel}>Patients</Text>
+              <Text style={styles.statLabel}>Pacientes</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <Text style={styles.statValue}>5</Text>
-              <Text style={styles.statLabel}>Appointments</Text>
+              <Text style={styles.statLabel}>Consultas</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <Text style={styles.statValue}>8</Text>
-              <Text style={styles.statLabel}>Messages</Text>
+              <Text style={styles.statLabel}>Mensagens</Text>
             </View>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Today's Appointments</Text>
+          <Text style={styles.sectionTitle}>Consultas de Hoje</Text>
           <View style={styles.appointmentCard}>
             <View style={styles.appointmentTime}>
               <Text style={styles.appointmentTimeText}>10:30 AM</Text>
@@ -61,7 +62,7 @@ export default function NutritionistDashboard(): React.JSX.Element {
                 <Image source={{ uri: "/placeholder.svg?height=50&width=50" }} style={styles.patientImage} />
                 <View>
                   <Text style={styles.patientName}>Sarah Johnson</Text>
-                  <Text style={styles.appointmentType}>Weight Management</Text>
+                  <Text style={styles.appointmentType}>Controle de Peso</Text>
                 </View>
               </View>
               <View style={styles.appointmentActions}>
@@ -84,7 +85,7 @@ export default function NutritionistDashboard(): React.JSX.Element {
                 <Image source={{ uri: "/placeholder.svg?height=50&width=50" }} style={styles.patientImage} />
                 <View>
                   <Text style={styles.patientName}>Michael Brown</Text>
-                  <Text style={styles.appointmentType}>Diabetes Management</Text>
+                  <Text style={styles.appointmentType}>Controle de Diabetes</Text>
                 </View>
               </View>
               <View style={styles.appointmentActions}>
@@ -99,26 +100,26 @@ export default function NutritionistDashboard(): React.JSX.Element {
           </View>
 
           <TouchableOpacity style={styles.viewAllButton}>
-            <Text style={styles.viewAllButtonText}>View All Appointments</Text>
+            <Text style={styles.viewAllButtonText}>Ver Todas as Consultas</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Patient Activity</Text>
+          <Text style={styles.sectionTitle}>Atividade Recente dos Pacientes</Text>
           <View style={styles.activityCard}>
             <View style={styles.activityHeader}>
               <Image source={{ uri: "/placeholder.svg?height=40&width=40" }} style={styles.activityPatientImage} />
               <View>
                 <Text style={styles.activityPatientName}>Sarah Johnson</Text>
-                <Text style={styles.activityTime}>2 hours ago</Text>
+                <Text style={styles.activityTime}>2 horas atrás</Text>
               </View>
               <TouchableOpacity style={styles.activityButton}>
-                <Text style={styles.activityButtonText}>View</Text>
+                <Text style={styles.activityButtonText}>Ver</Text>
               </TouchableOpacity>
             </View>
             <View style={styles.activityContent}>
-              <Text style={styles.activityTitle}>Meal Plan Compliance</Text>
-              <Text style={styles.activityDescription}>Completed 2/3 meals today. Skipped dinner.</Text>
+              <Text style={styles.activityTitle}>Adesão ao Plano Alimentar</Text>
+              <Text style={styles.activityDescription}>Completou 2/3 refeições hoje. Pulou o jantar.</Text>
             </View>
           </View>
 
@@ -127,78 +128,61 @@ export default function NutritionistDashboard(): React.JSX.Element {
               <Image source={{ uri: "/placeholder.svg?height=40&width=40" }} style={styles.activityPatientImage} />
               <View>
                 <Text style={styles.activityPatientName}>Robert Davis</Text>
-                <Text style={styles.activityTime}>Yesterday</Text>
+                <Text style={styles.activityTime}>Ontem</Text>
               </View>
               <TouchableOpacity style={styles.activityButton}>
-                <Text style={styles.activityButtonText}>View</Text>
+                <Text style={styles.activityButtonText}>Ver</Text>
               </TouchableOpacity>
             </View>
             <View style={styles.activityContent}>
-              <Text style={styles.activityTitle}>Weight Update</Text>
-              <Text style={styles.activityDescription}>Recorded new weight: 172 lbs (-2 lbs this week)</Text>
+              <Text style={styles.activityTitle}>Atualização de Peso</Text>
+              <Text style={styles.activityDescription}>Registrou novo peso: 78 kg (-1 kg esta semana)</Text>
             </View>
           </View>
 
           <TouchableOpacity style={styles.viewAllButton}>
-            <Text style={styles.viewAllButtonText}>View All Activity</Text>
+            <Text style={styles.viewAllButtonText}>Ver Todas as Atividades</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <Text style={styles.sectionTitle}>Ações Rápidas</Text>
           <View style={styles.quickActionsContainer}>
             <TouchableOpacity
               style={styles.quickActionItem}
-              onPress={() => router.push("/nutricionist/create-meal-plan")}
+              onPress={() => router.push("/nutritionist/create-meal-plan")}
             >
               <View style={styles.quickActionIcon}>
                 <Ionicons name="restaurant-outline" size={24} color="#4CAF50" />
               </View>
-              <Text style={styles.quickActionText}>Create Meal Plan</Text>
+              <Text style={styles.quickActionText}>Criar Plano Alimentar</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.quickActionItem} onPress={() => router.push("/nutricionist/dashboard")}>
+            <TouchableOpacity style={styles.quickActionItem} onPress={() => router.push("/nutritionist/dashboard")}>
               <View style={styles.quickActionIcon}>
                 <Ionicons name="person-add-outline" size={24} color="#4CAF50" />
               </View>
-              <Text style={styles.quickActionText}>Add Patient</Text>
+              <Text style={styles.quickActionText}>Adicionar Paciente</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.quickActionItem} onPress={() => router.push("/nutricionist/schedule")}>
+            <TouchableOpacity style={styles.quickActionItem} onPress={() => router.push("/nutritionist/schedule")}>
               <View style={styles.quickActionIcon}>
                 <Ionicons name="calendar-outline" size={24} color="#4CAF50" />
               </View>
-              <Text style={styles.quickActionText}>Schedule</Text>
+              <Text style={styles.quickActionText}>Agendar</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.quickActionItem} onPress={() => router.push("/nutricionist/dashboard")}>
+            <TouchableOpacity style={styles.quickActionItem} onPress={() => router.push("/nutritionist/dashboard")}>
               <View style={styles.quickActionIcon}>
                 <Ionicons name="analytics-outline" size={24} color="#4CAF50" />
               </View>
-              <Text style={styles.quickActionText}>Reports</Text>
+              <Text style={styles.quickActionText}>Relatórios</Text>
             </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
 
-      <View style={styles.tabBar}>
-        <TouchableOpacity style={styles.tabItem}>
-          <Ionicons name="home" size={24} color="#4CAF50" />
-          <Text style={[styles.tabLabel, styles.tabLabelActive]}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/")}>
-          <Ionicons name="people-outline" size={24} color="#999" />
-          <Text style={styles.tabLabel}>Patients</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/patient/messages")}>
-          <Ionicons name="chatbubbles-outline" size={24} color="#999" />
-          <Text style={styles.tabLabel}>Messages</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/patient/meal-plans")}>
-          <Ionicons name="restaurant-outline" size={24} color="#999" />
-          <Text style={styles.tabLabel}>Meal Plans</Text>
-        </TouchableOpacity>
-      </View>
+     <NutritionistTabBar activeTab="inicio"/>
     </SafeAreaView>
   )
 }

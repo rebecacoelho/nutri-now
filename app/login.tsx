@@ -29,7 +29,7 @@ export default function LoginScreen(): React.JSX.Element {
     if (userType === "patient") {
       router.replace("/patient/dashboard")
     } else {
-      router.replace("/nutricionist/dashboard")
+      router.replace("/nutritionist/dashboard")
     }
   }
 

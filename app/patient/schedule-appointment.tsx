@@ -44,73 +44,71 @@ export default function ScheduleAppointment(): React.JSX.Element {
     {
       id: "1",
       name: "Dr. Emily Johnson",
-      specialty: "Weight Management",
+      specialty: "Gerenciamento de Peso",
       image: "/placeholder.svg?height=60&width=60",
-      availability: ["Monday", "Wednesday", "Friday"],
+      availability: ["Segunda-feira", "Quarta-feira", "Sexta-feira"],
     },
     {
       id: "2",
       name: "Dr. Michael Smith",
-      specialty: "Sports Nutrition",
+      specialty: "Nutrição Esportiva",
       image: "/placeholder.svg?height=60&width=60",
-      availability: ["Tuesday", "Thursday", "Saturday"],
+      availability: ["Terça-feira", "Quinta-feira", "Sábado"],
     },
     {
       id: "3",
       name: "Dr. Sarah Williams",
-      specialty: "Diabetes Management",
+      specialty: "Gerenciamento de Diabetes",
       image: "/placeholder.svg?height=60&width=60",
-      availability: ["Monday", "Tuesday", "Thursday"],
+      availability: ["Segunda-feira", "Terça-feira", "Quinta-feira"],
     },
   ]
 
   // Sample data for dates
   const dates = [
-    "Mon, Mar 15",
-    "Tue, Mar 16",
-    "Wed, Mar 17",
-    "Thu, Mar 18",
-    "Fri, Mar 19",
-    "Sat, Mar 20",
-    "Sun, Mar 21",
-  ]
-
-  // Sample data for time slots
+    "Seg, Mar 15",
+    "Ter, Mar 16",
+    "Qua, Mar 17",
+    "Qui, Mar 18",
+    "Sex, Mar 19",
+    "Sáb, Mar 20",
+    "Dom, Mar 21",
+];
   const timeSlots: TimeSlot[] = [
-    { id: "1", time: "9:00 AM", available: true },
-    { id: "2", time: "10:00 AM", available: true },
-    { id: "3", time: "11:00 AM", available: false },
-    { id: "4", time: "1:00 PM", available: true },
-    { id: "5", time: "2:00 PM", available: true },
-    { id: "6", time: "3:00 PM", available: false },
-    { id: "7", time: "4:00 PM", available: true },
-  ]
+    { id: "1", time: "09:00", available: true },
+    { id: "2", time: "10:00", available: true },
+    { id: "3", time: "11:00", available: false },
+    { id: "4", time: "13:00", available: true },
+    { id: "5", time: "14:00", available: true },
+    { id: "6", time: "15:00", available: false },
+    { id: "7", time: "16:00", available: true },
+  ];
 
   const handleScheduleAppointment = (): void => {
     if (!selectedDate || !selectedNutritionist || !selectedTimeSlot) {
-      Alert.alert("Missing Information", "Please select a date, nutritionist, and time slot.")
-      return
+      Alert.alert("Informações Faltando", "Por favor, selecione uma data, um nutricionista e um horário.");
+      return;
     }
 
-    // In a real app, you would send this data to your backend
+    // enviar dados para o backend
     Alert.alert(
-      "Appointment Scheduled",
-      `Your appointment with ${selectedNutritionist.name} on ${selectedDate} at ${selectedTimeSlot} has been scheduled.`,
+      "Consulta Agendada",
+      `Sua consulta com ${selectedNutritionist.name} em ${selectedDate} às ${selectedTimeSlot} foi agendada.`,
       [
         {
           text: "OK",
           onPress: () => router.push("/patient/dashboard"),
         },
       ],
-    )
-  }
+    );
+};
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
       <Stack.Screen
         options={{
-          title: "Schedule Appointment",
+          title: "Agendar Consulta",
           headerStyle: {
             backgroundColor: "#fff",
           },
@@ -119,7 +117,7 @@ export default function ScheduleAppointment(): React.JSX.Element {
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Select Date</Text>
+          <Text style={styles.sectionTitle}>Selecione a Data</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.datesContainer}>
             {dates.map((date) => (
               <TouchableOpacity
@@ -136,7 +134,7 @@ export default function ScheduleAppointment(): React.JSX.Element {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Select Nutritionist</Text>
+          <Text style={styles.sectionTitle}>Selecione o nutricionista</Text>
           {nutritionists.map((nutritionist) => (
             <TouchableOpacity
               key={nutritionist.id}
@@ -151,7 +149,7 @@ export default function ScheduleAppointment(): React.JSX.Element {
                 <Text style={styles.nutritionistName}>{nutritionist.name}</Text>
                 <Text style={styles.nutritionistSpecialty}>{nutritionist.specialty}</Text>
                 <View style={styles.availabilityContainer}>
-                  <Text style={styles.availabilityLabel}>Available: </Text>
+                  <Text style={styles.availabilityLabel}>Disponível: </Text>
                   <Text style={styles.availabilityDays}>{nutritionist.availability.join(", ")}</Text>
                 </View>
               </View>
@@ -163,7 +161,7 @@ export default function ScheduleAppointment(): React.JSX.Element {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Select Time</Text>
+          <Text style={styles.sectionTitle}>Selecione o Horário</Text>
           <View style={styles.timeSlotsContainer}>
             {timeSlots.map((slot) => (
               <TouchableOpacity
@@ -185,17 +183,17 @@ export default function ScheduleAppointment(): React.JSX.Element {
                 >
                   {slot.time}
                 </Text>
-                {!slot.available && <Text style={styles.unavailableText}>Unavailable</Text>}
+                {!slot.available && <Text style={styles.unavailableText}>Indisponível</Text>}
               </TouchableOpacity>
             ))}
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Appointment Reason</Text>
+          <Text style={styles.sectionTitle}>Motivo da Consulta</Text>
           <TextInput
             style={styles.reasonInput}
-            placeholder="Briefly describe the reason for your appointment"
+            placeholder="Descreva brevemente o motivo da sua consulta"
             value={appointmentReason}
             onChangeText={setAppointmentReason}
             multiline
@@ -204,27 +202,27 @@ export default function ScheduleAppointment(): React.JSX.Element {
         </View>
 
         <View style={styles.summarySection}>
-          <Text style={styles.summarySectionTitle}>Appointment Summary</Text>
+          <Text style={styles.summarySectionTitle}>Resumo da Consulta</Text>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>Date:</Text>
-            <Text style={styles.summaryValue}>{selectedDate || "Not selected"}</Text>
+            <Text style={styles.summaryLabel}>Data:</Text>
+            <Text style={styles.summaryValue}>{selectedDate || "Não selecionado"}</Text>
           </View>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>Nutritionist:</Text>
-            <Text style={styles.summaryValue}>{selectedNutritionist?.name || "Not selected"}</Text>
+            <Text style={styles.summaryLabel}>nutricionista:</Text>
+            <Text style={styles.summaryValue}>{selectedNutritionist?.name || "Não selecionado"}</Text>
           </View>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>Time:</Text>
-            <Text style={styles.summaryValue}>{selectedTimeSlot || "Not selected"}</Text>
+            <Text style={styles.summaryLabel}>Horário:</Text>
+            <Text style={styles.summaryValue}>{selectedTimeSlot || "Não selecionado"}</Text>
           </View>
         </View>
 
         <TouchableOpacity style={styles.scheduleButton} onPress={handleScheduleAppointment}>
-          <Text style={styles.scheduleButtonText}>Schedule Appointment</Text>
+          <Text style={styles.scheduleButtonText}>Agendar Consulta</Text>
         </TouchableOpacity>
       </ScrollView>
 
-      <PatientTabBar activeTab="appointments" />
+      <PatientTabBar activeTab="consultas" />
     </SafeAreaView>
   )
 }

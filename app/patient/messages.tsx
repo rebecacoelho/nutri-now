@@ -16,6 +16,7 @@ import {
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
+import PatientTabBar from "../components/patient-tab-bar"
 
 interface Conversation {
   id: string
@@ -41,7 +42,7 @@ export default function PatientMessages(): React.JSX.Element {
     {
       id: "1",
       name: "Dra. Emily Johnson",
-      role: "Nutricionista",
+      role: "nutricionista",
       lastMessage: "Como você está se sentindo após as mudanças na dieta?",
       time: "10:30 AM",
       unread: 2,
@@ -193,24 +194,7 @@ export default function PatientMessages(): React.JSX.Element {
       )}
 
       {!activeChat && (
-        <View style={styles.tabBar}>
-          <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/patient/dashboard")}>
-            <Ionicons name="home-outline" size={24} color="#999" />
-            <Text style={styles.tabLabel}>Home</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/patient/meal-plans")}>
-            <Ionicons name="restaurant-outline" size={24} color="#999" />
-            <Text style={styles.tabLabel}>Meals</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.tabItem}>
-            <Ionicons name="chatbubbles" size={24} color="#4CAF50" />
-            <Text style={[styles.tabLabel, styles.tabLabelActive]}>Messages</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/patient/progress")}>
-            <Ionicons name="analytics-outline" size={24} color="#999" />
-            <Text style={styles.tabLabel}>Progress</Text>
-          </TouchableOpacity>
-        </View>
+        <PatientTabBar activeTab="mensagens" /> 
       )}
     </SafeAreaView>
   )

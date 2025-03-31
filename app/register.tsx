@@ -30,7 +30,7 @@ export default function RegisterScreen(): React.JSX.Element {
     if (userType === "patient") {
       router.replace("/patient/dashboard")
     } else {
-      router.replace("/nutricionist/dashboard")
+      router.replace("/nutritionist/dashboard")
     }
   }
 
@@ -68,7 +68,7 @@ export default function RegisterScreen(): React.JSX.Element {
                 onPress={() => setUserType("nutritionist")}
               >
                 <Ionicons name="medkit-outline" size={20} color={userType === "nutritionist" ? "#fff" : "#666"} />
-                <Text style={[styles.userTypeText, userType === "nutritionist" && styles.userTypeTextActive]}>Nutricionista</Text>
+                <Text style={[styles.userTypeText, userType === "nutritionist" && styles.userTypeTextActive]}>nutricionista</Text>
               </TouchableOpacity>
             </View>
 
