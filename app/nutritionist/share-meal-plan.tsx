@@ -46,52 +46,52 @@ export default function ShareMealPlan(): React.JSX.Element {
       id: "1",
       name: "Sarah Johnson",
       image: "/placeholder.svg?height=60&width=60",
-      condition: "Weight Management",
+      condition: "Controle de Peso",
     },
     {
       id: "2",
       name: "Michael Brown",
       image: "/placeholder.svg?height=60&width=60",
-      condition: "Diabetes Management",
+      condition: "Controle de Diabetes",
     },
     {
       id: "3",
       name: "Emily Davis",
       image: "/placeholder.svg?height=60&width=60",
-      condition: "Sports Nutrition",
+      condition: "Nutrição Esportiva",
     },
   ]
 
   const mealPlans: MealPlan[] = [
     {
       id: "1",
-      name: "Weight Loss Plan",
-      description: "Low calorie meal plan with balanced macros",
+      name: "Plano de Perda de Peso",
+      description: "Plano alimentar de baixa caloria com macros balanceados",
       days: 7,
-      calories: "1,500",
-      createdAt: "Mar 10, 2025",
+      calories: "1.500",
+      createdAt: "10 de março de 2025",
     },
     {
       id: "2",
-      name: "Diabetes Management",
-      description: "Low glycemic index foods with consistent carb intake",
+      name: "Controle de Diabetes",
+      description: "Alimentos de baixo índice glicêmico com ingestão equilibrada de carboidratos",
       days: 14,
-      calories: "1,800",
-      createdAt: "Mar 12, 2025",
+      calories: "1.800",
+      createdAt: "12 de março de 2025",
     },
     {
       id: "3",
-      name: "Muscle Building",
-      description: "High protein meal plan with adequate carbs",
+      name: "Ganho de Massa Muscular",
+      description: "Plano alimentar rico em proteínas com carboidratos adequados",
       days: 7,
-      calories: "2,200",
-      createdAt: "Mar 13, 2025",
+      calories: "2.200",
+      createdAt: "13 de março de 2025",
     },
   ]
 
   const handleGeneratePDF = (): void => {
     if (!selectedPatient || !selectedMealPlan) {
-      Alert.alert("Missing Information", "Please select a patient and a meal plan.")
+      Alert.alert("Informação Faltando", "Selecione um paciente e um plano alimentar.")
       return
     }
 
@@ -105,11 +105,11 @@ export default function ShareMealPlan(): React.JSX.Element {
 
   const handleShareMealPlan = (): void => {
     if (!pdfGenerated) {
-      Alert.alert("Generate PDF First", "Please generate the PDF before sharing.")
+      Alert.alert("Gerar PDF Primeiro", "Por favor, gere o PDF antes de compartilhar.")
       return
     }
 
-    Alert.alert("Meal Plan Shared", `The meal plan has been shared with ${selectedPatient?.name}.`, [
+    Alert.alert("Plano Alimentar Compartilhado", `O plano alimentar foi compartilhado com ${selectedPatient?.name}.`, [
       {
         text: "OK",
         onPress: () => router.push("/nutritionist/dashboard"),
@@ -122,7 +122,7 @@ export default function ShareMealPlan(): React.JSX.Element {
       <StatusBar style="dark" />
       <Stack.Screen
         options={{
-          title: "Share Meal Plan",
+          title: "Compartilhar Plano Alimentar",
           headerStyle: {
             backgroundColor: "#fff",
           },
@@ -131,7 +131,7 @@ export default function ShareMealPlan(): React.JSX.Element {
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Select Patient</Text>
+          <Text style={styles.sectionTitle}>Selecionar Paciente</Text>
           {patients.map((patient) => (
             <TouchableOpacity
               key={patient.id}
@@ -151,7 +151,7 @@ export default function ShareMealPlan(): React.JSX.Element {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Select Meal Plan</Text>
+          <Text style={styles.sectionTitle}>Selecionar Plano Alimentar</Text>
           {mealPlans.map((mealPlan) => (
             <TouchableOpacity
               key={mealPlan.id}
@@ -160,17 +160,17 @@ export default function ShareMealPlan(): React.JSX.Element {
             >
               <View style={styles.mealPlanHeader}>
                 <Text style={styles.mealPlanName}>{mealPlan.name}</Text>
-                <Text style={styles.mealPlanDate}>Created: {mealPlan.createdAt}</Text>
+                <Text style={styles.mealPlanDate}>Criado: {mealPlan.createdAt}</Text>
               </View>
               <Text style={styles.mealPlanDescription}>{mealPlan.description}</Text>
               <View style={styles.mealPlanDetails}>
                 <View style={styles.mealPlanDetail}>
                   <Ionicons name="calendar-outline" size={16} color="#4CAF50" />
-                  <Text style={styles.mealPlanDetailText}>{mealPlan.days} days</Text>
+                  <Text style={styles.mealPlanDetailText}>{mealPlan.days} dias</Text>
                 </View>
                 <View style={styles.mealPlanDetail}>
                   <Ionicons name="flame-outline" size={16} color="#4CAF50" />
-                  <Text style={styles.mealPlanDetailText}>{mealPlan.calories} cal/day</Text>
+                  <Text style={styles.mealPlanDetailText}>{mealPlan.calories} cal/dia</Text>
                 </View>
               </View>
               {selectedMealPlan?.id === mealPlan.id && (
@@ -185,7 +185,7 @@ export default function ShareMealPlan(): React.JSX.Element {
             <Text style={styles.pdfTitle}>PDF Generation</Text>
             {pdfGenerated && (
               <View style={styles.pdfGeneratedBadge}>
-                <Text style={styles.pdfGeneratedText}>Generated</Text>
+                <Text style={styles.pdfGeneratedText}>PDF gerado com sucesso!</Text>
               </View>
             )}
           </View>
@@ -193,7 +193,7 @@ export default function ShareMealPlan(): React.JSX.Element {
           {isGeneratingPDF ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#4CAF50" />
-              <Text style={styles.loadingText}>Generating PDF...</Text>
+              <Text style={styles.loadingText}>Gerando PDF...</Text>
             </View>
           ) : (
             <View style={styles.pdfContent}>
@@ -206,14 +206,14 @@ export default function ShareMealPlan(): React.JSX.Element {
                 ) : (
                   <>
                     <Ionicons name="document-outline" size={48} color="#999" />
-                    <Text style={styles.pdfPreviewTextEmpty}>No PDF generated yet</Text>
+                    <Text style={styles.pdfPreviewTextEmpty}>Nenhum PDF gerado ainda.</Text>
                   </>
                 )}
               </View>
 
               <TouchableOpacity style={styles.generateButton} onPress={handleGeneratePDF}>
                 <Ionicons name="document-text-outline" size={20} color="#fff" />
-                <Text style={styles.generateButtonText}>{pdfGenerated ? "Regenerate PDF" : "Generate PDF"}</Text>
+                <Text style={styles.generateButtonText}>{pdfGenerated ? "Gerar outro PDF" : "Gerar PDF"}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -222,17 +222,17 @@ export default function ShareMealPlan(): React.JSX.Element {
         <View style={styles.summarySection}>
           <Text style={styles.summarySectionTitle}>Sharing Summary</Text>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>Patient:</Text>
-            <Text style={styles.summaryValue}>{selectedPatient?.name || "Not selected"}</Text>
+            <Text style={styles.summaryLabel}>Paciente:</Text>
+            <Text style={styles.summaryValue}>{selectedPatient?.name || "Não selecionado"}</Text>
           </View>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>Meal Plan:</Text>
-            <Text style={styles.summaryValue}>{selectedMealPlan?.name || "Not selected"}</Text>
+            <Text style={styles.summaryLabel}>Plano Alimentar:</Text>
+            <Text style={styles.summaryValue}>{selectedMealPlan?.name || "Não selected"}</Text>
           </View>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>PDF Status:</Text>
+            <Text style={styles.summaryLabel}>Status do PDF:</Text>
             <Text style={[styles.summaryValue, pdfGenerated ? styles.pdfStatusGenerated : {}]}>
-              {pdfGenerated ? "Generated" : "Not generated"}
+              {pdfGenerated ? "Gerado" : "Não Gerado"}
             </Text>
           </View>
         </View>
@@ -246,7 +246,7 @@ export default function ShareMealPlan(): React.JSX.Element {
           disabled={!selectedPatient || !selectedMealPlan || !pdfGenerated}
         >
           <Ionicons name="share-outline" size={20} color="#fff" />
-          <Text style={styles.shareButtonText}>Share Meal Plan</Text>
+          <Text style={styles.shareButtonText}>Compartilhar Plano Alimentar</Text>
         </TouchableOpacity>
       </ScrollView>
       <NutritionistTabBar activeTab="pacientes" />
