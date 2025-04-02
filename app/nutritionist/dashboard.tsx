@@ -169,10 +169,10 @@ export default function NutritionistDashboard(): React.JSX.Element {
               <View style={styles.quickActionIcon}>
                 <Ionicons name="calendar-outline" size={24} color="#4CAF50" />
               </View>
-              <Text style={styles.quickActionText}>Agendar</Text>
+              <Text style={styles.quickActionText}>Agenda</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.quickActionItem} onPress={() => router.push("/nutritionist/dashboard")}>
+            <TouchableOpacity style={styles.quickActionItem} onPress={() => router.push("/nutritionist/reports")}>
               <View style={styles.quickActionIcon}>
                 <Ionicons name="analytics-outline" size={24} color="#4CAF50" />
               </View>
@@ -409,6 +409,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: "#333",
+    textAlign: "center"
   },
   tabBar: {
     flexDirection: "row",

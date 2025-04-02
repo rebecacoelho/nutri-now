@@ -68,7 +68,7 @@ export default function RegisterScreen(): React.JSX.Element {
                 onPress={() => setUserType("nutritionist")}
               >
                 <Ionicons name="medkit-outline" size={20} color={userType === "nutritionist" ? "#fff" : "#666"} />
-                <Text style={[styles.userTypeText, userType === "nutritionist" && styles.userTypeTextActive]}>nutricionista</Text>
+                <Text style={[styles.userTypeText, userType === "nutritionist" && styles.userTypeTextActive]}>Nutricionista</Text>
               </TouchableOpacity>
             </View>
 

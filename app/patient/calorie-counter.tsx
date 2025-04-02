@@ -49,16 +49,16 @@ export default function CalorieCounter(): React.JSX.Element {
   const foodDatabase: FoodItem[] = [
     {
       id: "1",
-      name: "Apple",
+      name: "Maçã",
       calories: 95,
       protein: 0.5,
       carbs: 25,
       fat: 0.3,
-      serving: "1 medium (182g)",
+      serving: "1 média (182g)",
     },
     {
       id: "2",
-      name: "Chicken Breast",
+      name: "Peito de Frango",
       calories: 165,
       protein: 31,
       carbs: 0,
@@ -67,16 +67,16 @@ export default function CalorieCounter(): React.JSX.Element {
     },
     {
       id: "3",
-      name: "Brown Rice",
+      name: "Arroz Integral",
       calories: 215,
       protein: 5,
       carbs: 45,
       fat: 1.8,
-      serving: "1 cup cooked (195g)",
+      serving: "1 xícara cozida (195g)",
     },
     {
       id: "4",
-      name: "Salmon",
+      name: "Salmão",
       calories: 206,
       protein: 22,
       carbs: 0,
@@ -85,16 +85,16 @@ export default function CalorieCounter(): React.JSX.Element {
     },
     {
       id: "5",
-      name: "Broccoli",
+      name: "Brócolis",
       calories: 55,
       protein: 3.7,
       carbs: 11.2,
       fat: 0.6,
-      serving: "1 cup (91g)",
+      serving: "1 xícara (91g)",
     },
     {
       id: "6",
-      name: "Greek Yogurt",
+      name: "Iogurte Grego",
       calories: 100,
       protein: 17,
       carbs: 6,
@@ -108,16 +108,16 @@ export default function CalorieCounter(): React.JSX.Element {
       protein: 1.3,
       carbs: 27,
       fat: 0.4,
-      serving: "1 medium (118g)",
+      serving: "1 média (118g)",
     },
     {
       id: "8",
-      name: "Egg",
+      name: "Ovo",
       calories: 72,
       protein: 6.3,
       carbs: 0.4,
       fat: 5,
-      serving: "1 large (50g)",
+      serving: "1 grande (50g)",
     },
   ]
 
@@ -169,7 +169,7 @@ export default function CalorieCounter(): React.JSX.Element {
     setSearchQuery("")
     setSearchResults([])
 
-    Alert.alert("Food Added", `${food.name} added to your ${mealType} log.`)
+    Alert.alert("Alimento Adicionado", `${food.name} adicionado ao seu registro de ${mealType === "breakfast" ? "café da manhã" : mealType === "lunch" ? "almoço" : mealType === "dinner" ? "jantar" : "lanche"}.`)
   }
 
   const handleRemoveFood = (index: number): void => {
@@ -187,27 +187,26 @@ export default function CalorieCounter(): React.JSX.Element {
           <Text style={styles.foodItemCalories}>{item.calories} cal</Text>
           <Text style={styles.foodItemMacro}>P: {item.protein}g</Text>
           <Text style={styles.foodItemMacro}>C: {item.carbs}g</Text>
-          <Text style={styles.foodItemMacro}>F: {item.fat}g</Text>
+          <Text style={styles.foodItemMacro}>G: {item.fat}g</Text>
         </View>
       </View>
       <View style={styles.foodItemActions}>
         <TouchableOpacity style={styles.addButton} onPress={() => handleAddFood(item, "breakfast")}>
-          <Text style={styles.addButtonText}>B</Text>
+          <Text style={styles.addButtonText}>C</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.addButton} onPress={() => handleAddFood(item, "lunch")}>
-          <Text style={styles.addButtonText}>L</Text>
+          <Text style={styles.addButtonText}>A</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.addButton} onPress={() => handleAddFood(item, "dinner")}>
-          <Text style={styles.addButtonText}>D</Text>
+          <Text style={styles.addButtonText}>J</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.addButton} onPress={() => handleAddFood(item, "snack")}>
-          <Text style={styles.addButtonText}>S</Text>
+          <Text style={styles.addButtonText}>L</Text>
         </TouchableOpacity>
       </View>
     </View>
   )
 
-  // Group consumed foods by meal type
   const groupedFoods = {
     breakfast: consumedFoods.filter((food) => food.mealType === "breakfast"),
     lunch: consumedFoods.filter((food) => food.mealType === "lunch"),
@@ -215,7 +214,6 @@ export default function CalorieCounter(): React.JSX.Element {
     snack: consumedFoods.filter((food) => food.mealType === "snack"),
   }
 
-  // Calculate calories remaining
   const caloriesRemaining = calorieGoal - totalCalories
 
   return (
@@ -223,7 +221,7 @@ export default function CalorieCounter(): React.JSX.Element {
       <StatusBar style="dark" />
       <Stack.Screen
         options={{
-          title: "Calorie Counter",
+          title: "Contador de Calorias",
           headerStyle: {
             backgroundColor: "#fff",
           },
@@ -235,13 +233,13 @@ export default function CalorieCounter(): React.JSX.Element {
           style={[styles.tab, activeTab === "log" && styles.activeTab]}
           onPress={() => setActiveTab("log")}
         >
-          <Text style={[styles.tabText, activeTab === "log" && styles.activeTabText]}>Food Log</Text>
+          <Text style={[styles.tabText, activeTab === "log" && styles.activeTabText]}>Registro de Alimentos</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === "search" && styles.activeTab]}
           onPress={() => setActiveTab("search")}
         >
-          <Text style={[styles.tabText, activeTab === "search" && styles.activeTabText]}>Add Food</Text>
+          <Text style={[styles.tabText, activeTab === "search" && styles.activeTabText]}>Adicionar Alimento</Text>
         </TouchableOpacity>
       </View>
 
@@ -250,12 +248,12 @@ export default function CalorieCounter(): React.JSX.Element {
           <View style={styles.summaryCard}>
             <View style={styles.calorieCircle}>
               <Text style={styles.calorieValue}>{totalCalories}</Text>
-              <Text style={styles.calorieLabel}>calories</Text>
+              <Text style={styles.calorieLabel}>calorias</Text>
             </View>
             <View style={styles.goalInfo}>
-              <Text style={styles.goalText}>Goal: {calorieGoal} calories</Text>
+              <Text style={styles.goalText}>Meta: {calorieGoal} calorias</Text>
               <Text style={[styles.remainingText, caloriesRemaining < 0 ? styles.negativeCalories : {}]}>
-                {caloriesRemaining >= 0 ? `${caloriesRemaining} remaining` : `${Math.abs(caloriesRemaining)} over`}
+                {caloriesRemaining >= 0 ? `${caloriesRemaining} restantes` : `${Math.abs(caloriesRemaining)} acima`}
               </Text>
               <View style={styles.progressBar}>
                 <View
@@ -272,24 +270,23 @@ export default function CalorieCounter(): React.JSX.Element {
           <View style={styles.macrosCard}>
             <View style={styles.macroItem}>
               <Text style={styles.macroValue}>{totalProtein.toFixed(1)}g</Text>
-              <Text style={styles.macroLabel}>Protein</Text>
+              <Text style={styles.macroLabel}>Proteína</Text>
             </View>
             <View style={styles.macroDivider} />
             <View style={styles.macroItem}>
               <Text style={styles.macroValue}>{totalCarbs.toFixed(1)}g</Text>
-              <Text style={styles.macroLabel}>Carbs</Text>
+              <Text style={styles.macroLabel}>Carboidratos</Text>
             </View>
             <View style={styles.macroDivider} />
             <View style={styles.macroItem}>
               <Text style={styles.macroValue}>{totalFat.toFixed(1)}g</Text>
-              <Text style={styles.macroLabel}>Fat</Text>
+              <Text style={styles.macroLabel}>Gordura</Text>
             </View>
           </View>
 
-          {/* Breakfast Section */}
           <View style={styles.mealSection}>
             <View style={styles.mealHeader}>
-              <Text style={styles.mealTitle}>Breakfast</Text>
+              <Text style={styles.mealTitle}>Café da Manhã</Text>
               <TouchableOpacity
                 style={styles.addMealButton}
                 onPress={() => {
@@ -301,7 +298,7 @@ export default function CalorieCounter(): React.JSX.Element {
             </View>
 
             {groupedFoods.breakfast.length === 0 ? (
-              <Text style={styles.emptyMealText}>No breakfast foods logged yet</Text>
+              <Text style={styles.emptyMealText}>Nenhum alimento registrado ainda</Text>
             ) : (
               groupedFoods.breakfast.map((food, index) => (
                 <View key={`breakfast-${index}`} style={styles.loggedFoodItem}>
@@ -325,10 +322,9 @@ export default function CalorieCounter(): React.JSX.Element {
             )}
           </View>
 
-          {/* Lunch Section */}
           <View style={styles.mealSection}>
             <View style={styles.mealHeader}>
-              <Text style={styles.mealTitle}>Lunch</Text>
+              <Text style={styles.mealTitle}>Almoço</Text>
               <TouchableOpacity
                 style={styles.addMealButton}
                 onPress={() => {
@@ -340,7 +336,7 @@ export default function CalorieCounter(): React.JSX.Element {
             </View>
 
             {groupedFoods.lunch.length === 0 ? (
-              <Text style={styles.emptyMealText}>No lunch foods logged yet</Text>
+              <Text style={styles.emptyMealText}>Nenhum alimento registrado ainda</Text>
             ) : (
               groupedFoods.lunch.map((food, index) => (
                 <View key={`lunch-${index}`} style={styles.loggedFoodItem}>
@@ -364,10 +360,9 @@ export default function CalorieCounter(): React.JSX.Element {
             )}
           </View>
 
-          {/* Dinner Section */}
           <View style={styles.mealSection}>
             <View style={styles.mealHeader}>
-              <Text style={styles.mealTitle}>Dinner</Text>
+              <Text style={styles.mealTitle}>Jantar</Text>
               <TouchableOpacity
                 style={styles.addMealButton}
                 onPress={() => {
@@ -379,7 +374,7 @@ export default function CalorieCounter(): React.JSX.Element {
             </View>
 
             {groupedFoods.dinner.length === 0 ? (
-              <Text style={styles.emptyMealText}>No dinner foods logged yet</Text>
+              <Text style={styles.emptyMealText}>Nenhum alimento registrado ainda</Text>
             ) : (
               groupedFoods.dinner.map((food, index) => (
                 <View key={`dinner-${index}`} style={styles.loggedFoodItem}>
@@ -403,10 +398,9 @@ export default function CalorieCounter(): React.JSX.Element {
             )}
           </View>
 
-          {/* Snacks Section */}
           <View style={styles.mealSection}>
             <View style={styles.mealHeader}>
-              <Text style={styles.mealTitle}>Snacks</Text>
+              <Text style={styles.mealTitle}>Lanches</Text>
               <TouchableOpacity
                 style={styles.addMealButton}
                 onPress={() => {
@@ -418,7 +412,7 @@ export default function CalorieCounter(): React.JSX.Element {
             </View>
 
             {groupedFoods.snack.length === 0 ? (
-              <Text style={styles.emptyMealText}>No snacks logged yet</Text>
+              <Text style={styles.emptyMealText}>Nenhum lanche registrado ainda</Text>
             ) : (
               groupedFoods.snack.map((food, index) => (
                 <View key={`snack-${index}`} style={styles.loggedFoodItem}>
@@ -448,7 +442,7 @@ export default function CalorieCounter(): React.JSX.Element {
             <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
             <TextInput
               style={styles.searchInput}
-              placeholder="Search for a food..."
+              placeholder="Buscar um alimento..."
               value={searchQuery}
               onChangeText={handleSearch}
               autoFocus
@@ -469,8 +463,8 @@ export default function CalorieCounter(): React.JSX.Element {
           {searchQuery.length > 0 && searchResults.length === 0 ? (
             <View style={styles.noResultsContainer}>
               <Ionicons name="search-outline" size={48} color="#ddd" />
-              <Text style={styles.noResultsText}>No foods found</Text>
-              <Text style={styles.noResultsSubtext}>Try a different search term</Text>
+              <Text style={styles.noResultsText}>Nenhum alimento encontrado</Text>
+              <Text style={styles.noResultsSubtext}>Tente um termo de busca diferente</Text>
             </View>
           ) : (
             <FlatList

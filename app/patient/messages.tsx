@@ -42,27 +42,11 @@ export default function PatientMessages(): React.JSX.Element {
     {
       id: "1",
       name: "Dra. Emily Johnson",
-      role: "nutricionista",
+      role: "Nutricionista",
       lastMessage: "Como você está se sentindo após as mudanças na dieta?",
       time: "10:30 AM",
       unread: 2,
-    },
-    {
-      id: "2",
-      name: "Dr. Michael Smith",
-      role: "Dietista",
-      lastMessage: "Os seus exames mais recentes estão bons!",
-      time: "Ontem",
-      unread: 0,
-    },
-    {
-      id: "3",
-      name: "Suporte Nutri Now",
-      role: "Equipe de Suporte",
-      lastMessage: "Há algo mais com o que podemos te ajudar?",
-      time: "10 de Mar",
-      unread: 0,
-    },
+    }
   ]
 
   const messages: Message[] = [
