@@ -6,6 +6,7 @@ import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
 import PatientTabBar from "../components/patient-tab-bar"
+import PatientLayout from "../components/patient-layout"
 
 interface MealCardProps {
   title: string
@@ -37,127 +38,129 @@ export default function PatientDashboard(): React.JSX.Element {
   const router = useRouter()
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="dark" />
-      <Stack.Screen
-        options={{
-          title: "Home",
-          headerStyle: {
-            backgroundColor: "#fff",
-          },
-          headerRight: () => (
-            <TouchableOpacity style={styles.headerButton} onPress={() => router.push("/patient/profile")}>
-              <Ionicons name="person-circle-outline" size={24} color="#4CAF50" />
-            </TouchableOpacity>
-          ),
-        }}
-      />
-
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>Olá, Sarah</Text>
-            <Text style={styles.date}>Segunda-feira, 13 de março</Text>
-          </View>
-          <View style={styles.statsContainer}>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>1.850</Text>
-              <Text style={styles.statLabel}>Calorias</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>75g</Text>
-              <Text style={styles.statLabel}>Proteínas</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Plano de Refeições de Hoje</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mealsContainer}>
-            <MealCard
-              title="Café da Manhã"
-              time="7:30 AM"
-              image="/placeholder.svg?height=100&width=100"
-              calories="420"
-              completed={true}
-            />
-            <MealCard
-              title="Almoço"
-              time="12:30 PM"
-              image="/placeholder.svg?height=100&width=100"
-              calories="580"
-              completed={false}
-            />
-            <MealCard
-              title="Jantar"
-              time="7:00 PM"
-              image="/placeholder.svg?height=100&width=100"
-              calories="650"
-              completed={false}
-            />
-          </ScrollView>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Próximas Consultas</Text>
-          <View style={styles.appointmentCard}>
-            <View style={styles.appointmentHeader}>
-              <Ionicons name="calendar-outline" size={24} color="#4CAF50" />
-              <Text style={styles.appointmentDate}>15 de março de 2025</Text>
-              <Text style={styles.appointmentTime}>10:30 AM</Text>
-            </View>
-            <View style={styles.appointmentContent}>
-              <Text style={styles.appointmentTitle}>Consulta de Nutrição</Text>
-              <Text style={styles.appointmentDoctor}>Dra. Emily Johnson</Text>
-            </View>
-            <View style={styles.appointmentActions}>
-              <TouchableOpacity style={styles.appointmentButton}>
-                <Ionicons name="videocam-outline" size={20} color="#4CAF50" />
-                <Text style={styles.appointmentButtonText}>Participar por Vídeo</Text>
+    <PatientLayout>
+      <SafeAreaView style={styles.container}>
+        <StatusBar style="dark" />
+        <Stack.Screen
+          options={{
+            title: "Home",
+            headerStyle: {
+              backgroundColor: "#fff",
+            },
+            headerRight: () => (
+              <TouchableOpacity style={styles.headerButton} onPress={() => router.push("/patient/profile")}>
+                <Ionicons name="person-circle-outline" size={24} color="#4CAF50" />
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.appointmentButton, styles.appointmentButtonOutline]}>
-                <Ionicons name="calendar-outline" size={20} color="#4CAF50" />
-                <Text style={styles.appointmentButtonTextOutline}>Reagendar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+            ),
+          }}
+        />
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Acompanhamento de Progresso</Text>
-          <View style={styles.progressCard}>
-            <View style={styles.progressHeader}>
-              <Text style={styles.progressTitle}>Progresso de Peso</Text>
-              <TouchableOpacity>
-                <Text style={styles.progressViewAll}>Ver Tudo</Text>
-              </TouchableOpacity>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.header}>
+            <View>
+              <Text style={styles.greeting}>Olá, Sarah</Text>
+              <Text style={styles.date}>Segunda-feira, 13 de março</Text>
             </View>
-            <View style={styles.progressChart}>
-              <View style={styles.chartPlaceholder}>
-                <Text style={styles.chartPlaceholderText}>Gráfico de Peso</Text>
+            <View style={styles.statsContainer}>
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>1.850</Text>
+                <Text style={styles.statLabel}>Calorias</Text>
               </View>
-            </View>
-            <View style={styles.progressStats}>
-              <View style={styles.progressStat}>
-                <Text style={styles.progressStatValue}>165 kg</Text>
-                <Text style={styles.progressStatLabel}>Atual</Text>
-              </View>
-              <View style={styles.progressStat}>
-                <Text style={styles.progressStatValue}>-5 kg</Text>
-                <Text style={styles.progressStatLabel}>Este Mês</Text>
-              </View>
-              <View style={styles.progressStat}>
-                <Text style={styles.progressStatValue}>150 kg</Text>
-                <Text style={styles.progressStatLabel}>Meta</Text>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>75g</Text>
+                <Text style={styles.statLabel}>Proteínas</Text>
               </View>
             </View>
           </View>
-        </View>
-      </ScrollView>
 
-    <PatientTabBar activeTab="inicio" /> 
-    </SafeAreaView>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Plano de Refeições de Hoje</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mealsContainer}>
+              <MealCard
+                title="Café da Manhã"
+                time="7:30 AM"
+                image="/placeholder.svg?height=100&width=100"
+                calories="420"
+                completed={true}
+              />
+              <MealCard
+                title="Almoço"
+                time="12:30 PM"
+                image="/placeholder.svg?height=100&width=100"
+                calories="580"
+                completed={false}
+              />
+              <MealCard
+                title="Jantar"
+                time="7:00 PM"
+                image="/placeholder.svg?height=100&width=100"
+                calories="650"
+                completed={false}
+              />
+            </ScrollView>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Próximas Consultas</Text>
+            <View style={styles.appointmentCard}>
+              <View style={styles.appointmentHeader}>
+                <Ionicons name="calendar-outline" size={24} color="#4CAF50" />
+                <Text style={styles.appointmentDate}>15 de março de 2025</Text>
+                <Text style={styles.appointmentTime}>10:30 AM</Text>
+              </View>
+              <View style={styles.appointmentContent}>
+                <Text style={styles.appointmentTitle}>Consulta de Nutrição</Text>
+                <Text style={styles.appointmentDoctor}>Dra. Emily Johnson</Text>
+              </View>
+              <View style={styles.appointmentActions}>
+                <TouchableOpacity style={styles.appointmentButton}>
+                  <Ionicons name="videocam-outline" size={20} color="#4CAF50" />
+                  <Text style={styles.appointmentButtonText}>Participar por Vídeo</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.appointmentButton, styles.appointmentButtonOutline]}>
+                  <Ionicons name="calendar-outline" size={20} color="#4CAF50" />
+                  <Text style={styles.appointmentButtonTextOutline}>Reagendar</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Acompanhamento de Progresso</Text>
+            <View style={styles.progressCard}>
+              <View style={styles.progressHeader}>
+                <Text style={styles.progressTitle}>Progresso de Peso</Text>
+                <TouchableOpacity>
+                  <Text style={styles.progressViewAll}>Ver Tudo</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.progressChart}>
+                <View style={styles.chartPlaceholder}>
+                  <Text style={styles.chartPlaceholderText}>Gráfico de Peso</Text>
+                </View>
+              </View>
+              <View style={styles.progressStats}>
+                <View style={styles.progressStat}>
+                  <Text style={styles.progressStatValue}>165 kg</Text>
+                  <Text style={styles.progressStatLabel}>Atual</Text>
+                </View>
+                <View style={styles.progressStat}>
+                  <Text style={styles.progressStatValue}>-5 kg</Text>
+                  <Text style={styles.progressStatLabel}>Este Mês</Text>
+                </View>
+                <View style={styles.progressStat}>
+                  <Text style={styles.progressStatValue}>150 kg</Text>
+                  <Text style={styles.progressStatLabel}>Meta</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </ScrollView>
+
+      <PatientTabBar activeTab="inicio" /> 
+      </SafeAreaView>
+    </PatientLayout>
   )
 }
 
