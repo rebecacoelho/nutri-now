@@ -12,10 +12,16 @@ import {
   TextInput,
   FlatList,
   Alert,
+  Platform,
+  ActivityIndicator
 } from "react-native"
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import axios from "axios"
+import DateTimePicker from "@react-native-community/datetimepicker"
+import { format } from "date-fns"
 import PatientTabBar from "../components/patient-tab-bar"
 
 interface FoodItem {
@@ -32,6 +38,7 @@ interface ConsumedFood extends FoodItem {
   quantity: number
   mealType: "breakfast" | "lunch" | "dinner" | "snack"
   timeAdded: string
+  date: Date
 }
 
 export default function CalorieCounter(): React.JSX.Element {
@@ -45,138 +52,244 @@ export default function CalorieCounter(): React.JSX.Element {
   const [totalFat, setTotalFat] = useState<number>(0)
   const [calorieGoal] = useState<number>(2000)
   const [activeTab, setActiveTab] = useState<"log" | "search">("log")
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const [showDatePicker, setShowDatePicker] = useState(false)
+  const [isSearching, setIsSearching] = useState<boolean>(false)
 
-  const foodDatabase: FoodItem[] = [
-    {
-      id: "1",
-      name: "Maçã",
-      calories: 95,
-      protein: 0.5,
-      carbs: 25,
-      fat: 0.3,
-      serving: "1 média (182g)",
-    },
-    {
-      id: "2",
-      name: "Peito de Frango",
-      calories: 165,
-      protein: 31,
-      carbs: 0,
-      fat: 3.6,
-      serving: "100g",
-    },
-    {
-      id: "3",
-      name: "Arroz Integral",
-      calories: 215,
-      protein: 5,
-      carbs: 45,
-      fat: 1.8,
-      serving: "1 xícara cozida (195g)",
-    },
-    {
-      id: "4",
-      name: "Salmão",
-      calories: 206,
-      protein: 22,
-      carbs: 0,
-      fat: 13,
-      serving: "100g",
-    },
-    {
-      id: "5",
-      name: "Brócolis",
-      calories: 55,
-      protein: 3.7,
-      carbs: 11.2,
-      fat: 0.6,
-      serving: "1 xícara (91g)",
-    },
-    {
-      id: "6",
-      name: "Iogurte Grego",
-      calories: 100,
-      protein: 17,
-      carbs: 6,
-      fat: 0.4,
-      serving: "170g",
-    },
-    {
-      id: "7",
-      name: "Banana",
-      calories: 105,
-      protein: 1.3,
-      carbs: 27,
-      fat: 0.4,
-      serving: "1 média (118g)",
-    },
-    {
-      id: "8",
-      name: "Ovo",
-      calories: 72,
-      protein: 6.3,
-      carbs: 0.4,
-      fat: 5,
-      serving: "1 grande (50g)",
-    },
-  ]
+  const translateToEnglish = async (text: string) => {
+    const options = {
+      method: 'POST',
+      url: 'https://rapid-translate.p.rapidapi.com/TranslateText',
+      headers: {
+        'content-type': 'application/json',
+        'X-RapidAPI-Key': process.env.EXPO_PUBLIC_API_TRANSLATE_KEY,
+        'X-RapidAPI-Host': 'rapid-translate.p.rapidapi.com'
+      },
+      data: {
+        from: 'pt-br',
+        text,
+        to: 'en'
+      }
+    };
+    
+    try {
+      const response = await axios.request(options);
+      return response.data.result;
+    } catch (error) {
+      console.error(error);
+      return text;
+    }
+  };
+
+  const translateToPortuguese = async (text: string) => {
+    const options = {
+      method: 'POST',
+      url: 'https://rapid-translate.p.rapidapi.com/TranslateText',
+      headers: {
+        'content-type': 'application/json',
+        'X-RapidAPI-Key': process.env.EXPO_PUBLIC_API_TRANSLATE_KEY,
+        'X-RapidAPI-Host': 'rapid-translate.p.rapidapi.com'
+      },
+      data: {
+        from: 'en',
+        text,
+        to: 'pt-br'
+      }
+    };
+    
+    try {
+      const response = await axios.request(options);
+      return response.data.result;
+    } catch (error) {
+      console.error(error);
+      return text;
+    }
+  };
+
+  const getFoodDetails = async (foodName: string) => {
+    try {
+      const translatedFoodName = await translateToEnglish(foodName);
+      const response = await axios.get(`https://api.calorieninjas.com/v1/nutrition?query=${translatedFoodName}`, {
+        headers: {
+          'X-Api-Key': process.env.EXPO_PUBLIC_API_CALORIE_KEY
+        }
+      });
+
+      
+      if (response.data && response.data.items.length > 0) {
+        return response.data.items.map((item: any, index: number) => ({
+          id: `api-${Date.now()}-${index}`,
+          name: foodName.charAt(0).toUpperCase() + foodName.slice(1).toLowerCase(),
+          calories: item.calories,
+          protein: item.protein_g || 0,
+          carbs: item.carbohydrates_total_g || 0,
+          fat: item.fat_total_g || 0,
+          serving: item.serving_size_g ? `${item.serving_size_g}g` : "1 porção"
+        }));
+      }
+      return [];
+    } catch (error) {
+      console.error('Error fetching food details', error);
+      return [];
+    }
+  };
 
   useEffect(() => {
-    let calories = 0
-    let protein = 0
-    let carbs = 0
-    let fat = 0
+    loadConsumedFoods();
+  }, []);
 
-    consumedFoods.forEach((food) => {
-      calories += food.calories * food.quantity
-      protein += food.protein * food.quantity
-      carbs += food.carbs * food.quantity
-      fat += food.fat * food.quantity
-    })
+  useEffect(() => {
+    let calories = 0;
+    let protein = 0;
+    let carbs = 0;
+    let fat = 0;
 
-    setTotalCalories(calories)
-    setTotalProtein(protein)
-    setTotalCarbs(carbs)
-    setTotalFat(fat)
-  }, [consumedFoods])
+    const filteredFoods = consumedFoods.filter(food => {
+      const foodDate = new Date(food.date);
+      return foodDate.toDateString() === selectedDate.toDateString();
+    });
+
+    filteredFoods.forEach((food) => {
+      calories += food.calories * food.quantity;
+      protein += food.protein * food.quantity;
+      carbs += food.carbs * food.quantity;
+      fat += food.fat * food.quantity;
+    });
+
+    setTotalCalories(calories);
+    setTotalProtein(protein);
+    setTotalCarbs(carbs);
+    setTotalFat(fat);
+  }, [consumedFoods, selectedDate]);
+
+  const loadConsumedFoods = async () => {
+    try {
+      const savedFoods = await AsyncStorage.getItem('consumedFoods');
+      if (savedFoods !== null) {
+        const parsedFoods = JSON.parse(savedFoods);
+        const foodsWithDates = parsedFoods.map((food: any) => ({
+          ...food,
+          date: new Date(food.date)
+        }));
+        setConsumedFoods(foodsWithDates);
+      }
+    } catch (error) {
+      console.error('Error loading consumed foods', error);
+    }
+  };
+
+  const saveConsumedFoods = async (foodsList: ConsumedFood[]) => {
+    try {
+      await AsyncStorage.setItem('consumedFoods', JSON.stringify(foodsList));
+    } catch (error) {
+      console.error('Error saving consumed foods', error);
+    }
+  };
 
   const handleSearch = (query: string): void => {
     setSearchQuery(query)
-
-    if (query.trim() === "") {
+  }
+  
+  const executeSearch = async () => {
+    if (searchQuery.trim() === "") {
       setSearchResults([])
       return
     }
-
-    const results = foodDatabase.filter((food) => food.name.toLowerCase().includes(query.toLowerCase()))
-
-    setSearchResults(results)
-  }
-
-  const handleAddFood = (food: FoodItem, mealType: "breakfast" | "lunch" | "dinner" | "snack"): void => {
-    const now = new Date()
-    const timeAdded = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-
-    const consumedFood: ConsumedFood = {
-      ...food,
-      quantity: 1,
-      mealType,
-      timeAdded,
+    
+    setIsSearching(true)
+    
+    try {
+      const apiResults = await getFoodDetails(searchQuery)
+      setSearchResults(apiResults)
+    } catch (error) {
+      console.error('Error searching for food:', error)
+    } finally {
+      setIsSearching(false)
     }
-
-    setConsumedFoods([...consumedFoods, consumedFood])
-    setActiveTab("log")
-    setSearchQuery("")
-    setSearchResults([])
-
-    Alert.alert("Alimento Adicionado", `${food.name} adicionado ao seu registro de ${mealType === "breakfast" ? "café da manhã" : mealType === "lunch" ? "almoço" : mealType === "dinner" ? "jantar" : "lanche"}.`)
   }
 
-  const handleRemoveFood = (index: number): void => {
-    const newConsumedFoods = [...consumedFoods]
-    newConsumedFoods.splice(index, 1)
-    setConsumedFoods(newConsumedFoods)
-  }
+  const handleAddFood = async (food: FoodItem, mealType: "breakfast" | "lunch" | "dinner" | "snack"): Promise<void> => {
+    try {
+      let translatedName = food.name;
+      if (food.id.startsWith('api-')) {
+        translatedName = await translateToPortuguese(food.name);
+      }
+
+      const now = new Date();
+      const timeAdded = format(now, "HH:mm");
+
+      const consumedFood: ConsumedFood = {
+        ...food,
+        name: translatedName,
+        quantity: 1,
+        mealType,
+        timeAdded,
+        date: selectedDate
+      };
+
+      const updatedFoods = [...consumedFoods, consumedFood];
+      setConsumedFoods(updatedFoods);
+      await saveConsumedFoods(updatedFoods);
+      
+      setActiveTab("log");
+      setSearchQuery("");
+      setSearchResults([]);
+
+      const mealTypeTranslation = 
+        mealType === "breakfast" ? "café da manhã" : 
+        mealType === "lunch" ? "almoço" : 
+        mealType === "dinner" ? "jantar" : "lanche";
+        
+      Alert.alert("Alimento Adicionado", `${translatedName} adicionado ao seu registro de ${mealTypeTranslation}.`);
+    } catch (error) {
+      console.error('Error adding food:', error);
+      Alert.alert("Erro", "Não foi possível adicionar este alimento.");
+    }
+  };
+
+  const handleRemoveFood = async (index: number): Promise<void> => {
+    try {
+      const newConsumedFoods = [...consumedFoods];
+      newConsumedFoods.splice(index, 1);
+      setConsumedFoods(newConsumedFoods);
+      await saveConsumedFoods(newConsumedFoods);
+    } catch (error) {
+      console.error('Error removing food:', error);
+      Alert.alert("Erro", "Não foi possível remover este alimento.");
+    }
+  };
+
+  const handleDateChange = (event: any, selectedDate: Date | undefined) => {
+    const currentDate = selectedDate || new Date();
+    setShowDatePicker(Platform.OS === 'ios');
+    setSelectedDate(currentDate);
+  };
+
+  const toggleDatePicker = () => {
+    setShowDatePicker(!showDatePicker);
+  };
+
+  const groupedFoods = {
+    breakfast: consumedFoods.filter((food) => 
+      food.mealType === "breakfast" && 
+      new Date(food.date).toDateString() === selectedDate.toDateString()
+    ),
+    lunch: consumedFoods.filter((food) => 
+      food.mealType === "lunch" && 
+      new Date(food.date).toDateString() === selectedDate.toDateString()
+    ),
+    dinner: consumedFoods.filter((food) => 
+      food.mealType === "dinner" && 
+      new Date(food.date).toDateString() === selectedDate.toDateString()
+    ),
+    snack: consumedFoods.filter((food) => 
+      food.mealType === "snack" && 
+      new Date(food.date).toDateString() === selectedDate.toDateString()
+    ),
+  };
+
+  const caloriesRemaining = calorieGoal - totalCalories;
+  const formattedDate = format(selectedDate, "dd/MM/yyyy");
 
   const renderFoodItem = ({ item }: { item: FoodItem }): React.JSX.Element => (
     <View style={styles.foodItem}>
@@ -205,16 +318,7 @@ export default function CalorieCounter(): React.JSX.Element {
         </TouchableOpacity>
       </View>
     </View>
-  )
-
-  const groupedFoods = {
-    breakfast: consumedFoods.filter((food) => food.mealType === "breakfast"),
-    lunch: consumedFoods.filter((food) => food.mealType === "lunch"),
-    dinner: consumedFoods.filter((food) => food.mealType === "dinner"),
-    snack: consumedFoods.filter((food) => food.mealType === "snack"),
-  }
-
-  const caloriesRemaining = calorieGoal - totalCalories
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -227,6 +331,25 @@ export default function CalorieCounter(): React.JSX.Element {
           },
         }}
       />
+
+      <View style={styles.datePickerContainer}>
+        <TouchableOpacity style={styles.dateButton} onPress={toggleDatePicker}>
+          <Ionicons name="calendar" size={20} color="#4CAF50" style={styles.dateIcon} />
+          <Text style={styles.dateText}>{formattedDate}</Text>
+        </TouchableOpacity>
+        {showDatePicker && (
+          <DateTimePicker
+            locale="pt-BR"
+            testID="dateTimePicker"
+            value={selectedDate}
+            mode="date"
+            is24Hour={true}
+            display="default"
+            onChange={handleDateChange}
+            style={styles.datePicker}
+          />
+        )}
+      </View>
 
       <View style={styles.tabs}>
         <TouchableOpacity
@@ -247,13 +370,13 @@ export default function CalorieCounter(): React.JSX.Element {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.summaryCard}>
             <View style={styles.calorieCircle}>
-              <Text style={styles.calorieValue}>{totalCalories}</Text>
+              <Text style={styles.calorieValue}>{Math.round(totalCalories)}</Text>
               <Text style={styles.calorieLabel}>calorias</Text>
             </View>
             <View style={styles.goalInfo}>
               <Text style={styles.goalText}>Meta: {calorieGoal} calorias</Text>
               <Text style={[styles.remainingText, caloriesRemaining < 0 ? styles.negativeCalories : {}]}>
-                {caloriesRemaining >= 0 ? `${caloriesRemaining} restantes` : `${Math.abs(caloriesRemaining)} acima`}
+                {caloriesRemaining >= 0 ? `${Math.round(caloriesRemaining)} restantes` : `${Math.abs(Math.round(caloriesRemaining))} acima`}
               </Text>
               <View style={styles.progressBar}>
                 <View
@@ -303,13 +426,14 @@ export default function CalorieCounter(): React.JSX.Element {
               groupedFoods.breakfast.map((food, index) => (
                 <View key={`breakfast-${index}`} style={styles.loggedFoodItem}>
                   <View style={styles.loggedFoodInfo}>
-                    <Text style={styles.loggedFoodName}>{food.name}</Text>
+                    <Text style={styles.loggedFoodName}>{food.name.charAt(0).toUpperCase() + food.name.slice(1)}</Text>
                     <Text style={styles.loggedFoodServing}>
                       {food.serving} × {food.quantity}
                     </Text>
                   </View>
                   <View style={styles.loggedFoodNutrition}>
-                    <Text style={styles.loggedFoodCalories}>{food.calories * food.quantity} cal</Text>
+                    <Text style={styles.loggedFoodCalories}>{(food.calories * food.quantity).toFixed(1)} cal</Text>
+                    <Text style={styles.loggedFoodTime}>{food.timeAdded}</Text>
                   </View>
                   <TouchableOpacity
                     style={styles.removeButton}
@@ -341,13 +465,14 @@ export default function CalorieCounter(): React.JSX.Element {
               groupedFoods.lunch.map((food, index) => (
                 <View key={`lunch-${index}`} style={styles.loggedFoodItem}>
                   <View style={styles.loggedFoodInfo}>
-                    <Text style={styles.loggedFoodName}>{food.name}</Text>
+                    <Text style={styles.loggedFoodName}>{food.name.charAt(0).toUpperCase() + food.name.slice(1)}</Text>
                     <Text style={styles.loggedFoodServing}>
                       {food.serving} × {food.quantity}
                     </Text>
                   </View>
                   <View style={styles.loggedFoodNutrition}>
-                    <Text style={styles.loggedFoodCalories}>{food.calories * food.quantity} cal</Text>
+                    <Text style={styles.loggedFoodCalories}>{(food.calories * food.quantity).toFixed(1)} cal</Text>
+                    <Text style={styles.loggedFoodTime}>{food.timeAdded}</Text>
                   </View>
                   <TouchableOpacity
                     style={styles.removeButton}
@@ -379,13 +504,14 @@ export default function CalorieCounter(): React.JSX.Element {
               groupedFoods.dinner.map((food, index) => (
                 <View key={`dinner-${index}`} style={styles.loggedFoodItem}>
                   <View style={styles.loggedFoodInfo}>
-                    <Text style={styles.loggedFoodName}>{food.name}</Text>
+                    <Text style={styles.loggedFoodName}>{food.name.charAt(0).toUpperCase() + food.name.slice(1)}</Text>
                     <Text style={styles.loggedFoodServing}>
                       {food.serving} × {food.quantity}
                     </Text>
                   </View>
                   <View style={styles.loggedFoodNutrition}>
-                    <Text style={styles.loggedFoodCalories}>{food.calories * food.quantity} cal</Text>
+                    <Text style={styles.loggedFoodCalories}>{(food.calories * food.quantity).toFixed(1)} cal</Text>
+                    <Text style={styles.loggedFoodTime}>{food.timeAdded}</Text>
                   </View>
                   <TouchableOpacity
                     style={styles.removeButton}
@@ -417,13 +543,14 @@ export default function CalorieCounter(): React.JSX.Element {
               groupedFoods.snack.map((food, index) => (
                 <View key={`snack-${index}`} style={styles.loggedFoodItem}>
                   <View style={styles.loggedFoodInfo}>
-                    <Text style={styles.loggedFoodName}>{food.name}</Text>
+                    <Text style={styles.loggedFoodName}>{food.name.charAt(0).toUpperCase() + food.name.slice(1)}</Text>
                     <Text style={styles.loggedFoodServing}>
                       {food.serving} × {food.quantity}
                     </Text>
                   </View>
                   <View style={styles.loggedFoodNutrition}>
-                    <Text style={styles.loggedFoodCalories}>{food.calories * food.quantity} cal</Text>
+                    <Text style={styles.loggedFoodCalories}>{(food.calories * food.quantity).toFixed(1)} cal</Text>
+                    <Text style={styles.loggedFoodTime}>{food.timeAdded}</Text>
                   </View>
                   <TouchableOpacity
                     style={styles.removeButton}
@@ -445,18 +572,32 @@ export default function CalorieCounter(): React.JSX.Element {
               placeholder="Buscar um alimento..."
               value={searchQuery}
               onChangeText={handleSearch}
+              onSubmitEditing={executeSearch}
               autoFocus
             />
             {searchQuery.length > 0 && (
-              <TouchableOpacity
-                style={styles.clearButton}
-                onPress={() => {
-                  setSearchQuery("")
-                  setSearchResults([])
-                }}
-              >
-                <Ionicons name="close-circle" size={20} color="#999" />
-              </TouchableOpacity>
+              <>
+                <TouchableOpacity
+                  style={styles.searchButton}
+                  onPress={executeSearch}
+                  disabled={isSearching}
+                >
+                  {isSearching ? (
+                    <ActivityIndicator size="small" color="#4CAF50" />
+                  ) : (
+                    <Ionicons name="search-circle" size={24} color="#4CAF50" />
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.clearButton}
+                  onPress={() => {
+                    setSearchQuery("")
+                    setSearchResults([])
+                  }}
+                >
+                  <Ionicons name="close-circle" size={20} color="#999" />
+                </TouchableOpacity>
+              </>
             )}
           </View>
 
@@ -792,6 +933,45 @@ const styles = StyleSheet.create({
   },
   tabLabelActive: {
     color: "#4CAF50",
+  },
+  datePickerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  dateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#f0f8f0',
+  },
+  dateIcon: {
+    marginRight: 5,
+  },
+  dateText: {
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '500',
+  },
+  datePicker: {
+    width: '100%',
+    backgroundColor: '#fff',
+  },
+  loggedFoodTime: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2,
+    textAlign: 'right',
+  },
+  searchButton: {
+    padding: 5,
+    marginRight: 5,
   },
 })
 
