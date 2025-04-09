@@ -32,15 +32,6 @@ export default function PatientTabBar({ activeTab }: PatientTabBarProps): React.
         <Text style={[styles.tabLabel, activeTab === "refeicoes" && styles.tabLabelActive]}>Refeições</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/patient/messages")}>
-        <Ionicons
-          name={activeTab === "mensagens" ? "chatbubbles" : "chatbubbles-outline"}
-          size={24}
-          color={activeTab === "mensagens" ? "#4CAF50" : "#999"}
-        />
-        <Text style={[styles.tabLabel, activeTab === "mensagens" && styles.tabLabelActive]}>Mensagens</Text>
-      </TouchableOpacity>
-
       <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/patient/calorie-counter")}>
         <Ionicons
           name={activeTab === "calorias" ? "calculator" : "calculator-outline"}

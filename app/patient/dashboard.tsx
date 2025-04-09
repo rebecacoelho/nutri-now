@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { SafeAreaView, StyleSheet, Text, View, ScrollView, TouchableOpacity, Image } from "react-native"
+import { SafeAreaView, StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, Linking } from "react-native"
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
@@ -107,20 +107,23 @@ export default function PatientDashboard(): React.JSX.Element {
               <View style={styles.appointmentHeader}>
                 <Ionicons name="calendar-outline" size={24} color="#4CAF50" />
                 <Text style={styles.appointmentDate}>15 de março de 2025</Text>
-                <Text style={styles.appointmentTime}>10:30 AM</Text>
+                <Text style={styles.appointmentTime}>10:30h</Text>
               </View>
               <View style={styles.appointmentContent}>
                 <Text style={styles.appointmentTitle}>Consulta de Nutrição</Text>
                 <Text style={styles.appointmentDoctor}>Dra. Emily Johnson</Text>
               </View>
               <View style={styles.appointmentActions}>
-                <TouchableOpacity style={styles.appointmentButton}>
-                  <Ionicons name="videocam-outline" size={20} color="#4CAF50" />
-                  <Text style={styles.appointmentButtonText}>Participar por Vídeo</Text>
-                </TouchableOpacity>
                 <TouchableOpacity style={[styles.appointmentButton, styles.appointmentButtonOutline]}>
-                  <Ionicons name="calendar-outline" size={20} color="#4CAF50" />
-                  <Text style={styles.appointmentButtonTextOutline}>Reagendar</Text>
+                  <Ionicons name="calendar-outline" size={20} color="#f20505" />
+                  <Text style={styles.appointmentButtonTextOutline}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.appointmentButton, styles.appointmentButtonFilled]}
+                  onPress={() => Linking.openURL(`https://wa.me/+1234567890`)}
+                >
+                  <Ionicons name="logo-whatsapp" size={20} color="#ffffff" />
+                  <Text style={styles.appointmentButtonTextFilled}>Dúvidas</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -330,19 +333,33 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 10,
   },
+  appointmentButtonFilled: {
+    backgroundColor: '#25D366',
+    padding: 10,
+    borderRadius: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 10,
+  },
+  appointmentButtonTextFilled: {
+    color: '#ffffff',
+    fontSize: 14,
+    marginLeft: 5,
+  },
   appointmentButtonOutline: {
     backgroundColor: "transparent",
     borderWidth: 1,
-    borderColor: "#4CAF50",
+    borderColor: "#f20505",
     marginRight: 0,
   },
   appointmentButtonText: {
-    color: "#4CAF50",
+    color: "#f20505",
     fontWeight: "600",
     marginLeft: 5,
   },
   appointmentButtonTextOutline: {
-    color: "#4CAF50",
+    color: "#f20505",
     fontWeight: "600",
     marginLeft: 5,
   },

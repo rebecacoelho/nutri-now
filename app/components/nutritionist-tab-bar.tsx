@@ -32,15 +32,6 @@ export default function NutritionistTabBar({ activeTab }: NutritionistTabBarProp
         <Text style={[styles.tabLabel, activeTab === "pacientes" && styles.tabLabelActive]}>Pacientes</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/nutritionist/messages")}>
-        <Ionicons
-          name={activeTab === "mensagens" ? "chatbubbles" : "chatbubbles-outline"}
-          size={24}
-          color={activeTab === "mensagens" ? "#4CAF50" : "#999"}
-        />
-        <Text style={[styles.tabLabel, activeTab === "mensagens" && styles.tabLabelActive]}>Mensagens</Text>
-      </TouchableOpacity>
-
       <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/nutritionist/reports")}>
         <Ionicons
           name={activeTab === "relatorios" ? "document-text" : "document-text-outline"}
