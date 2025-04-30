@@ -55,6 +55,7 @@ export default function CalorieCounter(): React.JSX.Element {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [isSearching, setIsSearching] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
 
   const translateToEnglish = async (text: string) => {
     const options = {
@@ -164,6 +165,7 @@ export default function CalorieCounter(): React.JSX.Element {
 
   const loadConsumedFoods = async () => {
     try {
+      setIsLoading(true);
       const savedFoods = await AsyncStorage.getItem('consumedFoods');
       if (savedFoods !== null) {
         const parsedFoods = JSON.parse(savedFoods);
@@ -174,15 +176,21 @@ export default function CalorieCounter(): React.JSX.Element {
         setConsumedFoods(foodsWithDates);
       }
     } catch (error) {
-      console.error('Error loading consumed foods', error);
+      console.error('Erro ao carregar histórico de refeições', error);
+      Alert.alert("Erro", "Não foi possível carregar seu histórico de refeições.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const saveConsumedFoods = async (foodsList: ConsumedFood[]) => {
     try {
-      await AsyncStorage.setItem('consumedFoods', JSON.stringify(foodsList));
+      const foodsToSave = JSON.stringify(foodsList);
+      await AsyncStorage.setItem('consumedFoods', foodsToSave);
+      console.log('Histórico de refeições salvo com sucesso');
     } catch (error) {
-      console.error('Error saving consumed foods', error);
+      console.error('Erro ao salvar histórico de refeições', error);
+      Alert.alert("Erro", "Não foi possível salvar seu histórico de refeições.");
     }
   };
 
@@ -242,7 +250,7 @@ export default function CalorieCounter(): React.JSX.Element {
         
       Alert.alert("Alimento Adicionado", `${translatedName} adicionado ao seu registro de ${mealTypeTranslation}.`);
     } catch (error) {
-      console.error('Error adding food:', error);
+      console.error('Erro ao adicionar alimento:', error);
       Alert.alert("Erro", "Não foi possível adicionar este alimento.");
     }
   };
@@ -252,10 +260,37 @@ export default function CalorieCounter(): React.JSX.Element {
       const newConsumedFoods = [...consumedFoods];
       newConsumedFoods.splice(index, 1);
       setConsumedFoods(newConsumedFoods);
+      
       await saveConsumedFoods(newConsumedFoods);
+      Alert.alert("Alimento Removido", "Alimento removido do seu registro com sucesso.");
     } catch (error) {
-      console.error('Error removing food:', error);
+      console.error('Erro ao remover alimento:', error);
       Alert.alert("Erro", "Não foi possível remover este alimento.");
+    }
+  };
+
+  const handleUpdateFoodQuantity = async (food: ConsumedFood, newQuantity: number): Promise<void> => {
+    try {
+      if (newQuantity <= 0) {
+        const index = consumedFoods.indexOf(food);
+        if (index !== -1) {
+          handleRemoveFood(index);
+        }
+        return;
+      }
+
+      const updatedFoods = consumedFoods.map(item => {
+        if (item === food) {
+          return { ...item, quantity: newQuantity };
+        }
+        return item;
+      });
+
+      setConsumedFoods(updatedFoods);
+      await saveConsumedFoods(updatedFoods);
+    } catch (error) {
+      console.error('Erro ao atualizar quantidade do alimento:', error);
+      Alert.alert("Erro", "Não foi possível atualizar a quantidade deste alimento.");
     }
   };
 
@@ -332,293 +367,370 @@ export default function CalorieCounter(): React.JSX.Element {
         }}
       />
 
-      <View style={styles.datePickerContainer}>
-        <TouchableOpacity style={styles.dateButton} onPress={toggleDatePicker}>
-          <Ionicons name="calendar" size={20} color="#4CAF50" style={styles.dateIcon} />
-          <Text style={styles.dateText}>{formattedDate}</Text>
-        </TouchableOpacity>
-        {showDatePicker && (
-          <DateTimePicker
-            locale="pt-BR"
-            testID="dateTimePicker"
-            value={selectedDate}
-            mode="date"
-            is24Hour={true}
-            display="default"
-            onChange={handleDateChange}
-            style={styles.datePicker}
-          />
-        )}
-      </View>
-
-      <View style={styles.tabs}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === "log" && styles.activeTab]}
-          onPress={() => setActiveTab("log")}
-        >
-          <Text style={[styles.tabText, activeTab === "log" && styles.activeTabText]}>Registro de Alimentos</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === "search" && styles.activeTab]}
-          onPress={() => setActiveTab("search")}
-        >
-          <Text style={[styles.tabText, activeTab === "search" && styles.activeTabText]}>Adicionar Alimento</Text>
-        </TouchableOpacity>
-      </View>
-
-      {activeTab === "log" ? (
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.summaryCard}>
-            <View style={styles.calorieCircle}>
-              <Text style={styles.calorieValue}>{Math.round(totalCalories)}</Text>
-              <Text style={styles.calorieLabel}>calorias</Text>
-            </View>
-            <View style={styles.goalInfo}>
-              <Text style={styles.goalText}>Meta: {calorieGoal} calorias</Text>
-              <Text style={[styles.remainingText, caloriesRemaining < 0 ? styles.negativeCalories : {}]}>
-                {caloriesRemaining >= 0 ? `${Math.round(caloriesRemaining)} restantes` : `${Math.abs(Math.round(caloriesRemaining))} acima`}
-              </Text>
-              <View style={styles.progressBar}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    { width: `${Math.min(100, (totalCalories / calorieGoal) * 100)}%` },
-                    caloriesRemaining < 0 ? styles.progressOverage : {},
-                  ]}
-                />
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.macrosCard}>
-            <View style={styles.macroItem}>
-              <Text style={styles.macroValue}>{totalProtein.toFixed(1)}g</Text>
-              <Text style={styles.macroLabel}>Proteína</Text>
-            </View>
-            <View style={styles.macroDivider} />
-            <View style={styles.macroItem}>
-              <Text style={styles.macroValue}>{totalCarbs.toFixed(1)}g</Text>
-              <Text style={styles.macroLabel}>Carboidratos</Text>
-            </View>
-            <View style={styles.macroDivider} />
-            <View style={styles.macroItem}>
-              <Text style={styles.macroValue}>{totalFat.toFixed(1)}g</Text>
-              <Text style={styles.macroLabel}>Gordura</Text>
-            </View>
-          </View>
-
-          <View style={styles.mealSection}>
-            <View style={styles.mealHeader}>
-              <Text style={styles.mealTitle}>Café da Manhã</Text>
-              <TouchableOpacity
-                style={styles.addMealButton}
-                onPress={() => {
-                  setActiveTab("search")
-                }}
-              >
-                <Ionicons name="add" size={20} color="#4CAF50" />
-              </TouchableOpacity>
-            </View>
-
-            {groupedFoods.breakfast.length === 0 ? (
-              <Text style={styles.emptyMealText}>Nenhum alimento registrado ainda</Text>
-            ) : (
-              groupedFoods.breakfast.map((food, index) => (
-                <View key={`breakfast-${index}`} style={styles.loggedFoodItem}>
-                  <View style={styles.loggedFoodInfo}>
-                    <Text style={styles.loggedFoodName}>{food.name.charAt(0).toUpperCase() + food.name.slice(1)}</Text>
-                    <Text style={styles.loggedFoodServing}>
-                      {food.serving} × {food.quantity}
-                    </Text>
-                  </View>
-                  <View style={styles.loggedFoodNutrition}>
-                    <Text style={styles.loggedFoodCalories}>{(food.calories * food.quantity).toFixed(1)} cal</Text>
-                    <Text style={styles.loggedFoodTime}>{food.timeAdded}</Text>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.removeButton}
-                    onPress={() => handleRemoveFood(consumedFoods.indexOf(food))}
-                  >
-                    <Ionicons name="close" size={16} color="#999" />
-                  </TouchableOpacity>
-                </View>
-              ))
-            )}
-          </View>
-
-          <View style={styles.mealSection}>
-            <View style={styles.mealHeader}>
-              <Text style={styles.mealTitle}>Almoço</Text>
-              <TouchableOpacity
-                style={styles.addMealButton}
-                onPress={() => {
-                  setActiveTab("search")
-                }}
-              >
-                <Ionicons name="add" size={20} color="#4CAF50" />
-              </TouchableOpacity>
-            </View>
-
-            {groupedFoods.lunch.length === 0 ? (
-              <Text style={styles.emptyMealText}>Nenhum alimento registrado ainda</Text>
-            ) : (
-              groupedFoods.lunch.map((food, index) => (
-                <View key={`lunch-${index}`} style={styles.loggedFoodItem}>
-                  <View style={styles.loggedFoodInfo}>
-                    <Text style={styles.loggedFoodName}>{food.name.charAt(0).toUpperCase() + food.name.slice(1)}</Text>
-                    <Text style={styles.loggedFoodServing}>
-                      {food.serving} × {food.quantity}
-                    </Text>
-                  </View>
-                  <View style={styles.loggedFoodNutrition}>
-                    <Text style={styles.loggedFoodCalories}>{(food.calories * food.quantity).toFixed(1)} cal</Text>
-                    <Text style={styles.loggedFoodTime}>{food.timeAdded}</Text>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.removeButton}
-                    onPress={() => handleRemoveFood(consumedFoods.indexOf(food))}
-                  >
-                    <Ionicons name="close" size={16} color="#999" />
-                  </TouchableOpacity>
-                </View>
-              ))
-            )}
-          </View>
-
-          <View style={styles.mealSection}>
-            <View style={styles.mealHeader}>
-              <Text style={styles.mealTitle}>Jantar</Text>
-              <TouchableOpacity
-                style={styles.addMealButton}
-                onPress={() => {
-                  setActiveTab("search")
-                }}
-              >
-                <Ionicons name="add" size={20} color="#4CAF50" />
-              </TouchableOpacity>
-            </View>
-
-            {groupedFoods.dinner.length === 0 ? (
-              <Text style={styles.emptyMealText}>Nenhum alimento registrado ainda</Text>
-            ) : (
-              groupedFoods.dinner.map((food, index) => (
-                <View key={`dinner-${index}`} style={styles.loggedFoodItem}>
-                  <View style={styles.loggedFoodInfo}>
-                    <Text style={styles.loggedFoodName}>{food.name.charAt(0).toUpperCase() + food.name.slice(1)}</Text>
-                    <Text style={styles.loggedFoodServing}>
-                      {food.serving} × {food.quantity}
-                    </Text>
-                  </View>
-                  <View style={styles.loggedFoodNutrition}>
-                    <Text style={styles.loggedFoodCalories}>{(food.calories * food.quantity).toFixed(1)} cal</Text>
-                    <Text style={styles.loggedFoodTime}>{food.timeAdded}</Text>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.removeButton}
-                    onPress={() => handleRemoveFood(consumedFoods.indexOf(food))}
-                  >
-                    <Ionicons name="close" size={16} color="#999" />
-                  </TouchableOpacity>
-                </View>
-              ))
-            )}
-          </View>
-
-          <View style={styles.mealSection}>
-            <View style={styles.mealHeader}>
-              <Text style={styles.mealTitle}>Lanches</Text>
-              <TouchableOpacity
-                style={styles.addMealButton}
-                onPress={() => {
-                  setActiveTab("search")
-                }}
-              >
-                <Ionicons name="add" size={20} color="#4CAF50" />
-              </TouchableOpacity>
-            </View>
-
-            {groupedFoods.snack.length === 0 ? (
-              <Text style={styles.emptyMealText}>Nenhum lanche registrado ainda</Text>
-            ) : (
-              groupedFoods.snack.map((food, index) => (
-                <View key={`snack-${index}`} style={styles.loggedFoodItem}>
-                  <View style={styles.loggedFoodInfo}>
-                    <Text style={styles.loggedFoodName}>{food.name.charAt(0).toUpperCase() + food.name.slice(1)}</Text>
-                    <Text style={styles.loggedFoodServing}>
-                      {food.serving} × {food.quantity}
-                    </Text>
-                  </View>
-                  <View style={styles.loggedFoodNutrition}>
-                    <Text style={styles.loggedFoodCalories}>{(food.calories * food.quantity).toFixed(1)} cal</Text>
-                    <Text style={styles.loggedFoodTime}>{food.timeAdded}</Text>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.removeButton}
-                    onPress={() => handleRemoveFood(consumedFoods.indexOf(food))}
-                  >
-                    <Ionicons name="close" size={16} color="#999" />
-                  </TouchableOpacity>
-                </View>
-              ))
-            )}
-          </View>
-        </ScrollView>
-      ) : (
-        <View style={styles.searchContainer}>
-          <View style={styles.searchInputContainer}>
-            <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Buscar um alimento..."
-              value={searchQuery}
-              onChangeText={handleSearch}
-              onSubmitEditing={executeSearch}
-              autoFocus
-            />
-            {searchQuery.length > 0 && (
-              <>
-                <TouchableOpacity
-                  style={styles.searchButton}
-                  onPress={executeSearch}
-                  disabled={isSearching}
-                >
-                  {isSearching ? (
-                    <ActivityIndicator size="small" color="#4CAF50" />
-                  ) : (
-                    <Ionicons name="search-circle" size={24} color="#4CAF50" />
-                  )}
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.clearButton}
-                  onPress={() => {
-                    setSearchQuery("")
-                    setSearchResults([])
-                  }}
-                >
-                  <Ionicons name="close-circle" size={20} color="#999" />
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-
-          {searchQuery.length > 0 && searchResults.length === 0 ? (
-            <View style={styles.noResultsContainer}>
-              <Ionicons name="search-outline" size={48} color="#ddd" />
-              <Text style={styles.noResultsText}>Nenhum alimento encontrado</Text>
-              <Text style={styles.noResultsSubtext}>Tente um termo de busca diferente</Text>
-            </View>
-          ) : (
-            <FlatList
-              data={searchResults}
-              renderItem={renderFoodItem}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.searchResults}
-            />
-          )}
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#4CAF50" />
+          <Text style={styles.loadingText}>Carregando seu histórico de refeições...</Text>
         </View>
-      )}
+      ) : (
+        <>
+          <View style={styles.datePickerContainer}>
+            <TouchableOpacity style={styles.dateButton} onPress={toggleDatePicker}>
+              <Ionicons name="calendar" size={20} color="#4CAF50" style={styles.dateIcon} />
+              <Text style={styles.dateText}>{formattedDate}</Text>
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                locale="pt-BR"
+                testID="dateTimePicker"
+                value={selectedDate}
+                mode="date"
+                is24Hour={true}
+                display="default"
+                onChange={handleDateChange}
+                style={styles.datePicker}
+              />
+            )}
+          </View>
 
-      <PatientTabBar activeTab="calorias" />
+          <View style={styles.tabs}>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === "log" && styles.activeTab]}
+              onPress={() => setActiveTab("log")}
+            >
+              <Text style={[styles.tabText, activeTab === "log" && styles.activeTabText]}>Registro de Alimentos</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === "search" && styles.activeTab]}
+              onPress={() => setActiveTab("search")}
+            >
+              <Text style={[styles.tabText, activeTab === "search" && styles.activeTabText]}>Adicionar Alimento</Text>
+            </TouchableOpacity>
+          </View>
+
+          {activeTab === "log" ? (
+            <ScrollView contentContainerStyle={styles.scrollContent}>
+              <View style={styles.summaryCard}>
+                <View style={styles.calorieCircle}>
+                  <Text style={styles.calorieValue}>{Math.round(totalCalories)}</Text>
+                  <Text style={styles.calorieLabel}>calorias</Text>
+                </View>
+                <View style={styles.goalInfo}>
+                  <Text style={styles.goalText}>Meta: {calorieGoal} calorias</Text>
+                  <Text style={[styles.remainingText, caloriesRemaining < 0 ? styles.negativeCalories : {}]}>
+                    {caloriesRemaining >= 0 ? `${Math.round(caloriesRemaining)} restantes` : `${Math.abs(Math.round(caloriesRemaining))} acima`}
+                  </Text>
+                  <View style={styles.progressBar}>
+                    <View
+                      style={[
+                        styles.progressFill,
+                        { width: `${Math.min(100, (totalCalories / calorieGoal) * 100)}%` },
+                        caloriesRemaining < 0 ? styles.progressOverage : {},
+                      ]}
+                    />
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.macrosCard}>
+                <View style={styles.macroItem}>
+                  <Text style={styles.macroValue}>{totalProtein.toFixed(1)}g</Text>
+                  <Text style={styles.macroLabel}>Proteína</Text>
+                </View>
+                <View style={styles.macroDivider} />
+                <View style={styles.macroItem}>
+                  <Text style={styles.macroValue}>{totalCarbs.toFixed(1)}g</Text>
+                  <Text style={styles.macroLabel}>Carboidratos</Text>
+                </View>
+                <View style={styles.macroDivider} />
+                <View style={styles.macroItem}>
+                  <Text style={styles.macroValue}>{totalFat.toFixed(1)}g</Text>
+                  <Text style={styles.macroLabel}>Gordura</Text>
+                </View>
+              </View>
+
+              <View style={styles.mealSection}>
+                <View style={styles.mealHeader}>
+                  <Text style={styles.mealTitle}>Café da Manhã</Text>
+                  <TouchableOpacity
+                    style={styles.addMealButton}
+                    onPress={() => {
+                      setActiveTab("search")
+                    }}
+                  >
+                    <Ionicons name="add" size={20} color="#4CAF50" />
+                  </TouchableOpacity>
+                </View>
+
+                {groupedFoods.breakfast.length === 0 ? (
+                  <Text style={styles.emptyMealText}>Nenhum alimento registrado ainda</Text>
+                ) : (
+                  groupedFoods.breakfast.map((food, index) => (
+                    <View key={`breakfast-${index}`} style={styles.loggedFoodItem}>
+                      <View style={styles.loggedFoodInfo}>
+                        <Text style={styles.loggedFoodName}>{food.name.charAt(0).toUpperCase() + food.name.slice(1)}</Text>
+                        <View style={styles.servingContainer}>
+                          <Text style={styles.loggedFoodServing}>
+                            {food.serving} ×
+                          </Text>
+                          <View style={styles.quantityControls}>
+                            <TouchableOpacity
+                              style={styles.quantityButton}
+                              onPress={() => handleUpdateFoodQuantity(food, food.quantity - 0.5)}
+                            >
+                              <Ionicons name="remove" size={14} color="#4CAF50" />
+                            </TouchableOpacity>
+                            <Text style={styles.quantityText}>{food.quantity}</Text>
+                            <TouchableOpacity
+                              style={styles.quantityButton}
+                              onPress={() => handleUpdateFoodQuantity(food, food.quantity + 0.5)}
+                            >
+                              <Ionicons name="add" size={14} color="#4CAF50" />
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      </View>
+                      <View style={styles.loggedFoodNutrition}>
+                        <Text style={styles.loggedFoodCalories}>{(food.calories * food.quantity).toFixed(1)} cal</Text>
+                        <Text style={styles.loggedFoodTime}>{food.timeAdded}</Text>
+                      </View>
+                      <TouchableOpacity
+                        style={styles.removeButton}
+                        onPress={() => handleRemoveFood(consumedFoods.indexOf(food))}
+                      >
+                        <Ionicons name="close" size={16} color="#999" />
+                      </TouchableOpacity>
+                    </View>
+                  ))
+                )}
+              </View>
+
+              <View style={styles.mealSection}>
+                <View style={styles.mealHeader}>
+                  <Text style={styles.mealTitle}>Almoço</Text>
+                  <TouchableOpacity
+                    style={styles.addMealButton}
+                    onPress={() => {
+                      setActiveTab("search")
+                    }}
+                  >
+                    <Ionicons name="add" size={20} color="#4CAF50" />
+                  </TouchableOpacity>
+                </View>
+
+                {groupedFoods.lunch.length === 0 ? (
+                  <Text style={styles.emptyMealText}>Nenhum alimento registrado ainda</Text>
+                ) : (
+                  groupedFoods.lunch.map((food, index) => (
+                    <View key={`lunch-${index}`} style={styles.loggedFoodItem}>
+                      <View style={styles.loggedFoodInfo}>
+                        <Text style={styles.loggedFoodName}>{food.name.charAt(0).toUpperCase() + food.name.slice(1)}</Text>
+                        <View style={styles.servingContainer}>
+                          <Text style={styles.loggedFoodServing}>
+                            {food.serving} ×
+                          </Text>
+                          <View style={styles.quantityControls}>
+                            <TouchableOpacity
+                              style={styles.quantityButton}
+                              onPress={() => handleUpdateFoodQuantity(food, food.quantity - 0.5)}
+                            >
+                              <Ionicons name="remove" size={14} color="#4CAF50" />
+                            </TouchableOpacity>
+                            <Text style={styles.quantityText}>{food.quantity}</Text>
+                            <TouchableOpacity
+                              style={styles.quantityButton}
+                              onPress={() => handleUpdateFoodQuantity(food, food.quantity + 0.5)}
+                            >
+                              <Ionicons name="add" size={14} color="#4CAF50" />
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      </View>
+                      <View style={styles.loggedFoodNutrition}>
+                        <Text style={styles.loggedFoodCalories}>{(food.calories * food.quantity).toFixed(1)} cal</Text>
+                        <Text style={styles.loggedFoodTime}>{food.timeAdded}</Text>
+                      </View>
+                      <TouchableOpacity
+                        style={styles.removeButton}
+                        onPress={() => handleRemoveFood(consumedFoods.indexOf(food))}
+                      >
+                        <Ionicons name="close" size={16} color="#999" />
+                      </TouchableOpacity>
+                    </View>
+                  ))
+                )}
+              </View>
+
+              <View style={styles.mealSection}>
+                <View style={styles.mealHeader}>
+                  <Text style={styles.mealTitle}>Jantar</Text>
+                  <TouchableOpacity
+                    style={styles.addMealButton}
+                    onPress={() => {
+                      setActiveTab("search")
+                    }}
+                  >
+                    <Ionicons name="add" size={20} color="#4CAF50" />
+                  </TouchableOpacity>
+                </View>
+
+                {groupedFoods.dinner.length === 0 ? (
+                  <Text style={styles.emptyMealText}>Nenhum alimento registrado ainda</Text>
+                ) : (
+                  groupedFoods.dinner.map((food, index) => (
+                    <View key={`dinner-${index}`} style={styles.loggedFoodItem}>
+                      <View style={styles.loggedFoodInfo}>
+                        <Text style={styles.loggedFoodName}>{food.name.charAt(0).toUpperCase() + food.name.slice(1)}</Text>
+                        <View style={styles.servingContainer}>
+                          <Text style={styles.loggedFoodServing}>
+                            {food.serving} ×
+                          </Text>
+                          <View style={styles.quantityControls}>
+                            <TouchableOpacity
+                              style={styles.quantityButton}
+                              onPress={() => handleUpdateFoodQuantity(food, food.quantity - 0.5)}
+                            >
+                              <Ionicons name="remove" size={14} color="#4CAF50" />
+                            </TouchableOpacity>
+                            <Text style={styles.quantityText}>{food.quantity}</Text>
+                            <TouchableOpacity
+                              style={styles.quantityButton}
+                              onPress={() => handleUpdateFoodQuantity(food, food.quantity + 0.5)}
+                            >
+                              <Ionicons name="add" size={14} color="#4CAF50" />
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      </View>
+                      <View style={styles.loggedFoodNutrition}>
+                        <Text style={styles.loggedFoodCalories}>{(food.calories * food.quantity).toFixed(1)} cal</Text>
+                        <Text style={styles.loggedFoodTime}>{food.timeAdded}</Text>
+                      </View>
+                      <TouchableOpacity
+                        style={styles.removeButton}
+                        onPress={() => handleRemoveFood(consumedFoods.indexOf(food))}
+                      >
+                        <Ionicons name="close" size={16} color="#999" />
+                      </TouchableOpacity>
+                    </View>
+                  ))
+                )}
+              </View>
+
+              <View style={styles.mealSection}>
+                <View style={styles.mealHeader}>
+                  <Text style={styles.mealTitle}>Lanches</Text>
+                  <TouchableOpacity
+                    style={styles.addMealButton}
+                    onPress={() => {
+                      setActiveTab("search")
+                    }}
+                  >
+                    <Ionicons name="add" size={20} color="#4CAF50" />
+                  </TouchableOpacity>
+                </View>
+
+                {groupedFoods.snack.length === 0 ? (
+                  <Text style={styles.emptyMealText}>Nenhum lanche registrado ainda</Text>
+                ) : (
+                  groupedFoods.snack.map((food, index) => (
+                    <View key={`snack-${index}`} style={styles.loggedFoodItem}>
+                      <View style={styles.loggedFoodInfo}>
+                        <Text style={styles.loggedFoodName}>{food.name.charAt(0).toUpperCase() + food.name.slice(1)}</Text>
+                        <View style={styles.servingContainer}>
+                          <Text style={styles.loggedFoodServing}>
+                            {food.serving} ×
+                          </Text>
+                          <View style={styles.quantityControls}>
+                            <TouchableOpacity
+                              style={styles.quantityButton}
+                              onPress={() => handleUpdateFoodQuantity(food, food.quantity - 0.5)}
+                            >
+                              <Ionicons name="remove" size={14} color="#4CAF50" />
+                            </TouchableOpacity>
+                            <Text style={styles.quantityText}>{food.quantity}</Text>
+                            <TouchableOpacity
+                              style={styles.quantityButton}
+                              onPress={() => handleUpdateFoodQuantity(food, food.quantity + 0.5)}
+                            >
+                              <Ionicons name="add" size={14} color="#4CAF50" />
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      </View>
+                      <View style={styles.loggedFoodNutrition}>
+                        <Text style={styles.loggedFoodCalories}>{(food.calories * food.quantity).toFixed(1)} cal</Text>
+                        <Text style={styles.loggedFoodTime}>{food.timeAdded}</Text>
+                      </View>
+                      <TouchableOpacity
+                        style={styles.removeButton}
+                        onPress={() => handleRemoveFood(consumedFoods.indexOf(food))}
+                      >
+                        <Ionicons name="close" size={16} color="#999" />
+                      </TouchableOpacity>
+                    </View>
+                  ))
+                )}
+              </View>
+            </ScrollView>
+          ) : (
+            <View style={styles.searchContainer}>
+              <View style={styles.searchInputContainer}>
+                <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Buscar um alimento..."
+                  value={searchQuery}
+                  onChangeText={handleSearch}
+                  onSubmitEditing={executeSearch}
+                  autoFocus
+                />
+                {searchQuery.length > 0 && (
+                  <>
+                    <TouchableOpacity
+                      style={styles.searchButton}
+                      onPress={executeSearch}
+                      disabled={isSearching}
+                    >
+                      {isSearching ? (
+                        <ActivityIndicator size="small" color="#4CAF50" />
+                      ) : (
+                        <Ionicons name="search-circle" size={24} color="#4CAF50" />
+                      )}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.clearButton}
+                      onPress={() => {
+                        setSearchQuery("")
+                        setSearchResults([])
+                      }}
+                    >
+                      <Ionicons name="close-circle" size={20} color="#999" />
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
+
+              {searchQuery.length > 0 && searchResults.length === 0 ? (
+                <View style={styles.noResultsContainer}>
+                  <Ionicons name="search-outline" size={48} color="#ddd" />
+                  <Text style={styles.noResultsText}>Nenhum alimento encontrado</Text>
+                  <Text style={styles.noResultsSubtext}>Tente um termo de busca diferente</Text>
+                </View>
+              ) : (
+                <FlatList
+                  data={searchResults}
+                  renderItem={renderFoodItem}
+                  keyExtractor={(item) => item.id}
+                  contentContainerStyle={styles.searchResults}
+                />
+              )}
+            </View>
+          )}
+
+          <PatientTabBar activeTab="calorias" />
+        </>
+      )}
     </SafeAreaView>
   )
 }
@@ -800,6 +912,33 @@ const styles = StyleSheet.create({
     color: "#666",
     marginTop: 2,
   },
+  servingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  quantityControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 5,
+  },
+  quantityButton: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#f0f8f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 3,
+  },
+  quantityText: {
+    fontSize: 12,
+    color: '#333',
+    fontWeight: '500',
+    marginHorizontal: 3,
+    minWidth: 20,
+    textAlign: 'center',
+  },
   loggedFoodNutrition: {
     marginRight: 10,
   },
@@ -972,6 +1111,17 @@ const styles = StyleSheet.create({
   searchButton: {
     padding: 5,
     marginRight: 5,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#4CAF50",
+    marginTop: 10,
   },
 })
 

@@ -182,7 +182,7 @@ export default function ShareMealPlan(): React.JSX.Element {
 
         <View style={styles.pdfSection}>
           <View style={styles.pdfHeader}>
-            <Text style={styles.pdfTitle}>PDF Generation</Text>
+            <Text style={styles.pdfTitle}>Geração do PDF</Text>
             {pdfGenerated && (
               <View style={styles.pdfGeneratedBadge}>
                 <Text style={styles.pdfGeneratedText}>PDF gerado com sucesso!</Text>
@@ -220,7 +220,7 @@ export default function ShareMealPlan(): React.JSX.Element {
         </View>
 
         <View style={styles.summarySection}>
-          <Text style={styles.summarySectionTitle}>Sharing Summary</Text>
+          <Text style={styles.summarySectionTitle}>Resumo</Text>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Paciente:</Text>
             <Text style={styles.summaryValue}>{selectedPatient?.name || "Não selecionado"}</Text>
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f8f0",
   },
   mealPlanHeader: {
-    flexDirection: "row",
+    flexDirection: "column",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 8,

@@ -65,14 +65,6 @@ export default function NutritionistDashboard(): React.JSX.Element {
                   <Text style={styles.appointmentType}>Controle de Peso</Text>
                 </View>
               </View>
-              <View style={styles.appointmentActions}>
-                <TouchableOpacity style={styles.appointmentButton}>
-                  <Ionicons name="videocam-outline" size={20} color="#4CAF50" />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.appointmentButton}>
-                  <Ionicons name="chatbubble-outline" size={20} color="#4CAF50" />
-                </TouchableOpacity>
-              </View>
             </View>
           </View>
 
@@ -87,14 +79,6 @@ export default function NutritionistDashboard(): React.JSX.Element {
                   <Text style={styles.patientName}>Michael Brown</Text>
                   <Text style={styles.appointmentType}>Controle de Diabetes</Text>
                 </View>
-              </View>
-              <View style={styles.appointmentActions}>
-                <TouchableOpacity style={styles.appointmentButton}>
-                  <Ionicons name="videocam-outline" size={20} color="#4CAF50" />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.appointmentButton}>
-                  <Ionicons name="chatbubble-outline" size={20} color="#4CAF50" />
-                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -297,19 +281,6 @@ const styles = StyleSheet.create({
   appointmentType: {
     fontSize: 14,
     color: "#666",
-  },
-  appointmentActions: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-  },
-  appointmentButton: {
-    backgroundColor: "#e8f5e9",
-    borderRadius: 20,
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-    marginLeft: 10,
   },
   viewAllButton: {
     alignItems: "center",

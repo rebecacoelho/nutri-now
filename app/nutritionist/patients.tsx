@@ -380,8 +380,9 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   patientDetails: {
-    flexDirection: "row",
+    flexDirection: "column",
     marginBottom: 8,
+    gap: 4,
   },
   patientDetail: {
     flexDirection: "row",

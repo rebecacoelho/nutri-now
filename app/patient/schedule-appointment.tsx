@@ -39,7 +39,6 @@ export default function ScheduleAppointment(): React.JSX.Element {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>("")
   const [appointmentReason, setAppointmentReason] = useState<string>("")
 
-  // Sample data for nutritionists
   const nutritionists: Nutritionist[] = [
     {
       id: "1",
@@ -64,7 +63,6 @@ export default function ScheduleAppointment(): React.JSX.Element {
     },
   ]
 
-  // Sample data for dates
   const dates = [
     "Seg, Mar 15",
     "Ter, Mar 16",
@@ -315,6 +313,7 @@ const styles = StyleSheet.create({
   availabilityContainer: {
     flexDirection: "row",
     alignItems: "center",
+    flexWrap: "wrap",
   },
   availabilityLabel: {
     fontSize: 12,
