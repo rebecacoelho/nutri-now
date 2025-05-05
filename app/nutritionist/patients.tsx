@@ -106,10 +106,8 @@ export default function Patients(): React.JSX.Element {
     },
   ]
 
-  // Obter condições únicas para o filtro
   const conditions = Array.from(new Set(patients.map((patient) => patient.condition)))
 
-  // Filtrar pacientes com base na busca e no filtro de condição
   const filteredPatients = patients.filter((patient) => {
     const matchesSearch =
       patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -119,7 +117,6 @@ export default function Patients(): React.JSX.Element {
     return matchesSearch && matchesCondition
   })
 
-  // Navegar para os detalhes do paciente
   const handlePatientPress = (patientId: string): void => {
     alert(`Navegar para os detalhes do paciente com ID: ${patientId}`)
   }
