@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-import { useState } from "react"
+import React, { useState } from "react"
 import {
   SafeAreaView,
   StyleSheet,
@@ -12,10 +11,18 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
+  ActivityIndicator,
 } from "react-native"
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
+import { 
+  registerUser, 
+  RegisterUserData,
+  formatUsername,
+  formatDateToAPI,
+} from "../api"
 
 type UserType = "patient" | "nutritionist"
 
@@ -23,16 +30,145 @@ export default function RegisterScreen(): React.JSX.Element {
   const [name, setName] = useState<string>("")
   const [email, setEmail] = useState<string>("")
   const [password, setPassword] = useState<string>("")
+  const [phone, setPhone] = useState<string>("")
+  const [address, setAddress] = useState<string>("")
   const [userType, setUserType] = useState<UserType>("patient")
+  const [loading, setLoading] = useState<boolean>(false)
   const router = useRouter()
 
-  const handleRegister = (): void => {
-    if (userType === "patient") {
-      router.replace("/patient/dashboard")
-    } else {
-      router.replace("/nutritionist/dashboard")
+  const [age, setAge] = useState<string>("")
+  const [weight, setWeight] = useState<string>("")
+  const [height, setHeight] = useState<string>("")
+  const [gender, setGender] = useState<string>("")
+  const [birthDate, setBirthDate] = useState<string>("")
+  const [displayBirthDate, setDisplayBirthDate] = useState<string>("")
+
+  const handleBirthDateChange = (text: string): void => {
+    const cleaned = text.replace(/\D/g, "");
+  
+    let formatted = cleaned;
+    if (cleaned.length > 2 && cleaned.length <= 4) {
+      formatted = `${cleaned.slice(0, 2)}/${cleaned.slice(2)}`;
+    } else if (cleaned.length > 4 && cleaned.length <= 8) {
+      formatted = `${cleaned.slice(0, 2)}/${cleaned.slice(2, 4)}/${cleaned.slice(4)}`;
+    } else if (cleaned.length > 8) {
+      formatted = `${cleaned.slice(0, 2)}/${cleaned.slice(2, 4)}/${cleaned.slice(4, 8)}`;
     }
-  }
+  
+    setDisplayBirthDate(formatted);
+  
+    // Quando estiver completo (DD/MM/AAAA), atualiza o birthDate no formato da API
+    if (formatted.length === 10) {
+      setBirthDate(formatDateToAPI(formatted));
+    } else {
+      setBirthDate("");
+    }
+  };
+
+  const validateForm = (): string | null => {
+    if (!name) return "Nome é obrigatório";
+    if (!email) return "Email é obrigatório";
+    if (!password) return "Senha é obrigatória";
+    if (!phone) return "Telefone é obrigatório";
+    if (!address) return "Endereço é obrigatório";
+    
+    if (userType === "patient") {
+      if (!age) return "Idade é obrigatória";
+      if (!weight) return "Peso é obrigatório";
+      if (!height) return "Altura é obrigatória";
+      if (!gender) return "Gênero é obrigatório";
+      if (!birthDate) return "Data de nascimento é obrigatória";
+      
+      // Validar formato da data
+      if (birthDate && !/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
+        return "Data de nascimento deve estar no formato AAAA-MM-DD";
+      }
+    }
+    
+    return null;
+  };
+
+  const handleRegister = async (): Promise<void> => {
+    const validationError = validateForm();
+    if (validationError) {
+      Alert.alert("Erro", validationError);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      const uniqueUsername = formatUsername(name);
+      
+      const userData: RegisterUserData = {
+        username: uniqueUsername,
+        email: email,
+        password: password,
+        is_paciente: userType === "patient",
+        is_nutricionista: userType === "nutritionist",
+      };
+
+      if (userType === "patient") {
+        userData.paciente_data = {
+          nome: name,
+          idade: parseInt(age),
+          peso: parseFloat(weight),
+          altura: parseFloat(height),
+          genero: gender,
+          email: email,
+          senha: password,
+          endereco: address,
+          telefone: phone,
+          data_nascimento: formatDateToAPI(birthDate),
+        };
+      }
+
+      // Adicionar dados específicos de nutricionista se aplicável
+      if (userType === "nutritionist") {
+        userData.nutricionista_data = {
+          nome: name,
+          email: email,
+          senha: password,
+          endereco: address,
+          telefone: phone,
+          horarios_disponiveis: {}
+        };
+      }
+
+      const response = await registerUser(userData);
+      
+      Alert.alert(
+        "Sucesso", 
+        `Cadastro realizado com sucesso!\n Bem vindo(a) ${name}!`,
+        [
+          { 
+            text: "OK", 
+            onPress: () => {
+              if (userType === "patient") {
+                router.replace("/patient/dashboard");
+              } else {
+                router.replace("/nutritionist/dashboard");
+              }
+            }
+          }
+        ]
+      );
+    } catch (error) {
+      let errorMessage = (error as Error).message || "Falha ao cadastrar. Tente novamente.";
+      
+      if (errorMessage.includes("formato de data inválido")) {
+        errorMessage = "A data de nascimento deve estar no formato AAAA-MM-DD. Por favor, use o formato DD/MM/AAAA.";
+      }
+      
+      if (errorMessage.includes("já existe") || errorMessage.includes("already exists")) {
+        errorMessage = "Este nome de usuário já está em uso. O sistema gerará um nome único automaticamente.";
+      }
+      
+      Alert.alert("Erro", errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -53,7 +189,6 @@ export default function RegisterScreen(): React.JSX.Element {
             <Text style={styles.title}>Criar Conta</Text>
             <Text style={styles.subtitle}>Cadastre-se para começar</Text>
 
-
             <View style={styles.userTypeContainer}>
               <TouchableOpacity
                 style={[styles.userTypeButton, userType === "patient" && styles.userTypeButtonActive]}
@@ -70,6 +205,17 @@ export default function RegisterScreen(): React.JSX.Element {
                 <Ionicons name="medkit-outline" size={20} color={userType === "nutritionist" ? "#fff" : "#666"} />
                 <Text style={[styles.userTypeText, userType === "nutritionist" && styles.userTypeTextActive]}>Nutricionista</Text>
               </TouchableOpacity>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Ionicons name="person-outline" size={20} color="#999" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Nome completo"
+                placeholderTextColor={"#999"}
+                value={name}
+                onChangeText={setName}
+              />
             </View>
 
             <View style={styles.inputContainer}>
@@ -97,8 +243,102 @@ export default function RegisterScreen(): React.JSX.Element {
               />
             </View>
 
-            <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
-              <Text style={styles.registerButtonText}>Criar Conta</Text>
+            <View style={styles.inputContainer}>
+              <Ionicons name="call-outline" size={20} color="#999" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Telefone"
+                placeholderTextColor={"#999"}
+                value={phone}
+                onChangeText={setPhone}
+                keyboardType="phone-pad"
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Ionicons name="location-outline" size={20} color="#999" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Endereço"
+                placeholderTextColor={"#999"}
+                value={address}
+                onChangeText={setAddress}
+              />
+            </View>
+
+            {userType === "patient" && (
+              <>
+                <View style={styles.inputContainer}>
+                  <Ionicons name="calendar-outline" size={20} color="#999" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Data de Nascimento (DD/MM/AAAA)"
+                    placeholderTextColor={"#999"}
+                    value={displayBirthDate}
+                    onChangeText={handleBirthDateChange}
+                    keyboardType="numeric"
+                  />
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Ionicons name="fitness-outline" size={20} color="#999" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Idade"
+                    placeholderTextColor={"#999"}
+                    value={age}
+                    onChangeText={setAge}
+                    keyboardType="numeric"
+                  />
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Ionicons name="body-outline" size={20} color="#999" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Peso (kg)"
+                    placeholderTextColor={"#999"}
+                    value={weight}
+                    onChangeText={setWeight}
+                    keyboardType="decimal-pad"
+                  />
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Ionicons name="resize-outline" size={20} color="#999" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Altura (m)"
+                    placeholderTextColor={"#999"}
+                    value={height}
+                    onChangeText={setHeight}
+                    keyboardType="decimal-pad"
+                  />
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Ionicons name="people-outline" size={20} color="#999" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Gênero"
+                    placeholderTextColor={"#999"}
+                    value={gender}
+                    onChangeText={setGender}
+                  />
+                </View>
+              </>
+            )}
+
+            <TouchableOpacity 
+              style={styles.registerButton} 
+              onPress={handleRegister}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.registerButtonText}>Criar Conta</Text>
+              )}
             </TouchableOpacity>
 
             <View style={styles.loginContainer}>
@@ -206,4 +446,3 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 })
-
