@@ -20,7 +20,6 @@ import { Ionicons } from "@expo/vector-icons"
 import { 
   registerUser, 
   RegisterUserData,
-  formatUsername,
   formatDateToAPI,
 } from "../api"
 
@@ -57,7 +56,6 @@ export default function RegisterScreen(): React.JSX.Element {
   
     setDisplayBirthDate(formatted);
   
-    // Quando estiver completo (DD/MM/AAAA), atualiza o birthDate no formato da API
     if (formatted.length === 10) {
       setBirthDate(formatDateToAPI(formatted));
     } else {
@@ -97,11 +95,9 @@ export default function RegisterScreen(): React.JSX.Element {
 
     try {
       setLoading(true);
-      
-      const uniqueUsername = formatUsername(name);
-      
+            
       const userData: RegisterUserData = {
-        username: uniqueUsername,
+        username: email,
         email: email,
         password: password,
         is_paciente: userType === "patient",
@@ -123,7 +119,6 @@ export default function RegisterScreen(): React.JSX.Element {
         };
       }
 
-      // Adicionar dados específicos de nutricionista se aplicável
       if (userType === "nutritionist") {
         userData.nutricionista_data = {
           nome: name,

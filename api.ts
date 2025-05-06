@@ -1,5 +1,3 @@
-// api.ts
-
 export interface PacienteData {
   nome: string;
   idade: number;
@@ -32,6 +30,11 @@ export interface RegisterUserData {
   nutricionista_data?: NutricionistaData;
 }
 
+export interface LoginUserData {
+  username: string;
+  password: string;
+}
+
 export interface ApiResponse {
   id?: number;
   username?: string;
@@ -40,18 +43,6 @@ export interface ApiResponse {
 }
 
 const API_URL = "https://nutrinow.onrender.com";
-
-export const formatUsername = (name: string): string => {
-  const cleanName = name
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') 
-    .replace(/[^\w\s]/gi, '') 
-    .replace(/\s+/g, '-');
-
-  const uniqueId = (Date.now().toString(36) + Math.random().toString(36).substring(2, 6)).toLowerCase();
-  return `${cleanName}-${uniqueId}`;
-};
 
 export const formatDateToAPI = (date: string): string => {
   if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -91,6 +82,28 @@ export const registerUser = async (userData: RegisterUserData): Promise<ApiRespo
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.detail || 'Erro ao registrar usuário');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Erro na API:', error);
+    throw error;
+  }
+};
+
+export const loginUser = async (userData: LoginUserData) => {
+  try {
+    const response = await fetch(`${API_URL}/api/token/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData)
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Erro ao fazer login');
     }
     
     return await response.json();

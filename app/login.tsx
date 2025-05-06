@@ -12,10 +12,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
+  ActivityIndicator,
 } from "react-native"
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
+import { loginUser } from "../api"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
 type UserType = "patient" | "nutritionist"
 
@@ -23,13 +27,60 @@ export default function LoginScreen(): React.JSX.Element {
   const [email, setEmail] = useState<string>("")
   const [password, setPassword] = useState<string>("")
   const [userType, setUserType] = useState<UserType>("patient")
+  const [loading, setLoading] = useState<boolean>(false)
   const router = useRouter()
 
-  const handleLogin = (): void => {
-    if (userType === "patient") {
-      router.replace("/patient/dashboard")
-    } else {
-      router.replace("/nutritionist/dashboard")
+  const validateForm = (): string | null => {
+    if (!email) return "Email é obrigatório"
+    if (!password) return "Senha é obrigatória"
+    return null
+  }
+
+  const handleLogin = async (): Promise<void> => {
+    const validationError = validateForm()
+    if (validationError) {
+      Alert.alert("Erro", validationError)
+      return
+    }
+
+    try {
+      setLoading(true)
+
+      const loginData = {
+        username: email, 
+        password: password,
+      }
+
+      const response = await loginUser(loginData)
+      
+      if (response.access && response.refresh) {
+        await AsyncStorage.setItem("accessToken", response.access)
+        await AsyncStorage.setItem("refreshToken", response.refresh)
+        
+        await AsyncStorage.setItem("userType", userType)
+        
+        if (response.user) {
+          await AsyncStorage.setItem("userData", JSON.stringify(response.user))
+        }
+
+        if (userType === "patient") {
+          router.replace("/patient/dashboard")
+        } else {
+          router.replace("/nutritionist/dashboard")
+        }
+      } else {
+        throw new Error("Tokens de autenticação não recebidos")
+      }
+    } catch (error) {
+      let errorMessage = (error as Error).message || "Falha ao fazer login. Tente novamente."
+      
+      if (errorMessage.includes("credenciais inválidas") || errorMessage.includes("invalid credentials")) {
+        errorMessage = "Email ou senha incorretos. Por favor, tente novamente."
+      }
+      
+      Alert.alert("Erro de Login", errorMessage)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -97,8 +148,16 @@ export default function LoginScreen(): React.JSX.Element {
               />
             </View>
 
-            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-              <Text style={styles.loginButtonText}>Entrar</Text>
+            <TouchableOpacity 
+              style={styles.loginButton} 
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.loginButtonText}>Entrar</Text>
+              )}
             </TouchableOpacity>
 
             <View style={styles.registerContainer}>
@@ -205,4 +264,3 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 })
-
