@@ -59,10 +59,6 @@ export default function LoginScreen(): React.JSX.Element {
         
         await AsyncStorage.setItem("userType", userType)
         
-        if (response.user) {
-          await AsyncStorage.setItem("userData", JSON.stringify(response.user))
-        }
-
         if (userType === "patient") {
           router.replace("/patient/dashboard")
         } else {

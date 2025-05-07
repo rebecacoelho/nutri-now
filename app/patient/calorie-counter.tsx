@@ -187,7 +187,6 @@ export default function CalorieCounter(): React.JSX.Element {
     try {
       const foodsToSave = JSON.stringify(foodsList);
       await AsyncStorage.setItem('consumedFoods', foodsToSave);
-      console.log('Histórico de refeições salvo com sucesso');
     } catch (error) {
       console.error('Erro ao salvar histórico de refeições', error);
       Alert.alert("Erro", "Não foi possível salvar seu histórico de refeições.");

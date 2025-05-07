@@ -16,6 +16,7 @@ import {
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import NutritionistTabBar from "../components/nutritionist-tab-bar"
+import { registerUser } from "../../api"
 
 interface FormData {
   firstName: string
@@ -32,7 +33,8 @@ interface FormData {
   allergies: string
   dietaryRestrictions: string
   fitnessGoal: string
-  sendWelcomeEmail: boolean
+  address: string
+  age: string
 }
 
 export default function AddPatient(): React.JSX.Element {
@@ -52,7 +54,8 @@ export default function AddPatient(): React.JSX.Element {
     allergies: "",
     dietaryRestrictions: "",
     fitnessGoal: "",
-    sendWelcomeEmail: true,
+    address: "",
+    age: "",
   })
 
   // Atualizar campo do formulário
@@ -71,7 +74,7 @@ export default function AddPatient(): React.JSX.Element {
     updateField("gender", gender)
   }
 
-  const handleSubmit = (): void => {
+  const handleSubmit = async (): Promise<void> => {
     if (!formData.firstName || !formData.lastName || !formData.documentId || !formData.email) {
       Alert.alert("Informações Faltando", "Por favor, preencha todos os campos obrigatórios.")
       return
@@ -83,17 +86,45 @@ export default function AddPatient(): React.JSX.Element {
       return
     }
 
-    // enviar esses dados para o backend
-    Alert.alert(
-      "Paciente Adicionado",
-      `${formData.firstName} ${formData.lastName} foi adicionado à sua lista de pacientes.`,
-      [
-        {
-          text: "OK",
-          onPress: () => router.push("/nutritionist/patients"),
+    try {
+      const userData = {
+        email: formData.email,
+        is_nutricionista: false,
+        is_paciente: true,
+        paciente_data: {
+          altura: Number(formData.height),
+          data_nascimento: formData.dateOfBirth,
+          email: formData.email,
+          endereco: formData.address,
+          genero: formData.gender === "male" ? "Masculino" : formData.gender === "female" ? "Feminino" : "Outro",
+          idade: Number(formData.age),
+          nome: `${formData.firstName} ${formData.lastName}`,
+          peso: Number(formData.weight),
+          senha: "nutrinow",
+          telefone: formData.phone
         },
-      ]
-    )
+        password: "nutrinow",
+        username: formData.email.split("@")[0]
+      }
+
+      await registerUser(userData)
+      
+      Alert.alert(
+        "Paciente Adicionado",
+        `${formData.firstName} ${formData.lastName} foi adicionado à sua lista de pacientes. Uma senha padrão 'nutrinow' foi definida. Por questões de segurança, o paciente deve alterar esta senha no primeiro acesso.`,
+        [
+          {
+            text: "OK",
+            onPress: () => router.push("/nutritionist/patients"),
+          },
+        ]
+      )
+    } catch (error) {
+      Alert.alert(
+        "Erro",
+        "Ocorreu um erro ao adicionar o paciente. Por favor, tente novamente."
+      )
+    }
   }
 
   return (
@@ -137,57 +168,6 @@ export default function AddPatient(): React.JSX.Element {
               />
             </View>
           </View>
-
-          <Text style={styles.inputLabel}>
-            Tipo de Documento <Text style={styles.requiredStar}>*</Text>
-          </Text>
-          <View style={styles.optionsRow}>
-            <TouchableOpacity
-              style={[styles.optionButton, formData.documentType === "id" && styles.optionButtonSelected]}
-              onPress={() => handleDocumentTypeSelect("id")}
-            >
-              <Text
-                style={[styles.optionButtonText, formData.documentType === "id" && styles.optionButtonTextSelected]}
-              >
-                RG
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.optionButton, formData.documentType === "passport" && styles.optionButtonSelected]}
-              onPress={() => handleDocumentTypeSelect("passport")}
-            >
-              <Text
-                style={[
-                  styles.optionButtonText,
-                  formData.documentType === "passport" && styles.optionButtonTextSelected,
-                ]}
-              >
-                Passaporte
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.optionButton, formData.documentType === "other" && styles.optionButtonSelected]}
-              onPress={() => handleDocumentTypeSelect("other")}
-            >
-              <Text
-                style={[styles.optionButtonText, formData.documentType === "other" && styles.optionButtonTextSelected]}
-              >
-                Outro
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <Text style={styles.inputLabel}>
-            Número do Documento <Text style={styles.requiredStar}>*</Text>
-          </Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Digite o número do documento"
-            value={formData.documentId}
-            onChangeText={(value) => updateField("documentId", value)}
-          />
 
           <Text style={styles.inputLabel}>
             E-mail <Text style={styles.requiredStar}>*</Text>
@@ -320,17 +300,23 @@ export default function AddPatient(): React.JSX.Element {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Opções Adicionais</Text>
+          <Text style={styles.sectionTitle}>Endereço</Text>
+          <Text style={styles.inputLabel}>Endereço Completo</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Digite o endereço completo"
+            value={formData.address}
+            onChangeText={(value) => updateField("address", value)}
+          />
 
-          <View style={styles.optionItem}>
-            <Text style={styles.optionLabel}>Enviar e-mail de boas-vindas</Text>
-            <Switch
-              trackColor={{ false: "#ddd", true: "#a5d6a7" }}
-              thumbColor={"#4CAF50"}
-              value={formData.sendWelcomeEmail}
-              onValueChange={(value) => updateField("sendWelcomeEmail", value)}
-            />
-          </View>
+          <Text style={styles.inputLabel}>Idade</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Digite a idade"
+            keyboardType="numeric"
+            value={formData.age}
+            onChangeText={(value) => updateField("age", value)}
+          />
         </View>
 
         <View style={styles.buttonContainer}>

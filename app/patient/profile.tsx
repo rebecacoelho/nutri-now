@@ -17,7 +17,7 @@ import {
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
-import PatientTabBar from "../components/patient-tab-bar"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
 interface Appointment {
   id: string
@@ -68,7 +68,7 @@ export default function PatientProfile(): React.JSX.Element {
     },
   ]
 
-  const handleLogout = (): void => {
+  const handleLogout = async () => {
     Alert.alert(
       "Sair",
       "Tem certeza de que deseja sair?",
@@ -84,6 +84,10 @@ export default function PatientProfile(): React.JSX.Element {
       ],
       { cancelable: true },
     )
+
+    await AsyncStorage.removeItem("accessToken")
+    await AsyncStorage.removeItem("refreshToken")
+    await AsyncStorage.removeItem("userType")
   }
 
   const handleSaveProfile = (): void => {
@@ -175,6 +179,22 @@ export default function PatientProfile(): React.JSX.Element {
               </View>
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>Data de Nascimento</Text>
+                <TextInput
+                  style={styles.formInput}
+                  value={profileData.dateOfBirth}
+                  onChangeText={(text) => setProfileData({ ...profileData, dateOfBirth: text })}
+                />
+              </View>
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Gênero</Text>
+                <TextInput
+                  style={styles.formInput}
+                  value={profileData.dateOfBirth}
+                  onChangeText={(text) => setProfileData({ ...profileData, dateOfBirth: text })}
+                />
+              </View>
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Idade</Text>
                 <TextInput
                   style={styles.formInput}
                   value={profileData.dateOfBirth}

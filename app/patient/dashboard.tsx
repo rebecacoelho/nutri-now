@@ -59,7 +59,7 @@ export default function PatientDashboard(): React.JSX.Element {
           <View style={styles.header}>
             <View>
               <Text style={styles.greeting}>Olá, Sarah</Text>
-              <Text style={styles.date}>Segunda-feira, 13 de março</Text>
+              <Text style={styles.date}>{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</Text>
             </View>
             <View style={styles.statsContainer}>
               <View style={styles.statItem}>

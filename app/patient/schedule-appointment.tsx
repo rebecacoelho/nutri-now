@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   SafeAreaView,
   StyleSheet,
@@ -12,18 +12,19 @@ import {
   TextInput,
   Image,
   Alert,
+  ActivityIndicator,
 } from "react-native"
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
 import PatientTabBar from "../components/patient-tab-bar"
+import { getAllNutritionists, makeAppointment } from "../../api"
 
 interface Nutritionist {
-  id: string
-  name: string
-  specialty: string
-  image: string
-  availability: string[]
+  id: number;
+  nome: string;
+  email: string;
+  horarios_disponiveis: Record<string, any>;
 }
 
 interface TimeSlot {
@@ -37,69 +38,111 @@ export default function ScheduleAppointment(): React.JSX.Element {
   const [selectedDate, setSelectedDate] = useState<string>("")
   const [selectedNutritionist, setSelectedNutritionist] = useState<Nutritionist | null>(null)
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>("")
-  const [appointmentReason, setAppointmentReason] = useState<string>("")
+  const [nutritionists, setNutritionists] = useState<Nutritionist[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+  const [dates, setDates] = useState<string[]>([])
+  const [formattedDates, setFormattedDates] = useState<{[key: string]: string}>({})
 
-  const nutritionists: Nutritionist[] = [
-    {
-      id: "1",
-      name: "Dr. Emily Johnson",
-      specialty: "Gerenciamento de Peso",
-      image: "/placeholder.svg?height=60&width=60",
-      availability: ["Segunda-feira", "Quarta-feira", "Sexta-feira"],
-    },
-    {
-      id: "2",
-      name: "Dr. Michael Smith",
-      specialty: "Nutrição Esportiva",
-      image: "/placeholder.svg?height=60&width=60",
-      availability: ["Terça-feira", "Quinta-feira", "Sábado"],
-    },
-    {
-      id: "3",
-      name: "Dr. Sarah Williams",
-      specialty: "Gerenciamento de Diabetes",
-      image: "/placeholder.svg?height=60&width=60",
-      availability: ["Segunda-feira", "Terça-feira", "Quinta-feira"],
-    },
-  ]
-
-  const dates = [
-    "Seg, Mar 15",
-    "Ter, Mar 16",
-    "Qua, Mar 17",
-    "Qui, Mar 18",
-    "Sex, Mar 19",
-    "Sáb, Mar 20",
-    "Dom, Mar 21",
-];
   const timeSlots: TimeSlot[] = [
     { id: "1", time: "09:00", available: true },
     { id: "2", time: "10:00", available: true },
-    { id: "3", time: "11:00", available: false },
+    { id: "3", time: "11:00", available: true },
     { id: "4", time: "13:00", available: true },
     { id: "5", time: "14:00", available: true },
-    { id: "6", time: "15:00", available: false },
+    { id: "6", time: "15:00", available: true },
     { id: "7", time: "16:00", available: true },
   ];
 
-  const handleScheduleAppointment = (): void => {
+  useEffect(() => {
+    const generateWeekdayDates = () => {
+      const datesList: string[] = [];
+      const formattedDateMap: { [key: string]: string } = {};
+      const today = new Date();
+      let count = 0;
+      let daysAdded = 0;
+      
+      while (daysAdded < 10) {
+        const date = new Date();
+        date.setDate(today.getDate() + count);
+        
+        const dayOfWeek = date.getDay();
+        if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+          const formattedDate = formatDate(date);
+          datesList.push(formattedDate);
+          
+          const apiDateFormat = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+          formattedDateMap[formattedDate] = apiDateFormat;
+          
+          daysAdded++;
+        }
+        count++;
+      }
+      
+      setDates(datesList);
+      setFormattedDates(formattedDateMap);
+    };
+    
+    generateWeekdayDates();
+  }, []);
+
+  const formatDate = (date: Date): string => {
+    const days = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+    const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+    
+    return `${days[date.getDay()]}, ${months[date.getMonth()]} ${String(date.getDate()).padStart(2, '0')}`;
+  };
+
+  useEffect(() => {
+    const fetchNutritionists = async () => {
+      try {
+        setLoading(true);
+        const data = await getAllNutritionists();
+        setNutritionists(data);
+      } catch (error) {
+        console.error("Erro ao buscar nutricionistas:", error);
+        Alert.alert("Erro", "Não foi possível carregar a lista de nutricionistas.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchNutritionists();
+  }, []);
+
+  const handleScheduleAppointment = async (): Promise<void> => {
     if (!selectedDate || !selectedNutritionist || !selectedTimeSlot) {
       Alert.alert("Informações Faltando", "Por favor, selecione uma data, um nutricionista e um horário.");
       return;
     }
 
-    // enviar dados para o backend
-    Alert.alert(
-      "Consulta Agendada",
-      `Sua consulta com ${selectedNutritionist.name} em ${selectedDate} às ${selectedTimeSlot} foi agendada.`,
-      [
-        {
-          text: "OK",
-          onPress: () => router.push("/patient/dashboard"),
-        },
-      ],
-    );
-};
+    try {
+      const apiDate = formattedDates[selectedDate];
+      if (!apiDate) {
+        throw new Error('Data inválida');
+      }
+      
+      const appointmentDateTime = `${apiDate}T${selectedTimeSlot}:00-03:00`;
+      
+      await makeAppointment({
+        nutricionista: String(selectedNutritionist.id),
+        data_consulta: appointmentDateTime
+      });
+      
+      Alert.alert(
+        "Consulta Agendada",
+        `Sua consulta com ${selectedNutritionist.nome} em ${selectedDate} às ${selectedTimeSlot} foi agendada com sucesso.`,
+        [
+          {
+            text: "OK",
+            onPress: () => router.push("/patient/dashboard"),
+          },
+        ],
+      );
+    } catch (error) {
+      console.error("Erro ao agendar consulta:", error);
+      Alert.alert("Erro", "Não foi possível agendar a consulta. Por favor, tente novamente.");
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -132,30 +175,33 @@ export default function ScheduleAppointment(): React.JSX.Element {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Selecione o nutricionista</Text>
-          {nutritionists.map((nutritionist) => (
-            <TouchableOpacity
-              key={nutritionist.id}
-              style={[
-                styles.nutritionistCard,
-                selectedNutritionist?.id === nutritionist.id && styles.selectedNutritionistCard,
-              ]}
-              onPress={() => setSelectedNutritionist(nutritionist)}
-            >
-              <Image source={{ uri: nutritionist.image }} style={styles.nutritionistImage} />
-              <View style={styles.nutritionistInfo}>
-                <Text style={styles.nutritionistName}>{nutritionist.name}</Text>
-                <Text style={styles.nutritionistSpecialty}>{nutritionist.specialty}</Text>
-                <View style={styles.availabilityContainer}>
-                  <Text style={styles.availabilityLabel}>Disponível: </Text>
-                  <Text style={styles.availabilityDays}>{nutritionist.availability.join(", ")}</Text>
+          <Text style={styles.sectionTitle}>Selecione o Nutricionista</Text>
+          {loading ? (
+            <ActivityIndicator size="large" color="#4CAF50" />
+          ) : (
+            nutritionists.map((nutritionist) => (
+              <TouchableOpacity
+                key={nutritionist.id}
+                style={[
+                  styles.nutritionistCard,
+                  selectedNutritionist?.id === nutritionist.id && styles.selectedNutritionistCard,
+                ]}
+                onPress={() => setSelectedNutritionist(nutritionist)}
+              >
+                <Image 
+                  source={{ uri: "https://ui-avatars.com/api/?name=" + encodeURIComponent(nutritionist.nome) }} 
+                  style={styles.nutritionistImage} 
+                />
+                <View style={styles.nutritionistInfo}>
+                  <Text style={styles.nutritionistName}>{nutritionist.nome}</Text>
+                  <Text style={styles.nutritionistEmail}>{nutritionist.email}</Text>
                 </View>
-              </View>
-              {selectedNutritionist?.id === nutritionist.id && (
-                <Ionicons name="checkmark-circle" size={24} color="#4CAF50" style={styles.selectedIcon} />
-              )}
-            </TouchableOpacity>
-          ))}
+                {selectedNutritionist?.id === nutritionist.id && (
+                  <Ionicons name="checkmark-circle" size={24} color="#4CAF50" style={styles.selectedIcon} />
+                )}
+              </TouchableOpacity>
+            ))
+          )}
         </View>
 
         <View style={styles.section}>
@@ -187,18 +233,6 @@ export default function ScheduleAppointment(): React.JSX.Element {
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Motivo da Consulta</Text>
-          <TextInput
-            style={styles.reasonInput}
-            placeholder="Descreva brevemente o motivo da sua consulta"
-            value={appointmentReason}
-            onChangeText={setAppointmentReason}
-            multiline
-            numberOfLines={3}
-          />
-        </View>
-
         <View style={styles.summarySection}>
           <Text style={styles.summarySectionTitle}>Resumo da Consulta</Text>
           <View style={styles.summaryItem}>
@@ -206,8 +240,8 @@ export default function ScheduleAppointment(): React.JSX.Element {
             <Text style={styles.summaryValue}>{selectedDate || "Não selecionado"}</Text>
           </View>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>nutricionista:</Text>
-            <Text style={styles.summaryValue}>{selectedNutritionist?.name || "Não selecionado"}</Text>
+            <Text style={styles.summaryLabel}>Nutricionista:</Text>
+            <Text style={styles.summaryValue}>{selectedNutritionist?.nome || "Não selecionado"}</Text>
           </View>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Horário:</Text>
@@ -305,24 +339,10 @@ const styles = StyleSheet.create({
     color: "#333",
     marginBottom: 4,
   },
-  nutritionistSpecialty: {
+  nutritionistEmail: {
     fontSize: 14,
     color: "#666",
     marginBottom: 6,
-  },
-  availabilityContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-  },
-  availabilityLabel: {
-    fontSize: 12,
-    color: "#888",
-  },
-  availabilityDays: {
-    fontSize: 12,
-    color: "#4CAF50",
-    fontWeight: "500",
   },
   selectedIcon: {
     marginLeft: 10,
@@ -423,26 +443,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
-  tabBar: {
-    flexDirection: "row",
-    backgroundColor: "#fff",
-    borderTopWidth: 1,
-    borderTopColor: "#eee",
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingVertical: 10,
-  },
-  tabItem: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  tabLabel: {
-    fontSize: 12,
-    color: "#999",
-    marginTop: 5,
-  },
 })
-

@@ -1,3 +1,5 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 export interface PacienteData {
   nome: string;
   idade: number;
@@ -38,8 +40,20 @@ export interface LoginUserData {
 export interface ApiResponse {
   id?: number;
   username?: string;
-  message?: string;
+  mensagem?: string;
   [key: string]: any;
+}
+
+export interface AppointmentData {
+  nutricionista: string | number;
+  data_consulta: string;
+}
+
+export interface AppointmentResponse {
+  data_consulta: string;
+  nutricionista: string | number;
+  paciente: number;
+  realizada: boolean;
 }
 
 const API_URL = "https://nutrinow.onrender.com";
@@ -104,6 +118,56 @@ export const loginUser = async (userData: LoginUserData) => {
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.detail || 'Erro ao fazer login');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Erro na API:', error);
+    throw error;
+  }
+};
+
+export const getAllNutritionists = async () => {
+  try {
+    const token = await AsyncStorage.getItem("accessToken");
+    const response = await fetch(`${API_URL}/listar_nutricionistas/`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Erro ao buscar nutricionistas');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Erro na API:', error);
+    throw error;
+  }
+};
+
+export const makeAppointment = async (appointmentData: AppointmentData): Promise<AppointmentResponse> => {
+  try {
+    const token = await AsyncStorage.getItem("accessToken");
+    const response = await fetch(`${API_URL}/criar_consulta/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        nutricionista: String(appointmentData.nutricionista),
+        data_consulta: appointmentData.data_consulta
+      })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Erro ao criar consulta');
     }
     
     return await response.json();

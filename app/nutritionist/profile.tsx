@@ -17,7 +17,7 @@ import {
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
-import NutritionistTabBar from "../components/nutritionist-tab-bar"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
 interface Appointment {
   id: string
@@ -34,11 +34,6 @@ export default function NutritionistProfile(): React.JSX.Element {
     name: "Dra. Emily Johnson",
     email: "dra.johnson@nutricare.com",
     phone: "+1 (555) 987-6543",
-    specialization: "Controle de Peso, Nutrição Esportiva",
-    licenseNumber: "NUT-12345",
-    education: "Ph.D. em Ciências da Nutrição, Universidade da Califórnia",
-    experience: "Mais de 10 anos",
-    bio: "Especializada em ajudar pacientes a alcançar seus objetivos de saúde por meio de planos de nutrição personalizados e modificações no estilo de vida.",
   })
 
   // Configurações de notificações
@@ -74,7 +69,7 @@ export default function NutritionistProfile(): React.JSX.Element {
     },
   ]
 
-  const handleLogout = (): void => {
+  const handleLogout = async () => {
     Alert.alert(
       "Sair",
       "Tem certeza de que deseja sair?",
@@ -90,10 +85,14 @@ export default function NutritionistProfile(): React.JSX.Element {
       ],
       { cancelable: true },
     )
+
+    await AsyncStorage.removeItem("accessToken")
+    await AsyncStorage.removeItem("refreshToken")
+    await AsyncStorage.removeItem("userType")
+    router.replace("/")
   }
 
   const handleSaveProfile = (): void => {
-    // salvar os dados do perfil em um backend
     Alert.alert("Sucesso", "Perfil atualizado com sucesso")
     setIsEditing(false)
   }
@@ -133,7 +132,6 @@ export default function NutritionistProfile(): React.JSX.Element {
             )}
           </View>
           <Text style={styles.profileName}>{profileData.name}</Text>
-          <Text style={styles.profileSpecialization}>{profileData.specialization}</Text>
           <Text style={styles.profileEmail}>{profileData.email}</Text>
 
           {!isEditing ? (
@@ -179,48 +177,6 @@ export default function NutritionistProfile(): React.JSX.Element {
                   keyboardType="phone-pad"
                 />
               </View>
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Especialização</Text>
-                <TextInput
-                  style={styles.formInput}
-                  value={profileData.specialization}
-                  onChangeText={(text) => setProfileData({ ...profileData, specialization: text })}
-                />
-              </View>
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Número de Registro</Text>
-                <TextInput
-                  style={styles.formInput}
-                  value={profileData.licenseNumber}
-                  onChangeText={(text) => setProfileData({ ...profileData, licenseNumber: text })}
-                />
-              </View>
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Formação</Text>
-                <TextInput
-                  style={styles.formInput}
-                  value={profileData.education}
-                  onChangeText={(text) => setProfileData({ ...profileData, education: text })}
-                />
-              </View>
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Experiência</Text>
-                <TextInput
-                  style={styles.formInput}
-                  value={profileData.experience}
-                  onChangeText={(text) => setProfileData({ ...profileData, experience: text })}
-                />
-              </View>
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Biografia</Text>
-                <TextInput
-                  style={[styles.formInput, styles.textArea]}
-                  value={profileData.bio}
-                  onChangeText={(text) => setProfileData({ ...profileData, bio: text })}
-                  multiline
-                  numberOfLines={4}
-                />
-              </View>
             </View>
           ) : (
             <View style={styles.infoList}>
@@ -229,34 +185,6 @@ export default function NutritionistProfile(): React.JSX.Element {
                 <View style={styles.infoContent}>
                   <Text style={styles.infoLabel}>Telefone</Text>
                   <Text style={styles.infoValue}>{profileData.phone}</Text>
-                </View>
-              </View>
-              <View style={styles.infoItem}>
-                <Ionicons name="medical-outline" size={20} color="#4CAF50" style={styles.infoIcon} />
-                <View style={styles.infoContent}>
-                  <Text style={styles.infoLabel}>Número de Registro</Text>
-                  <Text style={styles.infoValue}>{profileData.licenseNumber}</Text>
-                </View>
-              </View>
-              <View style={styles.infoItem}>
-                <Ionicons name="school-outline" size={20} color="#4CAF50" style={styles.infoIcon} />
-                <View style={styles.infoContent}>
-                  <Text style={styles.infoLabel}>Formação</Text>
-                  <Text style={styles.infoValue}>{profileData.education}</Text>
-                </View>
-              </View>
-              <View style={styles.infoItem}>
-                <Ionicons name="time-outline" size={20} color="#4CAF50" style={styles.infoIcon} />
-                <View style={styles.infoContent}>
-                  <Text style={styles.infoLabel}>Experiência</Text>
-                  <Text style={styles.infoValue}>{profileData.experience}</Text>
-                </View>
-              </View>
-              <View style={styles.infoItem}>
-                <Ionicons name="person-outline" size={20} color="#4CAF50" style={styles.infoIcon} />
-                <View style={styles.infoContent}>
-                  <Text style={styles.infoLabel}>Biografia</Text>
-                  <Text style={styles.infoValue}>{profileData.bio}</Text>
                 </View>
               </View>
             </View>

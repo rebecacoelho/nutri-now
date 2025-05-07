@@ -22,6 +22,7 @@ import {
   RegisterUserData,
   formatDateToAPI,
 } from "../api"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
 type UserType = "patient" | "nutritionist"
 
@@ -41,6 +42,7 @@ export default function RegisterScreen(): React.JSX.Element {
   const [gender, setGender] = useState<string>("")
   const [birthDate, setBirthDate] = useState<string>("")
   const [displayBirthDate, setDisplayBirthDate] = useState<string>("")
+  const genderOptions = ["Feminino", "Masculino", "Outro"]
 
   const handleBirthDateChange = (text: string): void => {
     const cleaned = text.replace(/\D/g, "");
@@ -77,7 +79,6 @@ export default function RegisterScreen(): React.JSX.Element {
       if (!gender) return "Gênero é obrigatório";
       if (!birthDate) return "Data de nascimento é obrigatória";
       
-      // Validar formato da data
       if (birthDate && !/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
         return "Data de nascimento deve estar no formato AAAA-MM-DD";
       }
@@ -95,10 +96,12 @@ export default function RegisterScreen(): React.JSX.Element {
 
     try {
       setLoading(true);
+
+      await AsyncStorage.setItem("userType", userType);
             
       const userData: RegisterUserData = {
         username: email,
-        email: email,
+        email: name,
         password: password,
         is_paciente: userType === "patient",
         is_nutricionista: userType === "nutritionist",
@@ -131,6 +134,15 @@ export default function RegisterScreen(): React.JSX.Element {
       }
 
       const response = await registerUser(userData);
+
+      if (response.mensagem) {
+        const match = response.mensagem.match(/id:(\d+)/);
+        if (match && match[1]) {
+          const userId = match[1];
+          await AsyncStorage.setItem(`user@${userId}`, JSON.stringify(userData));
+          await AsyncStorage.setItem("userId", userId);
+        }
+      }
       
       Alert.alert(
         "Sucesso", 
@@ -139,11 +151,7 @@ export default function RegisterScreen(): React.JSX.Element {
           { 
             text: "OK", 
             onPress: () => {
-              if (userType === "patient") {
-                router.replace("/patient/dashboard");
-              } else {
-                router.replace("/nutritionist/dashboard");
-              }
+              router.replace('/login')
             }
           }
         ]
@@ -311,15 +319,29 @@ export default function RegisterScreen(): React.JSX.Element {
                   />
                 </View>
 
-                <View style={styles.inputContainer}>
-                  <Ionicons name="people-outline" size={20} color="#999" style={styles.inputIcon} />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Gênero"
-                    placeholderTextColor={"#999"}
-                    value={gender}
-                    onChangeText={setGender}
-                  />
+                <View style={styles.genderContainer}>
+                  <Text style={styles.genderLabel}>Gênero</Text>
+                  <View style={styles.genderOptions}>
+                    {genderOptions.map((option) => (
+                      <TouchableOpacity
+                        key={option}
+                        style={[
+                          styles.genderOption,
+                          gender === option && styles.genderOptionSelected
+                        ]}
+                        onPress={() => setGender(option)}
+                      >
+                        <Text
+                          style={[
+                            styles.genderOptionText,
+                            gender === option && styles.genderOptionTextSelected
+                          ]}
+                        >
+                          {option}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
                 </View>
               </>
             )}
@@ -440,4 +462,44 @@ const styles = StyleSheet.create({
     color: "#4CAF50",
     fontWeight: "600",
   },
+  genderContainer: {
+    marginBottom: 16,
+  },
+  
+  genderLabel: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 8,
+  },
+  
+  genderOptions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  
+  genderOption: {
+    flex: 1,
+    paddingVertical: 10,
+    marginHorizontal: 5,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  
+  genderOptionSelected: {
+    backgroundColor: "#4CAF50", 
+    borderColor: "#4CAF50",
+  },
+  
+  genderOptionText: {
+    color: "#333",
+    fontWeight: "500",
+  },
+  
+  genderOptionTextSelected: {
+    color: "#fff",
+  },
+  
 })
