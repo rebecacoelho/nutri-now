@@ -139,7 +139,10 @@ export default function RegisterScreen(): React.JSX.Element {
         const match = response.mensagem.match(/id:(\d+)/);
         if (match && match[1]) {
           const userId = match[1];
-          await AsyncStorage.setItem(`user@${userId}`, JSON.stringify(userData));
+
+          const { password, ...userDataWithoutPassword } = userData;
+
+          await AsyncStorage.setItem(`user@${userId}`, JSON.stringify(userDataWithoutPassword));
           await AsyncStorage.setItem("userId", userId);
         }
       }

@@ -7,6 +7,7 @@ import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
 import PatientTabBar from "../components/patient-tab-bar"
 import PatientLayout from "../components/patient-layout"
+import { usePatient } from "../contexts/PatientContext"
 
 interface MealCardProps {
   title: string
@@ -15,6 +16,20 @@ interface MealCardProps {
   calories: string
   completed: boolean
 }
+
+type PatientData = {
+  id: number;
+  nome: string;
+  email: string;
+  idade: number;
+  peso: number;
+  altura: number;
+  endereco: string;
+  genero: string;
+  telefone: string;
+  data_nascimento: string;
+  diario_alimentar: Record<string, unknown>;
+};
 
 const MealCard: React.FC<MealCardProps> = ({ title, time, image, calories, completed }) => {
   return (
@@ -36,7 +51,8 @@ const MealCard: React.FC<MealCardProps> = ({ title, time, image, calories, compl
 
 export default function PatientDashboard(): React.JSX.Element {
   const router = useRouter()
-
+  const { patientData, appointments } = usePatient();
+ 
   return (
     <PatientLayout>
       <SafeAreaView style={styles.container}>
@@ -58,7 +74,7 @@ export default function PatientDashboard(): React.JSX.Element {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.greeting}>Olá, Sarah</Text>
+              <Text style={styles.greeting}>Olá, {patientData?.nome}</Text>
               <Text style={styles.date}>{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</Text>
             </View>
             <View style={styles.statsContainer}>

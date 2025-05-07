@@ -6,10 +6,18 @@ import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
 import NutritionistTabBar from "../components/nutritionist-tab-bar"
+import { useNutritionist } from "../contexts/NutritionistContext"
 
 export default function NutritionistDashboard(): React.JSX.Element {
   const router = useRouter()
+    const { nutritionistData, appointments } = useNutritionist();
 
+    const today = new Date();
+    const todayAppointments = appointments.filter(appointment => {
+      const appointmentDate = new Date(appointment.data_consulta);
+      return appointmentDate.toDateString() === today.toDateString();
+    });
+  
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
@@ -30,8 +38,8 @@ export default function NutritionistDashboard(): React.JSX.Element {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <View>
-            <Text style={styles.greeting}>Olá, Dr. Johnson</Text>
-            <Text style={styles.date}>Segunda-feira, 13 de Março</Text>
+            <Text style={styles.greeting}>Olá, {nutritionistData?.nome ? nutritionistData.nome.charAt(0).toUpperCase() + nutritionistData.nome.slice(1) : ""}</Text>
+            <Text style={styles.date}>{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</Text>
           </View>
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
@@ -40,52 +48,29 @@ export default function NutritionistDashboard(): React.JSX.Element {
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>5</Text>
-              <Text style={styles.statLabel}>Consultas</Text>
+              <Text style={styles.statValue}>{appointments.length}</Text>
+              <Text style={styles.statLabel}>Consulta(s)</Text>
             </View>
             <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>8</Text>
-              <Text style={styles.statLabel}>Mensagens</Text>
-            </View>
           </View>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Consultas de Hoje</Text>
-          <View style={styles.appointmentCard}>
-            <View style={styles.appointmentTime}>
-              <Text style={styles.appointmentTimeText}>10:30 AM</Text>
-            </View>
-            <View style={styles.appointmentDetails}>
-              <View style={styles.appointmentPatient}>
-                <Image source={{ uri: "/placeholder.svg?height=50&width=50" }} style={styles.patientImage} />
-                <View>
-                  <Text style={styles.patientName}>Sarah Johnson</Text>
-                  <Text style={styles.appointmentType}>Controle de Peso</Text>
+            {todayAppointments.map((appointment) => (
+              <View style={styles.appointmentCard} key={appointment.id}>
+                <View style={styles.appointmentTime}>
+                  <Text style={styles.appointmentTimeText}>{new Date(appointment.data_consulta).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</Text>
                 </View>
+                <View style={styles.appointmentDetails}>
+                  <View style={styles.appointmentPatient}>
+                    <View>
+                      <Text style={styles.patientName}>{appointment.paciente_nome}</Text>
+                    </View>
+                  </View>
               </View>
             </View>
-          </View>
-
-          <View style={styles.appointmentCard}>
-            <View style={styles.appointmentTime}>
-              <Text style={styles.appointmentTimeText}>2:00 PM</Text>
-            </View>
-            <View style={styles.appointmentDetails}>
-              <View style={styles.appointmentPatient}>
-                <Image source={{ uri: "/placeholder.svg?height=50&width=50" }} style={styles.patientImage} />
-                <View>
-                  <Text style={styles.patientName}>Michael Brown</Text>
-                  <Text style={styles.appointmentType}>Controle de Diabetes</Text>
-                </View>
-              </View>
-            </View>
-          </View>
-
-          <TouchableOpacity style={styles.viewAllButton}>
-            <Text style={styles.viewAllButtonText}>Ver Todas as Consultas</Text>
-          </TouchableOpacity>
+          ))}
         </View>
 
         <View style={styles.section}>
@@ -225,7 +210,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 15,
   },
   section: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
   sectionTitle: {
     fontSize: 18,
@@ -265,13 +251,7 @@ const styles = StyleSheet.create({
   appointmentPatient: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
-  },
-  patientImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10,
+    marginVertical: 10,
   },
   patientName: {
     fontSize: 16,

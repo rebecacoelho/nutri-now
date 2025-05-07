@@ -18,7 +18,7 @@ import {
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
-import { loginUser } from "../api"
+import { getAppointments, getNutritionistData, getPatientData, loginUser } from "../api"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 
 type UserType = "patient" | "nutritionist"
@@ -57,11 +57,31 @@ export default function LoginScreen(): React.JSX.Element {
         await AsyncStorage.setItem("accessToken", response.access)
         await AsyncStorage.setItem("refreshToken", response.refresh)
         
-        await AsyncStorage.setItem("userType", userType)
+        if (response.is_paciente) {
+          await AsyncStorage.setItem("@paciente/userId", String(response.paciente_id));
+        }
+        
+        if (response.is_nutricionista) {
+          await AsyncStorage.setItem("@nutricionista/userId", String(response.nutricionista_id));
+        }
         
         if (userType === "patient") {
+          const patientData = await getPatientData()
+          await AsyncStorage.setItem("@paciente/data", JSON.stringify(patientData))
+
+          const appointments = await getAppointments()
+          await AsyncStorage.setItem("@paciente/appointments", JSON.stringify(appointments))
+
           router.replace("/patient/dashboard")
-        } else {
+        }
+        
+        if (userType === "nutritionist") {
+          const nutritionistData = await getNutritionistData()
+          await AsyncStorage.setItem("@nutricionista/data", JSON.stringify(nutritionistData))
+
+          const appointments = await getAppointments()
+          await AsyncStorage.setItem("@nutricionista/appointments", JSON.stringify(appointments))
+
           router.replace("/nutritionist/dashboard")
         }
       } else {

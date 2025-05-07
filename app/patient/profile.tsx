@@ -87,7 +87,11 @@ export default function PatientProfile(): React.JSX.Element {
 
     await AsyncStorage.removeItem("accessToken")
     await AsyncStorage.removeItem("refreshToken")
-    await AsyncStorage.removeItem("userType")
+    await AsyncStorage.removeItem("@paciente/data")
+    await AsyncStorage.removeItem("@nutricionista/data")
+    await AsyncStorage.removeItem("@paciente/userId")
+    await AsyncStorage.removeItem("@nutricionista/userId")
+    router.replace("/")
   }
 
   const handleSaveProfile = (): void => {

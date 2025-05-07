@@ -56,6 +56,14 @@ export interface AppointmentResponse {
   realizada: boolean;
 }
 
+export interface AppointmentsResponse {
+  id: number;
+  data_consulta: string; 
+  nutricionista_nome: string;
+  paciente_nome: string;
+  realizada: boolean;
+};
+
 const API_URL = "https://nutrinow.onrender.com";
 
 export const formatDateToAPI = (date: string): string => {
@@ -168,6 +176,81 @@ export const makeAppointment = async (appointmentData: AppointmentData): Promise
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.detail || 'Erro ao criar consulta');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Erro na API:', error);
+    throw error;
+  }
+};
+
+export const getAppointments = async () => {
+  try {
+    const token = await AsyncStorage.getItem("accessToken");
+    const nutritionistId = await AsyncStorage.getItem("@nutricionista/userId");
+    const patientId = await AsyncStorage.getItem("@paciente/userId");
+
+    const response = await fetch(`${API_URL}/lista_consultas/${nutritionistId ?? patientId}/`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Erro ao buscar informações das consultas');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Erro na API:', error);
+    throw error;
+  }
+};
+
+export const getPatientData = async () => {
+  try {
+    const token = await AsyncStorage.getItem("accessToken");
+    const patientId = await AsyncStorage.getItem("@paciente/userId");
+    const response = await fetch(`${API_URL}/info_paciente/${patientId}/`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Erro ao buscar informações do paciente');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Erro na API:', error);
+    throw error;
+  }
+};
+
+export const getNutritionistData = async () => {
+  try {
+    const token = await AsyncStorage.getItem("accessToken");
+    const nutritionistId = await AsyncStorage.getItem("@nutricionista/userId");
+
+    const response = await fetch(`${API_URL}/info_nutricionista/${nutritionistId}/`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Erro ao buscar informações do nutricionista');
     }
     
     return await response.json();
