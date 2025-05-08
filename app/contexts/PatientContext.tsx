@@ -22,7 +22,7 @@ interface PatientContextData {
 
 const PatientContext = createContext<PatientContextData>({} as PatientContextData);
 
-export function PatientProvider({ children }: { children: ReactNode }) {
+export default function PatientProvider({ children }: { children: ReactNode }) {
   const [patientData, setPatientDataState] = useState<PatientData | null>(null);
   const [appointments, setAppointmentsState] = useState<AppointmentsResponse[]>([]);
   const [loading, setLoading] = useState(true);

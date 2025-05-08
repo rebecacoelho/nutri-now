@@ -18,6 +18,7 @@ import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
 import AsyncStorage from "@react-native-async-storage/async-storage"
+import { useNutritionist } from "../contexts/NutritionistContext"
 
 interface Appointment {
   id: string
@@ -30,6 +31,7 @@ interface Appointment {
 export default function NutritionistProfile(): React.JSX.Element {
   const router = useRouter()
   const [isEditing, setIsEditing] = useState<boolean>(false)
+  const { nutritionistData } = useNutritionist()
   const [profileData, setProfileData] = useState({
     name: "Dra. Emily Johnson",
     email: "dra.johnson@nutricare.com",
@@ -80,19 +82,20 @@ export default function NutritionistProfile(): React.JSX.Element {
         },
         {
           text: "Sair",
-          onPress: () => router.replace("/"),
+          onPress: async () => {
+            await AsyncStorage.removeItem("accessToken")
+            await AsyncStorage.removeItem("refreshToken")
+            await AsyncStorage.removeItem("@paciente/data")
+            await AsyncStorage.removeItem("@nutricionista/data")
+            await AsyncStorage.removeItem("@paciente/userId")
+            await AsyncStorage.removeItem("@nutricionista/userId")  
+            router.replace("/")
+          },
         },
       ],
       { cancelable: true },
     )
 
-    await AsyncStorage.removeItem("accessToken")
-    await AsyncStorage.removeItem("refreshToken")
-    await AsyncStorage.removeItem("@paciente/data")
-    await AsyncStorage.removeItem("@nutricionista/data")
-    await AsyncStorage.removeItem("@paciente/userId")
-    await AsyncStorage.removeItem("@nutricionista/userId")
-    router.replace("/")
   }
 
   const handleSaveProfile = (): void => {
@@ -134,8 +137,8 @@ export default function NutritionistProfile(): React.JSX.Element {
               </TouchableOpacity>
             )}
           </View>
-          <Text style={styles.profileName}>{profileData.name}</Text>
-          <Text style={styles.profileEmail}>{profileData.email}</Text>
+          <Text style={styles.profileName}>{nutritionistData?.nome}</Text>
+          <Text style={styles.profileEmail}>{nutritionistData?.email}</Text>
 
           {!isEditing ? (
             <TouchableOpacity style={styles.editProfileButton} onPress={() => setIsEditing(true)}>
@@ -147,50 +150,6 @@ export default function NutritionistProfile(): React.JSX.Element {
               <Ionicons name="save-outline" size={18} color="#fff" />
               <Text style={styles.saveProfileButtonText}>Salvar Alterações</Text>
             </TouchableOpacity>
-          )}
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Informações Profissionais</Text>
-          {isEditing ? (
-            <View style={styles.editForm}>
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Nome Completo</Text>
-                <TextInput
-                  style={styles.formInput}
-                  value={profileData.name}
-                  onChangeText={(text) => setProfileData({ ...profileData, name: text })}
-                />
-              </View>
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>E-mail</Text>
-                <TextInput
-                  style={styles.formInput}
-                  value={profileData.email}
-                  onChangeText={(text) => setProfileData({ ...profileData, email: text })}
-                  keyboardType="email-address"
-                />
-              </View>
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Telefone</Text>
-                <TextInput
-                  style={styles.formInput}
-                  value={profileData.phone}
-                  onChangeText={(text) => setProfileData({ ...profileData, phone: text })}
-                  keyboardType="phone-pad"
-                />
-              </View>
-            </View>
-          ) : (
-            <View style={styles.infoList}>
-              <View style={styles.infoItem}>
-                <Ionicons name="call-outline" size={20} color="#4CAF50" style={styles.infoIcon} />
-                <View style={styles.infoContent}>
-                  <Text style={styles.infoLabel}>Telefone</Text>
-                  <Text style={styles.infoValue}>{profileData.phone}</Text>
-                </View>
-              </View>
-            </View>
           )}
         </View>
 

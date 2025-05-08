@@ -130,13 +130,9 @@ export default function PatientDashboard(): React.JSX.Element {
                 <Text style={styles.appointmentDoctor}>Dra. Emily Johnson</Text>
               </View>
               <View style={styles.appointmentActions}>
-                <TouchableOpacity style={[styles.appointmentButton, styles.appointmentButtonOutline]}>
-                  <Ionicons name="calendar-outline" size={20} color="#f20505" />
-                  <Text style={styles.appointmentButtonTextOutline}>Cancelar</Text>
-                </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.appointmentButton, styles.appointmentButtonFilled]}
-                  onPress={() => Linking.openURL(`https://wa.me/+1234567890`)}
+                  onPress={() => Linking.openURL(`https://wa.me/+559891931960`)}
                 >
                   <Ionicons name="logo-whatsapp" size={20} color="#ffffff" />
                   <Text style={styles.appointmentButtonTextFilled}>Dúvidas</Text>
@@ -347,7 +343,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
     flex: 1,
-    marginRight: 10,
   },
   appointmentButtonFilled: {
     backgroundColor: '#25D366',
@@ -356,7 +351,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 10,
   },
   appointmentButtonTextFilled: {
     color: '#ffffff',

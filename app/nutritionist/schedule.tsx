@@ -7,6 +7,7 @@ import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
 import NutritionistTabBar from "../components/nutritionist-tab-bar"
+import { useNutritionist } from "../contexts/NutritionistContext"
 
 interface TimeSlot {
   id: string
@@ -18,69 +19,92 @@ interface TimeSlot {
 
 interface DaySchedule {
   date: string
+  displayDate: string
   dayOfWeek: string
   timeSlots: TimeSlot[]
 }
 
 export default function NutritionistSchedule(): React.JSX.Element {
   const router = useRouter()
-  const [selectedDate, setSelectedDate] = useState<string>("15 de Mar, 2025")
   const [workingHoursEnabled, setWorkingHoursEnabled] = useState<boolean>(true)
+  const { nutritionistData, appointments } = useNutritionist();
 
-  // Dados de exemplo para o cronograma
-  const weekDates: string[] = [
-    "15 de Mar, 2025",
-    "16 de Mar, 2025",
-    "17 de Mar, 2025",
-    "18 de Mar, 2025",
-    "19 de Mar, 2025",
-    "20 de Mar, 2025",
-    "21 de Mar, 2025",
-  ]
+  const [workingHours, setWorkingHours] = useState<{
+    start: string;
+    end: string;
+  }>({
+    start: nutritionistData?.horarios_disponiveis?.[0] || "09:00",
+    end:
+      nutritionistData?.horarios_disponiveis?.[
+        nutritionistData.horarios_disponiveis.length - 1
+      ] || "17:00",
+  });
 
-  const weekDays: string[] = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"]
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }));
 
-  // Gerar dados do cronograma
-  const scheduleData: DaySchedule[] = weekDates.map((date, index) => {
-    // Gerar horários para cada dia
-    const slots: TimeSlot[] = []
-    for (let hour = 9; hour <= 17; hour++) {
-      const time = `${hour > 12 ? hour - 12 : hour}:00 ${hour >= 12 ? "PM" : "AM"}`
+  const generateWeekDates = () => {
+    const dates: { display: string; full: string }[] = [];
+    const today = new Date();
+    
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      dates.push({
+        display: date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+        full: date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })
+      });
+    }
+    
+    return dates;
+  };
 
-      // Determinar aleatoriamente se um horário está reservado
-      const isBooked = Math.random() > 0.7
-      const patientNames = ["Sarah Johnson", "Michael Brown", "Emily Davis", "Robert Wilson"]
+  const weekDates = generateWeekDates();
+  const weekDays = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
+  const scheduleData: DaySchedule[] = weekDates.map((dateObj, index) => {
+    const slots: TimeSlot[] = [];
+    const currentDate = new Date(dateObj.full.split("/").reverse().join("-"));
+    const dayOfWeek = weekDays[currentDate.getDay()];
+
+    const isAvailableDay = true; // TODO: Implementar lógica de dias disponíveis
+
+    nutritionistData?.horarios_disponiveis?.forEach((time) => {
+      const [hour] = time.split(":");
+      const formattedTime = `${parseInt(hour) > 12 ? parseInt(hour) - 12 : parseInt(hour)}:00 ${parseInt(hour) >= 12 ? "PM" : "AM"}`;
+      
+      const appointment = appointments?.find(
+        (apt) => apt.data_consulta.split("T")[0] === dateObj.full.split("/").reverse().join("-")
+      );
 
       slots.push({
-        id: `${date}-${hour}`,
-        time,
-        available: weekDays[index] !== "Domingo", // Não disponível aos domingos
-        booked: isBooked,
-        patientName: isBooked ? patientNames[Math.floor(Math.random() * patientNames.length)] : undefined,
-      })
-    }
+        id: `${dateObj.full}-${time}`,
+        time: formattedTime,
+        available: isAvailableDay,
+        booked: !!appointment,
+        patientName: appointment?.paciente_nome,
+      });
+    });
 
     return {
-      date,
-      dayOfWeek: weekDays[index],
+      date: dateObj.full,
+      displayDate: dateObj.display,
+      dayOfWeek,
       timeSlots: slots,
-    }
-  })
+    };
+  });
 
-  // Encontrar o cronograma do dia selecionado
-  const selectedDaySchedule = scheduleData.find((day) => day.date === selectedDate)
+  const selectedDaySchedule = scheduleData.find((day) => day.date === selectedDate);
 
-  // Alterar a disponibilidade de um horário
   const toggleAvailability = (slotId: string): void => {
-    //atualizar isso no seu estado ou backend
-    Alert.alert("Disponibilidade Atualizada", "Sua disponibilidade foi atualizada para este horário.", [{ text: "OK" }])
-  }
+    // TODO: Implementar lógica real de atualização de disponibilidade
+    Alert.alert("Disponibilidade Atualizada", "Sua disponibilidade foi atualizada para este horário.", [{ text: "OK" }]);
+  };
 
   // Configurar horário de trabalho
   const handleSetWorkingHours = (): void => {
-    // abriri um modal para configurar o horário de trabalho
-    Alert.alert("Configurar Horário de Trabalho", "Isso abriria um modal para configurar seu horário de trabalho padrão.", [{ text: "OK" }])
-  }
+    // TODO: Implementar lógica real de configuração de horário de trabalho
+    Alert.alert("Configurar Horário de Trabalho", "Isso abriria um modal para configurar seu horário de trabalho padrão.", [{ text: "OK" }]);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -108,15 +132,17 @@ export default function NutritionistSchedule(): React.JSX.Element {
                 styles.dateButton,
                 selectedDate === day.date && styles.selectedDateButton,
                 day.dayOfWeek === "Domingo" && styles.unavailableDateButton,
+                day.dayOfWeek === "Sábado" && styles.unavailableDateButton,
               ]}
               onPress={() => setSelectedDate(day.date)}
-              disabled={day.dayOfWeek === "Domingo"}
+              disabled={day.dayOfWeek === "Domingo" || day.dayOfWeek === "Sábado"}
             >
               <Text
                 style={[
                   styles.dayOfWeekText,
                   selectedDate === day.date && styles.selectedDayOfWeekText,
                   day.dayOfWeek === "Domingo" && styles.unavailableDayText,
+                  day.dayOfWeek === "Sábado" && styles.unavailableDayText,
                 ]}
               >
                 {day.dayOfWeek.substring(0, 3)}
@@ -126,9 +152,10 @@ export default function NutritionistSchedule(): React.JSX.Element {
                   styles.dateText,
                   selectedDate === day.date && styles.selectedDateText,
                   day.dayOfWeek === "Domingo" && styles.unavailableDayText,
+                  day.dayOfWeek === "Sábado" && styles.unavailableDayText,
                 ]}
               >
-                {day.date.split(", ")[0].split(" ")[0]}
+                {day.displayDate}
               </Text>
             </TouchableOpacity>
           ))}

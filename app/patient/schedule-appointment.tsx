@@ -17,6 +17,7 @@ import {
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
+import { Calendar, LocaleConfig } from 'react-native-calendars'
 import PatientTabBar from "../components/patient-tab-bar"
 import { getAllNutritionists, makeAppointment } from "../../api"
 
@@ -36,14 +37,37 @@ interface TimeSlot {
 export default function ScheduleAppointment(): React.JSX.Element {
   const router = useRouter()
   const [selectedDate, setSelectedDate] = useState<string>("")
+  const [selectedFormattedDate, setSelectedFormattedDate] = useState<string>("")
   const [selectedNutritionist, setSelectedNutritionist] = useState<Nutritionist | null>(null)
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>("")
   const [nutritionists, setNutritionists] = useState<Nutritionist[]>([])
+  const [sortedNutritionists, setSortedNutritionists] = useState<Nutritionist[]>([])
+  const [currentPage, setCurrentPage] = useState<number>(0)
   const [loading, setLoading] = useState<boolean>(true)
-  const [dates, setDates] = useState<string[]>([])
-  const [formattedDates, setFormattedDates] = useState<{[key: string]: string}>({})
+  const [markedDates, setMarkedDates] = useState<Record<string, any>>({})
+  const [availableTimeSlots, setAvailableTimeSlots] = useState<TimeSlot[]>([])
 
-  const timeSlots: TimeSlot[] = [
+  const nutritionistsPerPage = 3;
+  const totalPages = Math.ceil(sortedNutritionists.length / nutritionistsPerPage);
+  
+  const currentNutritionists = sortedNutritionists.slice(
+    currentPage * nutritionistsPerPage, 
+    (currentPage + 1) * nutritionistsPerPage
+  );
+
+  const nextPage = () => {
+    if (currentPage < totalPages - 1) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const prevPage = () => {
+    if (currentPage > 0) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const defaultTimeSlots: TimeSlot[] = [
     { id: "1", time: "09:00", available: true },
     { id: "2", time: "10:00", available: true },
     { id: "3", time: "11:00", available: true },
@@ -51,41 +75,34 @@ export default function ScheduleAppointment(): React.JSX.Element {
     { id: "5", time: "14:00", available: true },
     { id: "6", time: "15:00", available: true },
     { id: "7", time: "16:00", available: true },
+    { id: "8", time: "17:00", available: true },
   ];
 
-  useEffect(() => {
-    const generateWeekdayDates = () => {
-      const datesList: string[] = [];
-      const formattedDateMap: { [key: string]: string } = {};
-      const today = new Date();
-      let count = 0;
-      let daysAdded = 0;
-      
-      while (daysAdded < 10) {
-        const date = new Date();
-        date.setDate(today.getDate() + count);
-        
-        const dayOfWeek = date.getDay();
-        if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-          const formattedDate = formatDate(date);
-          datesList.push(formattedDate);
-          
-          const apiDateFormat = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-          formattedDateMap[formattedDate] = apiDateFormat;
-          
-          daysAdded++;
-        }
-        count++;
-      }
-      
-      setDates(datesList);
-      setFormattedDates(formattedDateMap);
-    };
-    
-    generateWeekdayDates();
-  }, []);
+  LocaleConfig.locales['pt-br'] = {
+    monthNames: [
+      'Janeiro',
+      'Fevereiro',
+      'Março',
+      'Abril',
+      'Maio',
+      'Junho',
+      'Julho',
+      'Agosto',
+      'Setembro',
+      'Outubro',
+      'Novembro',
+      'Dezembro'
+    ],
+    monthNamesShort: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+    dayNames: ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'],
+    dayNamesShort: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+    today: 'Hoje'
+  };
 
-  const formatDate = (date: Date): string => {
+  LocaleConfig.defaultLocale = 'pt-br';
+
+  const formatDisplayDate = (dateString: string): string => {
+    const date = new Date(dateString + 'T12:00:00');
     const days = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
     const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
     
@@ -93,11 +110,57 @@ export default function ScheduleAppointment(): React.JSX.Element {
   };
 
   useEffect(() => {
+    const generateMarkedDates = () => {
+      const today = new Date();
+      const markedDatesObj: Record<string, any> = {};
+      
+      for (let i = 0; i < 30; i++) {
+        const date = new Date();
+        date.setDate(today.getDate() + i);
+        
+        const dayOfWeek = date.getDay();
+        const dateString = date.toISOString().split('T')[0]
+        
+        if (dayOfWeek === 5 || dayOfWeek === 6) {
+          markedDatesObj[dateString] = { disabled: true, disableTouchEvent: true };
+        } else {
+          markedDatesObj[dateString] = { 
+            disabled: false,
+            ...(dateString === selectedDate ? {
+              selected: true,
+              selectedColor: '#4CAF50'
+            } : {})
+          };
+        }
+      }
+      
+      const yesterday = new Date();
+      yesterday.setDate(today.getDate() - 1);
+      markedDatesObj.minDate = today.toISOString().split('T')[0];
+      
+      setMarkedDates(markedDatesObj);
+    };
+    
+    generateMarkedDates();
+  }, [selectedDate]);
+
+  useEffect(() => {
     const fetchNutritionists = async () => {
       try {
         setLoading(true);
         const data = await getAllNutritionists();
         setNutritionists(data);
+        
+        const sorted = [...data].sort((a, b) => {
+          const aHasSlots = Array.isArray(a.horarios_disponiveis) && a.horarios_disponiveis.length > 0;
+          const bHasSlots = Array.isArray(b.horarios_disponiveis) && b.horarios_disponiveis.length > 0;
+          
+          if (aHasSlots && !bHasSlots) return -1;
+          if (!aHasSlots && bHasSlots) return 1;
+          return 0;
+        });
+        
+        setSortedNutritionists(sorted);
       } catch (error) {
         console.error("Erro ao buscar nutricionistas:", error);
         Alert.alert("Erro", "Não foi possível carregar a lista de nutricionistas.");
@@ -109,6 +172,52 @@ export default function ScheduleAppointment(): React.JSX.Element {
     fetchNutritionists();
   }, []);
 
+  useEffect(() => {
+    if (selectedNutritionist) {
+      setSelectedTimeSlot("");
+      
+      if (Array.isArray(selectedNutritionist.horarios_disponiveis) && 
+          selectedNutritionist.horarios_disponiveis.length > 0) {
+        
+        const slots = selectedNutritionist.horarios_disponiveis.map((time, index) => ({
+          id: String(index + 1),
+          time,
+          available: true
+        }));
+        
+        setAvailableTimeSlots(slots);
+      } else {
+        setAvailableTimeSlots(defaultTimeSlots.map(slot => ({...slot, available: false})));
+      }
+    } else {
+      setAvailableTimeSlots(defaultTimeSlots);
+    }
+  }, [selectedNutritionist]);
+
+  const handleDateSelect = (date: any) => {
+    setSelectedDate(date.dateString);
+    setSelectedFormattedDate(formatDisplayDate(date.dateString));
+    
+    const updatedMarkedDates = { ...markedDates };
+    
+    Object.keys(updatedMarkedDates).forEach(key => {
+      if (updatedMarkedDates[key] && updatedMarkedDates[key].selected) {
+        updatedMarkedDates[key] = {
+          ...updatedMarkedDates[key],
+          selected: false
+        };
+      }
+    });
+    
+    updatedMarkedDates[date.dateString] = {
+      ...updatedMarkedDates[date.dateString],
+      selected: true,
+      selectedColor: '#4CAF50'
+    };
+    
+    setMarkedDates(updatedMarkedDates);
+  };
+
   const handleScheduleAppointment = async (): Promise<void> => {
     if (!selectedDate || !selectedNutritionist || !selectedTimeSlot) {
       Alert.alert("Informações Faltando", "Por favor, selecione uma data, um nutricionista e um horário.");
@@ -116,12 +225,7 @@ export default function ScheduleAppointment(): React.JSX.Element {
     }
 
     try {
-      const apiDate = formattedDates[selectedDate];
-      if (!apiDate) {
-        throw new Error('Data inválida');
-      }
-      
-      const appointmentDateTime = `${apiDate}T${selectedTimeSlot}:00-03:00`;
+      const appointmentDateTime = `${selectedDate}T${selectedTimeSlot}:00-03:00`;
       
       await makeAppointment({
         nutricionista: String(selectedNutritionist.id),
@@ -130,7 +234,7 @@ export default function ScheduleAppointment(): React.JSX.Element {
       
       Alert.alert(
         "Consulta Agendada",
-        `Sua consulta com ${selectedNutritionist.nome} em ${selectedDate} às ${selectedTimeSlot} foi agendada com sucesso.`,
+        `Sua consulta com ${selectedNutritionist.nome} em ${selectedFormattedDate} às ${selectedTimeSlot} foi agendada com sucesso.`,
         [
           {
             text: "OK",
@@ -159,19 +263,39 @@ export default function ScheduleAppointment(): React.JSX.Element {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Selecione a Data</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.datesContainer}>
-            {dates.map((date) => (
-              <TouchableOpacity
-                key={date}
-                style={[styles.dateButton, selectedDate === date && styles.selectedDateButton]}
-                onPress={() => setSelectedDate(date)}
-              >
-                <Text style={[styles.dateButtonText, selectedDate === date && styles.selectedDateButtonText]}>
-                  {date}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          <Calendar
+            markedDates={markedDates}
+            onDayPress={handleDateSelect}
+            minDate={new Date().toISOString().split('T')[0]}
+            maxDate={new Date(new Date().setDate(new Date().getDate() + 30)).toISOString().split('T')[0]}
+            firstDay={0} 
+            disableAllTouchEventsForDisabledDays={true}
+            theme={{
+              calendarBackground: '#ffffff',
+              textSectionTitleColor: '#4CAF50',
+              todayTextColor: '#4CAF50',
+              dayTextColor: '#2d4150',
+              textDisabledColor: '#d9e1e8',
+              selectedDayBackgroundColor: '#4CAF50',
+              selectedDayTextColor: '#ffffff',
+              arrowColor: '#4CAF50',
+              monthTextColor: '#333333',
+              indicatorColor: '#4CAF50',
+              textDayFontWeight: '300',
+              textMonthFontWeight: 'bold',
+              textDayHeaderFontWeight: '500',
+              textDayFontSize: 16,
+              textMonthFontSize: 16,
+              textDayHeaderFontSize: 14,
+            }}
+          />
+          
+          {selectedDate && (
+            <View style={styles.selectedDateContainer}>
+              <Text style={styles.selectedDateLabel}>Data selecionada:</Text>
+              <Text style={styles.selectedDateValue}>{selectedFormattedDate}</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.section}>
@@ -179,65 +303,118 @@ export default function ScheduleAppointment(): React.JSX.Element {
           {loading ? (
             <ActivityIndicator size="large" color="#4CAF50" />
           ) : (
-            nutritionists.map((nutritionist) => (
-              <TouchableOpacity
-                key={nutritionist.id}
-                style={[
-                  styles.nutritionistCard,
-                  selectedNutritionist?.id === nutritionist.id && styles.selectedNutritionistCard,
-                ]}
-                onPress={() => setSelectedNutritionist(nutritionist)}
-              >
-                <Image 
-                  source={{ uri: "https://ui-avatars.com/api/?name=" + encodeURIComponent(nutritionist.nome) }} 
-                  style={styles.nutritionistImage} 
-                />
-                <View style={styles.nutritionistInfo}>
-                  <Text style={styles.nutritionistName}>{nutritionist.nome}</Text>
-                  <Text style={styles.nutritionistEmail}>{nutritionist.email}</Text>
+            <>
+              {currentNutritionists.map((nutritionist) => (
+                <TouchableOpacity
+                  key={nutritionist.id}
+                  style={[
+                    styles.nutritionistCard,
+                    selectedNutritionist?.id === nutritionist.id && styles.selectedNutritionistCard,
+                  ]}
+                  onPress={() => setSelectedNutritionist(nutritionist)}
+                >
+                  <Image 
+                    source={{ uri: "https://ui-avatars.com/api/?name=" + encodeURIComponent(nutritionist.nome) }} 
+                    style={styles.nutritionistImage} 
+                  />
+                  <View style={styles.nutritionistInfo}>
+                    <Text style={styles.nutritionistName}>{nutritionist.nome}</Text>
+                    <Text style={styles.nutritionistEmail}>{nutritionist.email}</Text>
+                    {Array.isArray(nutritionist.horarios_disponiveis) && 
+                    nutritionist.horarios_disponiveis.length > 0 ? (
+                      <Text style={styles.availabilityInfo}>
+                        {nutritionist.horarios_disponiveis.length} horários disponíveis
+                      </Text>
+                    ) : (
+                      <Text style={styles.noAvailabilityInfo}>
+                        Sem horários disponíveis
+                      </Text>
+                    )}
+                  </View>
+                  {selectedNutritionist?.id === nutritionist.id && (
+                    <Ionicons name="checkmark-circle" size={24} color="#4CAF50" style={styles.selectedIcon} />
+                  )}
+                </TouchableOpacity>
+              ))}
+              
+              {totalPages > 1 && (
+                <View style={styles.paginationContainer}>
+                  <TouchableOpacity 
+                    style={[styles.paginationButton, currentPage === 0 && styles.disabledButton]} 
+                    onPress={prevPage}
+                    disabled={currentPage === 0}
+                  >
+                    <Ionicons name="arrow-back" size={22} color={currentPage === 0 ? "#ccc" : "#4CAF50"} />
+                  </TouchableOpacity>
+                  
+                  <Text style={styles.paginationInfo}>
+                    {currentPage + 1} de {totalPages}
+                  </Text>
+                  
+                  <TouchableOpacity 
+                    style={[styles.paginationButton, currentPage === totalPages - 1 && styles.disabledButton]} 
+                    onPress={nextPage}
+                    disabled={currentPage === totalPages - 1}
+                  >
+                    <Ionicons name="arrow-forward" size={22} color={currentPage === totalPages - 1 ? "#ccc" : "#4CAF50"} />
+                  </TouchableOpacity>
                 </View>
-                {selectedNutritionist?.id === nutritionist.id && (
-                  <Ionicons name="checkmark-circle" size={24} color="#4CAF50" style={styles.selectedIcon} />
-                )}
-              </TouchableOpacity>
-            ))
+              )}
+            </>
           )}
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Selecione o Horário</Text>
-          <View style={styles.timeSlotsContainer}>
-            {timeSlots.map((slot) => (
-              <TouchableOpacity
-                key={slot.id}
-                style={[
-                  styles.timeSlot,
-                  !slot.available && styles.unavailableTimeSlot,
-                  selectedTimeSlot === slot.time && styles.selectedTimeSlot,
-                ]}
-                onPress={() => slot.available && setSelectedTimeSlot(slot.time)}
-                disabled={!slot.available}
-              >
-                <Text
-                  style={[
-                    styles.timeSlotText,
-                    !slot.available && styles.unavailableTimeSlotText,
-                    selectedTimeSlot === slot.time && styles.selectedTimeSlotText,
-                  ]}
-                >
-                  {slot.time}
+          {selectedNutritionist ? (
+            Array.isArray(selectedNutritionist.horarios_disponiveis) && 
+            selectedNutritionist.horarios_disponiveis.length > 0 ? (
+              <View style={styles.timeSlotsContainer}>
+                {availableTimeSlots.map((slot) => (
+                  <TouchableOpacity
+                    key={slot.id}
+                    style={[
+                      styles.timeSlot,
+                      !slot.available && styles.unavailableTimeSlot,
+                      selectedTimeSlot === slot.time && styles.selectedTimeSlot,
+                    ]}
+                    onPress={() => slot.available && setSelectedTimeSlot(slot.time)}
+                    disabled={!slot.available}
+                  >
+                    <Text
+                      style={[
+                        styles.timeSlotText,
+                        !slot.available && styles.unavailableTimeSlotText,
+                        selectedTimeSlot === slot.time && styles.selectedTimeSlotText,
+                      ]}
+                    >
+                      {slot.time}
+                    </Text>
+                    {!slot.available && <Text style={styles.unavailableText}>Indisponível</Text>}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : (
+              <View style={styles.noTimeSlotsContainer}>
+                <Text style={styles.noTimeSlotsText}>
+                  Este nutricionista não possui horários disponíveis. Por favor, escolha outro nutricionista.
                 </Text>
-                {!slot.available && <Text style={styles.unavailableText}>Indisponível</Text>}
-              </TouchableOpacity>
-            ))}
-          </View>
+              </View>
+            )
+          ) : (
+            <View style={styles.noTimeSlotsContainer}>
+              <Text style={styles.noTimeSlotsText}>
+                Selecione um nutricionista para ver os horários disponíveis.
+              </Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.summarySection}>
           <Text style={styles.summarySectionTitle}>Resumo da Consulta</Text>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Data:</Text>
-            <Text style={styles.summaryValue}>{selectedDate || "Não selecionado"}</Text>
+            <Text style={styles.summaryValue}>{selectedFormattedDate || "Não selecionado"}</Text>
           </View>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Nutricionista:</Text>
@@ -285,30 +462,23 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     color: "#333",
   },
-  datesContainer: {
-    marginLeft: -5,
+  selectedDateContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 15,
+    paddingTop: 15,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
   },
-  dateButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    marginRight: 10,
-    borderRadius: 10,
-    backgroundColor: "#f0f0f0",
-    borderWidth: 1,
-    borderColor: "#ddd",
-  },
-  selectedDateButton: {
-    backgroundColor: "#4CAF50",
-    borderColor: "#4CAF50",
-  },
-  dateButtonText: {
+  selectedDateLabel: {
     fontSize: 14,
     color: "#666",
-    fontWeight: "500",
+    marginRight: 8,
   },
-  selectedDateButtonText: {
-    color: "#fff",
+  selectedDateValue: {
+    fontSize: 14,
     fontWeight: "600",
+    color: "#4CAF50",
   },
   nutritionistCard: {
     flexDirection: "row",
@@ -343,6 +513,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     marginBottom: 6,
+  },
+  availabilityInfo: {
+    fontSize: 12,
+    color: "#4CAF50",
+    fontWeight: "500",
+  },
+  noAvailabilityInfo: {
+    fontSize: 12,
+    color: "#FF6B6B",
+    fontWeight: "500",
   },
   selectedIcon: {
     marginLeft: 10,
@@ -442,5 +622,44 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
+  },
+  noTimeSlotsContainer: {
+    padding: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#f5f5f5",
+    borderRadius: 10,
+  },
+  noTimeSlotsText: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+  },
+  paginationContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 15,
+    paddingTop: 15,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+  },
+  paginationButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#f0f0f0",
+    justifyContent: "center",
+    alignItems: "center",
+    marginHorizontal: 10,
+  },
+  disabledButton: {
+    backgroundColor: "#f5f5f5",
+    opacity: 0.7,
+  },
+  paginationInfo: {
+    fontSize: 14,
+    color: "#666",
+    fontWeight: "500",
   },
 })

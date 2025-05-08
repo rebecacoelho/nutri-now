@@ -19,7 +19,7 @@ interface NutritionistContextData {
 
 const NutritionistContext = createContext<NutritionistContextData>({} as NutritionistContextData);
 
-export function NutritionistProvider({ children }: { children: ReactNode }) {
+export default function NutritionistProvider({ children }: { children: ReactNode }) {
   const [nutritionistData, setNutritionistDataState] = useState<NutritionistData | null>(null);
   const [appointments, setAppointmentsState] = useState<AppointmentsResponse[]>([]);
   const [loading, setLoading] = useState(true);

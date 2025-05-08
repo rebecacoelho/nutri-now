@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
-import { NutritionistProvider } from "./contexts/NutritionistContext";
-import { PatientProvider } from "./contexts/PatientContext";
+import NutritionistProvider  from "./contexts/NutritionistContext";
+import PatientProvider from "./contexts/PatientContext";
 
 export default function RootLayout() {
   return (
