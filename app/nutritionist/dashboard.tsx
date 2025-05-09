@@ -99,6 +99,11 @@ export default function NutritionistDashboard(): React.JSX.Element {
               </View>
             </View>
           ))}
+          {todayAppointments.length === 0 && (
+            <View style={styles.noAppointments}>
+              <Text style={styles.noAppointmentsText}>Você não possui nenhuma consulta agendada para hoje!</Text>
+            </View>
+          )   }
         </View>
 
         <View style={styles.section}>
@@ -413,6 +418,18 @@ const styles = StyleSheet.create({
   },
   tabLabelActive: {
     color: "#4CAF50",
+  },
+  noAppointments: {
+    alignItems: "center",
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 12,
+  },
+  noAppointmentsText: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
   },
 })
 

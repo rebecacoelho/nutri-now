@@ -20,6 +20,7 @@ interface FoodItem {
   name: string
   amount: string
   calories: string
+  group: string
 }
 
 interface MealEditorProps {
@@ -29,19 +30,19 @@ interface MealEditorProps {
 }
 
 const MealEditor: React.FC<MealEditorProps> = ({ title, defaultTime, onMealChange }) => {
-  const [foods, setFoods] = useState<FoodItem[]>([{ id: "1", name: "", amount: "", calories: "" }])
+  const [foods, setFoods] = useState<FoodItem[]>([{ id: "1", name: "", amount: "", calories: "", group: "Outros" }])
   const [time, setTime] = useState(defaultTime)
 
   const addFood = (): void => {
     const newId = (Number.parseInt(foods[foods.length - 1].id) + 1).toString()
-    setFoods([...foods, { id: newId, name: "", amount: "", calories: "" }])
+    setFoods([...foods, { id: newId, name: "", amount: "", calories: "", group: "Outros" }])
   }
 
   const updateMeal = (newFoods: FoodItem[], newTime: string) => {
     const mealItems: MealItem[] = newFoods.map(food => ({
       descricao: `${food.name} - ${food.amount}`,
       kcal: parseInt(food.calories) || 0,
-      grupo: "Outros",
+      grupo: food.group,
       substituicoes: []
     }))
 
@@ -77,6 +78,7 @@ const MealEditor: React.FC<MealEditorProps> = ({ title, defaultTime, onMealChang
           <Text style={[styles.foodHeaderText, { flex: 2 }]}>Alimento</Text>
           <Text style={[styles.foodHeaderText, { flex: 1 }]}>Quantidade</Text>
           <Text style={[styles.foodHeaderText, { flex: 1 }]}>Calorias</Text>
+          <Text style={[styles.foodHeaderText, { flex: 1 }]}>Grupo</Text>
         </View>
 
         {foods.map((food, index) => (
@@ -112,6 +114,16 @@ const MealEditor: React.FC<MealEditorProps> = ({ title, defaultTime, onMealChang
                 setFoods(newFoods)
               }}
             />
+            <TextInput 
+              style={[styles.foodInput, { flex: 1 }]} 
+              placeholder="ex: Carboidratos" 
+              value={food.group}
+              onChangeText={(text) => {
+                const newFoods = [...foods]
+                newFoods[index].group = text
+                setFoods(newFoods)
+              }}
+            />
           </View>
         ))}
 
@@ -130,14 +142,24 @@ export default function CreateMealPlan(): React.JSX.Element {
   const [selectedDay, setSelectedDay] = useState<string>("Segunda-feira")
   const [meals, setMeals] = useState<Meal[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [patients, setPatients] = useState<Patient[]>([])
+  const [totalCalories, setTotalCalories] = useState(0)
 
-  const patients: Patient[] = [
-    { id: "1", name: "Sarah Johnson" },
-    { id: "2", name: "Michael Brown" },
-    { id: "3", name: "Emily Davis" },
-  ]
+  useEffect(() => {
+    const newTotalCalories = meals.reduce((total, meal) => {
+      return total + meal.items.reduce((mealTotal, item) => mealTotal + item.kcal, 0)
+    }, 0)
+    setTotalCalories(newTotalCalories)
+  }, [meals])
 
-  const days: string[] = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"]
+  useEffect(() => {
+    // Aqui você deve implementar a chamada para buscar os pacientes da API
+    const fetchPatients = async () => {
+      // Implementar a busca de pacientes
+    }
+    fetchPatients()
+  }, [])
+
 
   const handleMealChange = (updatedMeal: Meal) => {
     setMeals(currentMeals => {
@@ -170,7 +192,10 @@ export default function CreateMealPlan(): React.JSX.Element {
         paciente: parseInt(selectedPatient.id),
         id_nutricionista: parseInt(nutritionistId),
         dados_json: {
-          refeicoes: meals
+          refeicoes: meals.map(meal => ({
+            ...meal,
+            items: meal.items
+          }))
         }
       }
 
@@ -219,82 +244,17 @@ export default function CreateMealPlan(): React.JSX.Element {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Selecionar Dia</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.daysContainer}>
-            {days.map((day) => (
-              <TouchableOpacity
-                key={day}
-                style={[styles.dayButton, selectedDay === day && styles.selectedDayButton]}
-                onPress={() => setSelectedDay(day)}
-              >
-                <Text style={[styles.dayButtonText, selectedDay === day && styles.selectedDayButtonText]}>{day}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Metas Nutricionais</Text>
-          <View style={styles.nutritionGoalsContainer}>
-            <View style={styles.nutritionGoalItem}>
-              <Text style={styles.nutritionGoalLabel}>Calorias</Text>
-              <TextInput
-                style={styles.nutritionGoalInput}
-                placeholder="ex: 1800"
-                keyboardType="number-pad"
-                defaultValue="1850"
-              />
-            </View>
-            <View style={styles.nutritionGoalItem}>
-              <Text style={styles.nutritionGoalLabel}>Proteínas (g)</Text>
-              <TextInput
-                style={styles.nutritionGoalInput}
-                placeholder="ex: 75"
-                keyboardType="number-pad"
-                defaultValue="75"
-              />
-            </View>
-            <View style={styles.nutritionGoalItem}>
-              <Text style={styles.nutritionGoalLabel}>Carboidratos (g)</Text>
-              <TextInput
-                style={styles.nutritionGoalInput}
-                placeholder="ex: 200"
-                keyboardType="number-pad"
-                defaultValue="220"
-              />
-            </View>
-            <View style={styles.nutritionGoalItem}>
-              <Text style={styles.nutritionGoalLabel}>Gorduras (g)</Text>
-              <TextInput
-                style={styles.nutritionGoalInput}
-                placeholder="ex: 60"
-                keyboardType="number-pad"
-                defaultValue="60"
-              />
-            </View>
+          <Text style={styles.sectionTitle}>Total de Calorias</Text>
+          <View style={styles.caloriesContainer}>
+            <Text style={styles.caloriesText}>{totalCalories} kcal</Text>
           </View>
         </View>
 
-        <MealEditor title="Café da Manhã" defaultTime="7:30" onMealChange={handleMealChange} />
-        <MealEditor title="Almoço" defaultTime="12:30" onMealChange={handleMealChange} />
-        <MealEditor title="Jantar" defaultTime="7:00" onMealChange={handleMealChange} />
-        <MealEditor title="Lanches" defaultTime="Vários" onMealChange={handleMealChange} />
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Opções Adicionais</Text>
-          <View style={styles.optionItem}>
-            <Text style={styles.optionLabel}>Enviar notificação para o paciente</Text>
-            <Switch trackColor={{ false: "#ddd", true: "#a5d6a7" }} thumbColor={"#4CAF50"} value={true} />
-          </View>
-          <View style={styles.optionItem}>
-            <Text style={styles.optionLabel}>Permitir substituições de refeições</Text>
-            <Switch trackColor={{ false: "#ddd", true: "#a5d6a7" }} thumbColor={"#4CAF50"} value={true} />
-          </View>
-          <View style={styles.optionItem}>
-            <Text style={styles.optionLabel}>Aplicar para a semana inteira</Text>
-            <Switch trackColor={{ false: "#ddd", true: "#a5d6a7" }} thumbColor={"#4CAF50"} value={false} />
-          </View>
-        </View>
+        <MealEditor title="Café da Manhã" defaultTime="07:30" onMealChange={handleMealChange} />
+        <MealEditor title="Lanche da Manhã" defaultTime="10:30" onMealChange={handleMealChange} />
+        <MealEditor title="Almoço" defaultTime="13:00" onMealChange={handleMealChange} />
+        <MealEditor title="Lanche da Tarde" defaultTime="16:00" onMealChange={handleMealChange} />
+        <MealEditor title="Jantar" defaultTime="19:00" onMealChange={handleMealChange} />
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity 
@@ -397,25 +357,16 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "600",
   },
-  nutritionGoalsContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
-  nutritionGoalItem: {
-    width: "48%",
-    marginBottom: 15,
-  },
-  nutritionGoalLabel: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 5,
-  },
-  nutritionGoalInput: {
-    backgroundColor: "#f0f0f0",
+  caloriesContainer: {
+    backgroundColor: "#f0f8f0",
+    padding: 15,
     borderRadius: 8,
-    padding: 10,
-    fontSize: 16,
+    alignItems: "center"
+  },
+  caloriesText: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#4CAF50"
   },
   mealEditorHeader: {
     flexDirection: "row",
@@ -465,18 +416,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     marginLeft: 5,
-  },
-  optionItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-  },
-  optionLabel: {
-    fontSize: 16,
-    color: "#333",
   },
   buttonContainer: {
     marginBottom: 30,

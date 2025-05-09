@@ -121,7 +121,7 @@ export default function ScheduleAppointment(): React.JSX.Element {
         const dayOfWeek = date.getDay();
         const dateString = date.toISOString().split('T')[0]
         
-        if (dayOfWeek === 5 || dayOfWeek === 6) {
+        if (dayOfWeek === 0 || dayOfWeek === 6) {
           markedDatesObj[dateString] = { disabled: true, disableTouchEvent: true };
         } else {
           markedDatesObj[dateString] = { 

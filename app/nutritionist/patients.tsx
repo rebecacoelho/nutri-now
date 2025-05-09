@@ -184,12 +184,6 @@ export default function Patients(): React.JSX.Element {
         </ScrollView>
       </View>
 
-      <View style={styles.shareButtonContainer}>
-        <TouchableOpacity style={styles.shareButton} onPress={() => router.push("/nutritionist/share-meal-plan")}>
-          <Text style={styles.shareButtonText}>Compartilhar plano alimentar individual</Text>
-        </TouchableOpacity>
-      </View>
-
       <FlatList
         data={filteredPatients}
         keyExtractor={(item) => item.id}
@@ -302,21 +296,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
-  },
-  shareButtonContainer: {
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 12,
-  },
-  shareButton: {
-    backgroundColor: "#4CAF50",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-  },
-  shareButtonText: {
-    fontSize: 14,
-    color: "#fff",
   },
   filterButton: {
     paddingHorizontal: 15,
