@@ -20,7 +20,8 @@ import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
 import { getAppointments, getNutritionistData, getPatientData, loginUser } from "../api"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-
+import { useNutritionist } from "./contexts/NutritionistContext"
+import { usePatient } from "./contexts/PatientContext"
 type UserType = "patient" | "nutritionist"
 
 export default function LoginScreen(): React.JSX.Element {
@@ -28,6 +29,10 @@ export default function LoginScreen(): React.JSX.Element {
   const [password, setPassword] = useState<string>("")
   const [userType, setUserType] = useState<UserType>("patient")
   const [loading, setLoading] = useState<boolean>(false)
+  const { setNutritionistData } = useNutritionist();
+  const { setPatientData } = usePatient();
+
+
   const router = useRouter()
 
   const validateForm = (): string | null => {
@@ -56,6 +61,7 @@ export default function LoginScreen(): React.JSX.Element {
       if (response.access && response.refresh) {
         await AsyncStorage.setItem("accessToken", response.access)
         await AsyncStorage.setItem("refreshToken", response.refresh)
+        await AsyncStorage.setItem("userType", userType)
         
         if (response.is_paciente) {
           await AsyncStorage.setItem("@paciente/userId", String(response.paciente_id));
@@ -71,6 +77,7 @@ export default function LoginScreen(): React.JSX.Element {
 
           const appointments = await getAppointments()
           await AsyncStorage.setItem("@paciente/appointments", JSON.stringify(appointments))
+          setPatientData(patientData)
 
           router.replace("/patient/dashboard")
         }
@@ -81,7 +88,7 @@ export default function LoginScreen(): React.JSX.Element {
 
           const appointments = await getAppointments()
           await AsyncStorage.setItem("@nutricionista/appointments", JSON.stringify(appointments))
-
+          setNutritionistData(nutritionistData)
           router.replace("/nutritionist/dashboard")
         }
       } else {

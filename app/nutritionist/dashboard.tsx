@@ -1,23 +1,51 @@
 "use client"
 
 import type React from "react"
+import { useEffect } from "react"
 import { SafeAreaView, StyleSheet, Text, View, ScrollView, TouchableOpacity, Image } from "react-native"
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
 import NutritionistTabBar from "../components/nutritionist-tab-bar"
 import { useNutritionist } from "../contexts/NutritionistContext"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { getNutritionistData, refreshToken } from "@/api"
 
 export default function NutritionistDashboard(): React.JSX.Element {
   const router = useRouter()
-    const { nutritionistData, appointments } = useNutritionist();
+  const { nutritionistData, appointments } = useNutritionist();
 
-    const today = new Date();
-    const todayAppointments = appointments.filter(appointment => {
-      const appointmentDate = new Date(appointment.data_consulta);
-      return appointmentDate.toDateString() === today.toDateString();
-    });
-  
+  if (!nutritionistData) {
+    const handleMissingData = async () => {
+      try {
+        await AsyncStorage.removeItem("accessToken");
+        const response = await refreshToken();
+        
+        if (response.access) {
+          await AsyncStorage.setItem("accessToken", response.access);
+          const nutritionistData = await getNutritionistData();
+          if (!nutritionistData) {
+            router.replace("/");
+          }
+        } else {
+          router.replace("/");
+        }
+      } catch (error) {
+        console.error('Erro ao atualizar token:', error);
+        router.replace("/");
+      }
+    };
+
+    handleMissingData();
+    return <View />;
+  }
+
+  const today = new Date();
+  const todayAppointments = appointments.filter(appointment => {
+    const appointmentDate = new Date(appointment.data_consulta);
+    return appointmentDate.toDateString() === today.toDateString();
+  });
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
@@ -57,17 +85,17 @@ export default function NutritionistDashboard(): React.JSX.Element {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Consultas de Hoje</Text>
-            {todayAppointments.map((appointment) => (
-              <View style={styles.appointmentCard} key={appointment.id}>
-                <View style={styles.appointmentTime}>
-                  <Text style={styles.appointmentTimeText}>{new Date(appointment.data_consulta).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</Text>
-                </View>
-                <View style={styles.appointmentDetails}>
-                  <View style={styles.appointmentPatient}>
-                    <View>
-                      <Text style={styles.patientName}>{appointment.paciente_nome}</Text>
-                    </View>
+          {todayAppointments.map((appointment) => (
+            <View style={styles.appointmentCard} key={appointment.id}>
+              <View style={styles.appointmentTime}>
+                <Text style={styles.appointmentTimeText}>{new Date(appointment.data_consulta).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</Text>
+              </View>
+              <View style={styles.appointmentDetails}>
+                <View style={styles.appointmentPatient}>
+                  <View>
+                    <Text style={styles.patientName}>{appointment.paciente_nome}</Text>
                   </View>
+                </View>
               </View>
             </View>
           ))}
@@ -151,7 +179,7 @@ export default function NutritionistDashboard(): React.JSX.Element {
         </View>
       </ScrollView>
 
-     <NutritionistTabBar activeTab="inicio"/>
+      <NutritionistTabBar activeTab="inicio"/>
     </SafeAreaView>
   )
 }

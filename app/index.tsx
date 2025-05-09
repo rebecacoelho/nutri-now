@@ -1,9 +1,12 @@
 import type React from "react"
 import { SafeAreaView, StyleSheet, Text, View, Image, TouchableOpacity, Linking, ScrollView } from "react-native"
-import { Link, Stack } from "expo-router"
+import { Link, Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
 import MapView, { Marker } from "react-native-maps"
+import { useEffect, useState } from "react"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { refreshToken } from "@/api"
 
 interface FeatureItemProps {
   icon: keyof typeof Ionicons.glyphMap
@@ -22,6 +25,31 @@ const FeatureItem: React.FC<FeatureItemProps> = ({ icon, title, description }) =
 }
 
 export default function WelcomeScreen(): React.JSX.Element {
+  const router = useRouter()
+
+  useEffect(() => {
+    const checkLogin = async () => {
+      const userType = await AsyncStorage.getItem('userType')
+      const isLoggedIn = await AsyncStorage.getItem('refreshToken') && userType
+
+      if (isLoggedIn) {
+        const response = await refreshToken()
+
+        if (response.access) {
+          await AsyncStorage.setItem("accessToken", response.access)
+
+          if (userType === 'patient') {
+            router.replace('/patient/dashboard')
+          } else if (userType === 'nutritionist') {
+            router.replace('/nutritionist/dashboard')
+          }
+        }
+      }
+    }
+
+    checkLogin()
+  }, [])
+
   const clinicLocation = {
     latitude: -2.499679,
     longitude: -44.288340,

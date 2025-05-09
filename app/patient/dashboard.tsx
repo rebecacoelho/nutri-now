@@ -8,6 +8,8 @@ import { Ionicons } from "@expo/vector-icons"
 import PatientTabBar from "../components/patient-tab-bar"
 import PatientLayout from "../components/patient-layout"
 import { usePatient } from "../contexts/PatientContext"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { refreshToken, getPatientData } from "../../api"
 
 interface MealCardProps {
   title: string
@@ -16,20 +18,6 @@ interface MealCardProps {
   calories: string
   completed: boolean
 }
-
-type PatientData = {
-  id: number;
-  nome: string;
-  email: string;
-  idade: number;
-  peso: number;
-  altura: number;
-  endereco: string;
-  genero: string;
-  telefone: string;
-  data_nascimento: string;
-  diario_alimentar: Record<string, unknown>;
-};
 
 const MealCard: React.FC<MealCardProps> = ({ title, time, image, calories, completed }) => {
   return (
@@ -52,6 +40,31 @@ const MealCard: React.FC<MealCardProps> = ({ title, time, image, calories, compl
 export default function PatientDashboard(): React.JSX.Element {
   const router = useRouter()
   const { patientData, appointments } = usePatient();
+
+  if (!patientData) {
+    const handleMissingData = async () => {
+      try {
+        await AsyncStorage.removeItem("accessToken");
+        const response = await refreshToken();
+        
+        if (response.access) {
+          await AsyncStorage.setItem("accessToken", response.access);
+          const patientData = await getPatientData();
+          if (!patientData) {
+            router.replace("/");
+          }
+        } else {
+          router.replace("/");
+        }
+      } catch (error) {
+        console.error('Erro ao atualizar token:', error);
+        router.replace("/");
+      }
+    };
+
+    handleMissingData();
+    return <View />;
+  }
  
   return (
     <PatientLayout>

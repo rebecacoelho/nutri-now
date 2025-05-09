@@ -44,6 +44,10 @@ export interface ApiResponse {
   [key: string]: any;
 }
 
+export interface TokenResponse {
+  access: string;
+}
+
 export interface AppointmentData {
   nutricionista: string | number;
   data_consulta: string;
@@ -63,6 +67,40 @@ export interface AppointmentsResponse {
   paciente_nome: string;
   realizada: boolean;
 };
+
+export interface SubstitutionItem {
+  descricao: string;
+  kcal: number;
+  grupo: string;
+}
+
+export interface Substitution {
+  descrição: string;
+  items: SubstitutionItem[];
+}
+
+export interface MealItem {
+  descricao: string;
+  kcal: number;
+  grupo: string;
+  substituicoes: Substitution[];
+}
+
+export interface Meal {
+  horario: string;
+  nome: string;
+  items: MealItem[];
+}
+
+export interface JsonData {
+  refeicoes: Meal[];
+}
+
+export interface MealPlanData {
+  paciente: number;
+  id_nutricionista: number;
+  dados_json: JsonData;
+}
 
 const API_URL = "https://nutrinow.onrender.com";
 
@@ -129,6 +167,35 @@ export const loginUser = async (userData: LoginUserData) => {
     }
     
     return await response.json();
+  } catch (error) {
+    console.error('Erro na API:', error);
+    throw error;
+  }
+};
+
+export const refreshToken = async (): Promise<TokenResponse> => {
+  try {
+    const token = await AsyncStorage.getItem("refreshToken");
+
+    const response = await fetch(`${API_URL}/api/token/refresh/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        refresh: token
+      })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Erro ao fazer login');
+    }
+
+    const data = await response.json();
+    await AsyncStorage.setItem("accessToken", data.access);
+    
+    return data;
   } catch (error) {
     console.error('Erro na API:', error);
     throw error;
@@ -253,6 +320,30 @@ export const getNutritionistData = async () => {
       throw new Error(errorData.detail || 'Erro ao buscar informações do nutricionista');
     }
     
+    return await response.json();
+  } catch (error) {
+    console.error('Erro na API:', error);
+    throw error;
+  }
+};
+
+export const createMealPlan = async (mealPlanData: MealPlanData) => {
+  try {
+    const token = await AsyncStorage.getItem("accessToken");
+    const response = await fetch(`${API_URL}/criar_plano_alimentar/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(mealPlanData)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Erro ao criar plano alimentar');
+    }
+
     return await response.json();
   } catch (error) {
     console.error('Erro na API:', error);

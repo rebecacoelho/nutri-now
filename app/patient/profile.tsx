@@ -18,6 +18,7 @@ import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
 import AsyncStorage from "@react-native-async-storage/async-storage"
+import { usePatient } from "../contexts/PatientContext"
 
 interface Appointment {
   id: string
@@ -30,6 +31,7 @@ interface Appointment {
 export default function PatientProfile(): React.JSX.Element {
   const router = useRouter()
   const [isEditing, setIsEditing] = useState<boolean>(false)
+  const { patientData, appointments } = usePatient()
   const [profileData, setProfileData] = useState({
     name: "Sarah Johnson",
     email: "sarah.johnson@example.com",
@@ -50,23 +52,7 @@ export default function PatientProfile(): React.JSX.Element {
     progressReports: false,
   })
 
-  // Próximas consultas
-  const upcomingAppointments: Appointment[] = [
-    {
-      id: "1",
-      nutritionist: "Dra. Emily Johnson",
-      date: "18 de Março de 2025",
-      time: "10:30 AM",
-      type: "Consulta Nutricional",
-    },
-    {
-      id: "2",
-      nutritionist: "Dr. Michael Smith",
-      date: "02 de Abril de 2025",
-      time: "14:00",
-      type: "Revisão de Progresso",
-    },
-  ]
+  const upcomingAppointments = appointments.filter(appointment => new Date(appointment.data_consulta) > new Date())
 
   const handleLogout = async () => {
     Alert.alert(
@@ -136,8 +122,8 @@ export default function PatientProfile(): React.JSX.Element {
               </TouchableOpacity>
             )}
           </View>
-          <Text style={styles.profileName}>{profileData.name}</Text>
-          <Text style={styles.profileEmail}>{profileData.email}</Text>
+          <Text style={styles.profileName}>{patientData?.nome}</Text>
+          <Text style={styles.profileEmail}>{patientData?.email}</Text>
 
           {!isEditing ? (
             <TouchableOpacity style={styles.editProfileButton} onPress={() => setIsEditing(true)}>
@@ -220,7 +206,7 @@ export default function PatientProfile(): React.JSX.Element {
                 <Ionicons name="calendar-outline" size={20} color="#4CAF50" style={styles.infoIcon} />
                 <View style={styles.infoContent}>
                   <Text style={styles.infoLabel}>Data de Nascimento</Text>
-                  <Text style={styles.infoValue}>{profileData.dateOfBirth}</Text>
+                  <Text style={styles.infoValue}>{patientData?.data_nascimento.split("-").reverse().join("/")}</Text>                
                 </View>
               </View>
             </View>
@@ -247,30 +233,6 @@ export default function PatientProfile(): React.JSX.Element {
                   onChangeText={(text) => setProfileData({ ...profileData, weight: text })}
                 />
               </View>
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Alergias</Text>
-                <TextInput
-                  style={styles.formInput}
-                  value={profileData.allergies}
-                  onChangeText={(text) => setProfileData({ ...profileData, allergies: text })}
-                />
-              </View>
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Condições Médicas</Text>
-                <TextInput
-                  style={styles.formInput}
-                  value={profileData.medicalConditions}
-                  onChangeText={(text) => setProfileData({ ...profileData, medicalConditions: text })}
-                />
-              </View>
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Restrições Alimentares</Text>
-                <TextInput
-                  style={styles.formInput}
-                  value={profileData.dietaryRestrictions}
-                  onChangeText={(text) => setProfileData({ ...profileData, dietaryRestrictions: text })}
-                />
-              </View>
             </View>
           ) : (
             <View style={styles.infoList}>
@@ -278,14 +240,14 @@ export default function PatientProfile(): React.JSX.Element {
                 <Ionicons name="resize-outline" size={20} color="#4CAF50" style={styles.infoIcon} />
                 <View style={styles.infoContent}>
                   <Text style={styles.infoLabel}>Altura</Text>
-                  <Text style={styles.infoValue}>{profileData.height}</Text>
+                  <Text style={styles.infoValue}>{patientData?.altura} cm</Text>
                 </View>
               </View>
               <View style={styles.infoItem}>
                 <Ionicons name="fitness-outline" size={20} color="#4CAF50" style={styles.infoIcon} />
                 <View style={styles.infoContent}>
                   <Text style={styles.infoLabel}>Peso</Text>
-                  <Text style={styles.infoValue}>{profileData.weight}</Text>
+                  <Text style={styles.infoValue}>{patientData?.peso} kg</Text>
                 </View>
               </View>
             </View>
@@ -297,8 +259,8 @@ export default function PatientProfile(): React.JSX.Element {
           {upcomingAppointments.length > 0 ? (
             upcomingAppointments.map((appointment) => (
               <View key={appointment.id} style={styles.appointmentCard}>
-                <Text style={styles.appointmentDate}>{appointment.date}</Text>
-                <Text style={styles.appointmentTime}>{appointment.time}</Text>
+                <Text style={styles.appointmentDate}>{new Date(appointment.data_consulta).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</Text>
+                <Text style={styles.appointmentTime}>{new Date(appointment.data_consulta).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</Text>
               </View>
             ))
           ) : (
@@ -458,10 +420,13 @@ const styles = StyleSheet.create({
   appointmentCard: {
     backgroundColor: "#f0f8f0",
     borderRadius: 10,
-    padding: 15,
+    padding: 18,
     marginBottom: 15,
     borderLeftWidth: 4,
     borderLeftColor: "#4CAF50",
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   appointmentHeader: {
     flexDirection: "row",
