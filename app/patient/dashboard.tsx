@@ -41,6 +41,8 @@ export default function PatientDashboard(): React.JSX.Element {
   const router = useRouter()
   const { patientData, appointments } = usePatient();
 
+  const upcomingAppointments = appointments.filter(appointment => new Date(appointment.data_consulta) > new Date())
+
   if (!patientData) {
     const handleMissingData = async () => {
       try {
@@ -132,15 +134,27 @@ export default function PatientDashboard(): React.JSX.Element {
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Próximas Consultas</Text>
-            <View style={styles.appointmentCard}>
-              <View style={styles.appointmentHeader}>
-                <Ionicons name="calendar-outline" size={24} color="#4CAF50" />
-                <Text style={styles.appointmentDate}>15 de março de 2025</Text>
-                <Text style={styles.appointmentTime}>10:30h</Text>
-              </View>
-              <View style={styles.appointmentContent}>
+
+            {upcomingAppointments && upcomingAppointments.length > 0 ? (
+              upcomingAppointments.map((appointment) => (
+                <View style={styles.appointmentCard} key={appointment.id}>
+                   <View style={styles.appointmentHeader}>
+                    <Ionicons name="calendar-outline" size={24} color="#4CAF50" />
+                    <Text style={styles.appointmentDate}>
+                      {new Date(appointment.data_consulta).toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric',
+                      })}
+                    </Text>
+                    <Text style={styles.appointmentTime}>{new Date(appointment.data_consulta).toLocaleTimeString('pt-BR', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}</Text>
+                  </View>
+                  <View style={styles.appointmentContent}>
                 <Text style={styles.appointmentTitle}>Consulta de Nutrição</Text>
-                <Text style={styles.appointmentDoctor}>Dra. Emily Johnson</Text>
+                <Text style={styles.appointmentDoctor}>{appointment.nutricionista_nome}</Text>
               </View>
               <View style={styles.appointmentActions}>
                 <TouchableOpacity
@@ -151,7 +165,15 @@ export default function PatientDashboard(): React.JSX.Element {
                   <Text style={styles.appointmentButtonTextFilled}>Dúvidas</Text>
                 </TouchableOpacity>
               </View>
-            </View>
+                </View>
+              ))
+            ) : (
+              <View style={styles.emptyState}>
+                <Ionicons name="calendar-outline" size={40} color="#ddd" />
+                <Text style={styles.emptyStateText}>Nenhuma consulta agendada</Text>
+              </View>
+            )}
+            
           </View>
 
           <View style={styles.section}>
@@ -465,6 +487,16 @@ const styles = StyleSheet.create({
   },
   tabLabelActive: {
     color: "#4CAF50",
+  },
+  emptyState: {
+    alignItems: "center",
+    padding: 20,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: "#999",
+    marginTop: 10,
+    marginBottom: 15,
   },
 })
 
