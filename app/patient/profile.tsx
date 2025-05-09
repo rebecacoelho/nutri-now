@@ -239,6 +239,13 @@ export default function PatientProfile(): React.JSX.Element {
               <View style={styles.infoItem}>
                 <Ionicons name="resize-outline" size={20} color="#4CAF50" style={styles.infoIcon} />
                 <View style={styles.infoContent}>
+                  <Text style={styles.infoLabel}>Gênero</Text>
+                  <Text style={styles.infoValue}>{patientData?.genero}</Text>
+                </View>
+              </View>
+              <View style={styles.infoItem}>
+                <Ionicons name="resize-outline" size={20} color="#4CAF50" style={styles.infoIcon} />
+                <View style={styles.infoContent}>
                   <Text style={styles.infoLabel}>Altura</Text>
                   <Text style={styles.infoValue}>{patientData?.altura} cm</Text>
                 </View>

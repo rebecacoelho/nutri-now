@@ -350,3 +350,33 @@ export const createMealPlan = async (mealPlanData: MealPlanData) => {
     throw error;
   }
 };
+
+export const getMealPlan = async (mealPlanId: string) => {
+  try {
+    const token = await AsyncStorage.getItem("accessToken");
+
+    if (!mealPlanId) {
+      return null;
+    }
+
+    const response = await fetch(`${API_URL}/retorna_plano_alimentar/${mealPlanId}/`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+    });
+
+    console.log(response);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Erro ao buscar plano alimentar');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Erro na API:', error);
+    throw error;
+  }
+};

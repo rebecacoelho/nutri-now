@@ -10,6 +10,9 @@ interface PatientData {
   peso: number;
   altura: number;
   objetivo: string;
+  genero: string;
+  endereco: string;
+  plano_alimentar: string;
 }
 
 interface PatientContextData {

@@ -1,29 +1,49 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { SafeAreaView, StyleSheet, Text, View, ScrollView, TouchableOpacity, Image } from "react-native"
-import { Stack, useRouter } from "expo-router"
+import { Stack } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
 import PatientTabBar from "../components/patient-tab-bar"
+import { usePatient } from "../contexts/PatientContext"
+import { getMealPlan } from "@/api"
+import { SubstitutionModal } from "../components/substituion-modal"
 
 interface FoodItem {
   name: string
-  amount: string
   calories: number
+  grupo: string
+  substituicoes: Array<{
+    descricao: string
+    itens: Array<{
+      descricao: string
+      kcal: number
+      grupo: string
+    }>
+  }>
 }
 
 interface MealSectionProps {
   title: string
   time: string
-  calories: string
+  calories: number
   image: string
   foods: FoodItem[]
+  defaultExpanded?: boolean
 }
 
-const MealSection: React.FC<MealSectionProps> = ({ title, time, calories, image, foods }) => {
-  const [expanded, setExpanded] = useState<boolean>(false)
+
+const MealSection: React.FC<MealSectionProps> = ({ title, time, calories, image, foods, defaultExpanded = false }) => {
+  const [expanded, setExpanded] = useState<boolean>(defaultExpanded)
+  const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null)
+  const [isModalVisible, setIsModalVisible] = useState(false)
+
+  const handleOpenSubstitutions = (food: FoodItem) => {
+    setSelectedFood(food)
+    setIsModalVisible(true)
+  }
 
   return (
     <View style={styles.mealSection}>
@@ -41,130 +61,182 @@ const MealSection: React.FC<MealSectionProps> = ({ title, time, calories, image,
         <View style={styles.mealDetails}>
           <Text style={styles.mealDetailsTitle}>Alimentos</Text>
           {foods.map((food, index) => (
-            <View key={index} style={styles.foodItem}>
-              <Text style={styles.foodName}>{food.name}</Text>
-              <Text style={styles.foodAmount}>{food.amount}</Text>
-              <Text style={styles.foodCalories}>{food.calories} cal</Text>
+            <View 
+              key={index} 
+              style={[
+                styles.foodItem,
+                index === foods.length - 1 && styles.lastFoodItem
+              ]}
+            >
+              <View style={styles.foodInfo}>
+                <Text style={styles.foodName}>{food.name}</Text>
+                <Text style={styles.foodCalories}>{food.calories} cal</Text>
+              </View>
+              {food.substituicoes && food.substituicoes.length > 0 && (
+                <TouchableOpacity 
+                  style={styles.substitutionButton}
+                  onPress={() => handleOpenSubstitutions(food)}
+                >
+                  <Ionicons name="swap-horizontal" size={20} color="#4CAF50" />
+                </TouchableOpacity>
+              )}
             </View>
           ))}
-          <View style={styles.mealActions}>
-            <TouchableOpacity style={styles.mealActionButton}>
-              <Ionicons name="checkmark-circle-outline" size={20} color="#4CAF50" />
-              <Text style={styles.mealActionText}>Concluído</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.mealActionButton}>
-              <Ionicons name="swap-horizontal-outline" size={20} color="#4CAF50" />
-              <Text style={styles.mealActionText}>Substituir</Text>
-            </TouchableOpacity>
-          </View>
         </View>
+      )}
+
+      {selectedFood && (
+        <SubstitutionModal
+          isVisible={isModalVisible}
+          onClose={() => {
+            setIsModalVisible(false)
+            setSelectedFood(null)
+          }}
+          substitutions={selectedFood.substituicoes}
+          foodName={selectedFood.name}
+        />
       )}
     </View>
   )
 }
 
-export default function PatientMealPlans(): React.JSX.Element {
-  const router = useRouter()
-  const [activeDay, setActiveDay] = useState<string>("Segunda-feira")
+interface MealItem {
+  descricao: string
+  kcal: number
+  grupo: string
+  substituicoes: Array<{
+    descricao: string
+    itens: Array<{
+      descricao: string
+      kcal: number
+      grupo: string
+    }>
+  }>
+}
 
-  const days = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"]
+interface Meal {
+  nome: string
+  horario: string
+  itens: MealItem[]
+}
+
+interface MealPlanResponse {
+  refeicoes: Meal[]
+}
+
+interface NutrientTotals {
+  calories: number
+  proteins: number
+  fats: number
+  carbs: number
+}
+
+export default function PatientMealPlans(): React.JSX.Element {
+  const [mealPlan, setMealPlan] = useState<MealPlanResponse | null>(null)
+  const { patientData } = usePatient()
+  const [totalNutrients, setTotalNutrients] = useState<NutrientTotals>({
+    calories: 0,
+    proteins: 0,
+    fats: 0,
+    carbs: 0
+  })
+
+
+  useEffect(() => {
+    const fetchMealPlan = async () => {
+      try {
+        const response = await getMealPlan(patientData?.plano_alimentar ?? '')
+        setMealPlan(response)
+        
+        if (response?.refeicoes) {
+          const totals = response.refeicoes.reduce((acc: NutrientTotals, meal: Meal) => {
+            const mealCalories = meal.itens.reduce((sum: number, item: MealItem) => sum + item.kcal, 0)
+            return {
+              calories: acc.calories + mealCalories,
+              proteins: acc.proteins + 0, // Adicionar quando a API fornecer esses dados
+              fats: acc.fats + 0, // Adicionar quando a API fornecer esses dados
+              carbs: acc.carbs + 0 // Adicionar quando a API fornecer esses dados
+            }
+          }, { calories: 0, proteins: 0, fats: 0, carbs: 0 })
+          
+          setTotalNutrients(totals)
+        }
+      } catch (error) {
+        console.error('Erro ao buscar plano alimentar:', error)
+      }
+    }
+    
+    fetchMealPlan()
+  }, [patientData])
   
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
       <Stack.Screen
         options={{
-          title: "Planos de Refeições",
+          title: "Plano Alimentar",
           headerStyle: {
             backgroundColor: "#fff",
           },
         }}
       />
 
-      <View style={styles.daysContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {days.map((day) => (
-            <TouchableOpacity
-              key={day}
-              style={[styles.dayButton, activeDay === day && styles.activeDayButton]}
-              onPress={() => setActiveDay(day)}
-            >
-              <Text style={[styles.dayButtonText, activeDay === day && styles.activeDayButtonText]}>{day}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.nutritionSummary}>
           <View style={styles.nutritionItem}>
-            <Text style={styles.nutritionValue}>1.850</Text>
+            <Text style={styles.nutritionValue}>{totalNutrients.calories}</Text>
             <Text style={styles.nutritionLabel}>Calorias</Text>
           </View>
-          <View style={styles.nutritionDivider} />
-          <View style={styles.nutritionItem}>
-            <Text style={styles.nutritionValue}>75g</Text>
-            <Text style={styles.nutritionLabel}>Proteínas</Text>
-          </View>
-          <View style={styles.nutritionDivider} />
-          <View style={styles.nutritionItem}>
-            <Text style={styles.nutritionValue}>60g</Text>
-            <Text style={styles.nutritionLabel}>Gorduras</Text>
-          </View>
-          <View style={styles.nutritionDivider} />
-          <View style={styles.nutritionItem}>
-            <Text style={styles.nutritionValue}>220g</Text>
-            <Text style={styles.nutritionLabel}>Carboidratos</Text>
-          </View>
+         {totalNutrients.proteins > 0 && (
+           <>
+            <View style={styles.nutritionDivider} />
+            <View style={styles.nutritionItem}>
+              <Text style={styles.nutritionValue}>{totalNutrients.proteins}g</Text>
+              <Text style={styles.nutritionLabel}>Proteínas</Text>
+            </View>
+           </>
+         )}
+         {totalNutrients.fats > 0 && (
+           <>
+            <View style={styles.nutritionDivider} />
+            <View style={styles.nutritionItem}>
+            <Text style={styles.nutritionValue}>{totalNutrients.fats}g</Text>
+              <Text style={styles.nutritionLabel}>Gorduras</Text>
+            </View>
+          </>
+         )}
+         {totalNutrients.carbs > 0 && (
+          <>
+            <View style={styles.nutritionDivider} />
+            <View style={styles.nutritionItem}>
+              <Text style={styles.nutritionValue}>{totalNutrients.carbs}g</Text>
+              <Text style={styles.nutritionLabel}>Carboidratos</Text>
+            </View>
+          </>
+         )}
         </View>
 
-        <MealSection
-          title="Café da Manhã"
-          time="7:30 AM"
-          calories="420"
-          image="/placeholder.svg?height=150&width=150"
-          foods={[
-            { name: "Aveia com Frutas", amount: "1 xícara", calories: 250 },
-            { name: "Iogurte Grego", amount: "1/2 xícara", calories: 100 },
-            { name: "Mel", amount: "1 colher de sopa", calories: 70 },
-          ]}
-        />
+        {mealPlan?.refeicoes?.map((meal: Meal, index: number) => {
+          const totalCalories = meal.itens.reduce((sum: number, item: MealItem) => sum + item.kcal, 0)
+          const foods: FoodItem[] = meal.itens.map(item => ({
+            name: item.descricao,
+            calories: item.kcal,
+            grupo: item.grupo,
+            substituicoes: item.substituicoes
+          }))
 
-        <MealSection
-          title="Almoço"
-          time="12:30 PM"
-          calories="580"
-          image="/placeholder.svg?height=150&width=150"
-          foods={[
-            { name: "Salada de Frango Grelhado", amount: "1 tigela", calories: 350 },
-            { name: "Pão Integral", amount: "1 fatia", calories: 120 },
-            { name: "Molho de Azeite", amount: "1 colher de sopa", calories: 110 },
-          ]}
-        />
-
-        <MealSection
-          title="Jantar"
-          time="7:00 PM"
-          calories="650"
-          image="/placeholder.svg?height=150&width=150"
-          foods={[
-            { name: "Salmão Assado", amount: "5 oz", calories: 300 },
-            { name: "Arroz Integral", amount: "1 xícara", calories: 200 },
-            { name: "Legumes Cozidos", amount: "1 xícara", calories: 100 },
-            { name: "Molho de Manteiga com Limão", amount: "1 colher de sopa", calories: 50 },
-          ]}
-        />
-
-        <MealSection
-          title="Lanches"
-          time="Diversos"
-          calories="200"
-          image="/placeholder.svg?height=150&width=150"
-          foods={[
-            { name: "Maçã", amount: "1 média", calories: 80 },
-            { name: "Amêndoas", amount: "1 oz", calories: 120 },
-          ]}
-        />
+          return (
+            <MealSection
+              key={index}
+              title={meal.nome}
+              time={meal.horario}
+              calories={totalCalories}
+              image="/placeholder.svg?height=150&width=150"
+              foods={foods}
+              defaultExpanded={index === 0}
+            />
+          )
+        })}
       </ScrollView>
 
       <PatientTabBar activeTab="refeicoes" /> 
@@ -176,30 +248,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f8f8f8",
-  },
-  daysContainer: {
-    backgroundColor: "#fff",
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  dayButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    marginHorizontal: 5,
-    borderRadius: 20,
-    backgroundColor: "#f0f0f0",
-  },
-  activeDayButton: {
-    backgroundColor: "#4CAF50",
-  },
-  dayButtonText: {
-    fontSize: 14,
-    color: "#666",
-  },
-  activeDayButtonText: {
-    color: "#fff",
-    fontWeight: "600",
   },
   scrollContent: {
     padding: 20,
@@ -222,12 +270,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   nutritionValue: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "bold",
-    color: "#333",
+    color: "#4CAF50",
   },
   nutritionLabel: {
-    fontSize: 10,
+    fontSize: 14,
     color: "#666",
     marginTop: 5,
   },
@@ -298,6 +346,16 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#f0f0f0",
   },
+  lastFoodItem: {
+    borderBottomWidth: 0,
+    paddingBottom: 0,
+  },
+  foodInfo: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   foodName: {
     flex: 2,
     fontSize: 14,
@@ -314,11 +372,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#4CAF50",
     textAlign: "right",
-  },
-  mealActions: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 15,
   },
   mealActionButton: {
     flexDirection: "row",
@@ -360,5 +413,9 @@ const styles = StyleSheet.create({
   tabLabelActive: {
     color: "#4CAF50",
   },
+  substitutionButton: {
+    padding: 8,
+    marginLeft: 8,
+  }
 })
 

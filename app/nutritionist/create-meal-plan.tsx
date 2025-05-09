@@ -1,12 +1,14 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
-import { SafeAreaView, StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Switch } from "react-native"
+import { useState, useEffect } from "react"
+import { SafeAreaView, StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Switch, Alert } from "react-native"
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
 import NutritionistTabBar from "../components/nutritionist-tab-bar"
+import { createMealPlan, MealPlanData, Meal, MealItem, Substitution, SubstitutionItem } from "../../api"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
 interface Patient {
   id: string
@@ -23,21 +25,51 @@ interface FoodItem {
 interface MealEditorProps {
   title: string
   defaultTime: string
+  onMealChange: (meal: Meal) => void
 }
 
-const MealEditor: React.FC<MealEditorProps> = ({ title, defaultTime }) => {
+const MealEditor: React.FC<MealEditorProps> = ({ title, defaultTime, onMealChange }) => {
   const [foods, setFoods] = useState<FoodItem[]>([{ id: "1", name: "", amount: "", calories: "" }])
+  const [time, setTime] = useState(defaultTime)
 
   const addFood = (): void => {
     const newId = (Number.parseInt(foods[foods.length - 1].id) + 1).toString()
     setFoods([...foods, { id: newId, name: "", amount: "", calories: "" }])
   }
 
+  const updateMeal = (newFoods: FoodItem[], newTime: string) => {
+    const mealItems: MealItem[] = newFoods.map(food => ({
+      descricao: `${food.name} - ${food.amount}`,
+      kcal: parseInt(food.calories) || 0,
+      grupo: "Outros",
+      substituicoes: []
+    }))
+
+    const meal: Meal = {
+      horario: newTime,
+      nome: title,
+      items: mealItems
+    }
+
+    onMealChange(meal)
+  }
+
+  useEffect(() => {
+    updateMeal(foods, time)
+  }, [foods, time])
+
   return (
     <View style={styles.section}>
       <View style={styles.mealEditorHeader}>
         <Text style={styles.sectionTitle}>{title}</Text>
-        <TextInput style={styles.timeInput} defaultValue={defaultTime} />
+        <TextInput 
+          style={styles.timeInput} 
+          value={time}
+          onChangeText={(newTime) => {
+            setTime(newTime)
+            updateMeal(foods, newTime)
+          }}
+        />
       </View>
 
       <View style={styles.foodsContainer}>
@@ -47,11 +79,39 @@ const MealEditor: React.FC<MealEditorProps> = ({ title, defaultTime }) => {
           <Text style={[styles.foodHeaderText, { flex: 1 }]}>Calorias</Text>
         </View>
 
-        {foods.map((food) => (
+        {foods.map((food, index) => (
           <View key={food.id} style={styles.foodRow}>
-            <TextInput style={[styles.foodInput, { flex: 2 }]} placeholder="ex: Aveia" />
-            <TextInput style={[styles.foodInput, { flex: 1 }]} placeholder="ex: 1 xícara" />
-            <TextInput style={[styles.foodInput, { flex: 1 }]} placeholder="ex: 150" keyboardType="number-pad" />
+            <TextInput 
+              style={[styles.foodInput, { flex: 2 }]} 
+              placeholder="ex: Aveia"
+              value={food.name}
+              onChangeText={(text) => {
+                const newFoods = [...foods]
+                newFoods[index].name = text
+                setFoods(newFoods)
+              }}
+            />
+            <TextInput 
+              style={[styles.foodInput, { flex: 1 }]} 
+              placeholder="ex: 1 xícara"
+              value={food.amount}
+              onChangeText={(text) => {
+                const newFoods = [...foods]
+                newFoods[index].amount = text
+                setFoods(newFoods)
+              }}
+            />
+            <TextInput 
+              style={[styles.foodInput, { flex: 1 }]} 
+              placeholder="ex: 150" 
+              keyboardType="number-pad"
+              value={food.calories}
+              onChangeText={(text) => {
+                const newFoods = [...foods]
+                newFoods[index].calories = text
+                setFoods(newFoods)
+              }}
+            />
           </View>
         ))}
 
@@ -68,6 +128,8 @@ export default function CreateMealPlan(): React.JSX.Element {
   const router = useRouter()
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
   const [selectedDay, setSelectedDay] = useState<string>("Segunda-feira")
+  const [meals, setMeals] = useState<Meal[]>([])
+  const [isLoading, setIsLoading] = useState(false)
 
   const patients: Patient[] = [
     { id: "1", name: "Sarah Johnson" },
@@ -76,6 +138,52 @@ export default function CreateMealPlan(): React.JSX.Element {
   ]
 
   const days: string[] = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"]
+
+  const handleMealChange = (updatedMeal: Meal) => {
+    setMeals(currentMeals => {
+      const mealIndex = currentMeals.findIndex(meal => meal.nome === updatedMeal.nome)
+      if (mealIndex >= 0) {
+        const newMeals = [...currentMeals]
+        newMeals[mealIndex] = updatedMeal
+        return newMeals
+      }
+      return [...currentMeals, updatedMeal]
+    })
+  }
+
+  const handleSaveMealPlan = async () => {
+    if (!selectedPatient) {
+      Alert.alert("Erro", "Por favor, selecione um paciente")
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      const nutritionistId = await AsyncStorage.getItem("@nutricionista/userId")
+
+      if (!nutritionistId) {
+        Alert.alert("Erro", "ID do nutricionista não encontrado")
+        return
+      }
+
+      const mealPlanData: MealPlanData = {
+        paciente: parseInt(selectedPatient.id),
+        id_nutricionista: parseInt(nutritionistId),
+        dados_json: {
+          refeicoes: meals
+        }
+      }
+
+      await createMealPlan(mealPlanData)
+      Alert.alert("Sucesso", "Plano alimentar criado com sucesso!")
+      router.back()
+    } catch (error) {
+      console.error("Erro ao salvar plano alimentar:", error)
+      Alert.alert("Erro", "Não foi possível salvar o plano alimentar. Tente novamente.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -167,10 +275,10 @@ export default function CreateMealPlan(): React.JSX.Element {
           </View>
         </View>
 
-        <MealEditor title="Café da Manhã" defaultTime="7:30 AM" />
-        <MealEditor title="Almoço" defaultTime="12:30 PM" />
-        <MealEditor title="Jantar" defaultTime="7:00 PM" />
-        <MealEditor title="Lanches" defaultTime="Vários" />
+        <MealEditor title="Café da Manhã" defaultTime="7:30" onMealChange={handleMealChange} />
+        <MealEditor title="Almoço" defaultTime="12:30" onMealChange={handleMealChange} />
+        <MealEditor title="Jantar" defaultTime="7:00" onMealChange={handleMealChange} />
+        <MealEditor title="Lanches" defaultTime="Vários" onMealChange={handleMealChange} />
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Opções Adicionais</Text>
@@ -189,8 +297,14 @@ export default function CreateMealPlan(): React.JSX.Element {
         </View>
 
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.saveButton} onPress={() => router.back()}>
-            <Text style={styles.saveButtonText}>Salvar Plano Alimentar</Text>
+          <TouchableOpacity 
+            style={[styles.saveButton, isLoading && styles.disabledButton]} 
+            onPress={handleSaveMealPlan}
+            disabled={isLoading}
+          >
+            <Text style={styles.saveButtonText}>
+              {isLoading ? "Salvando..." : "Salvar Plano Alimentar"}
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -378,5 +492,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
+  disabledButton: {
+    opacity: 0.7,
+    backgroundColor: "#999"
+  }
 })
 
