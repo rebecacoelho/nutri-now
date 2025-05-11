@@ -83,14 +83,14 @@ export default function WelcomeScreen(): React.JSX.Element {
             description="Crie e acompanhe planos de refeição personalizados para os pacientes"
           />
           <FeatureItem
-            icon="chatbubbles-outline"
-            title="Comunicação Direta"
-            description="Conecte nutricionistas e pacientes de forma simples"
+            icon="leaf-outline"
+            title="Biblioteca de Alimentos"
+            description="Consulte informações nutricionais detalhadas de diversos alimentos"
           />
           <FeatureItem
-            icon="bar-chart-outline"
-            title="Análise de Progresso"
-            description="Monitore o progresso dos pacientes com gráficos detalhados"
+            icon="clipboard-outline"
+            title="Consultas"
+            description="Visualize histórico de consultas e os próximos agendamentos"
           />
         </View>
 
