@@ -167,31 +167,10 @@ export default function NutritionistProfile(): React.JSX.Element {
               onValueChange={() => toggleNotificationSetting("appointmentReminders")}
             />
           </View>
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Alertas de Novos Pacientes</Text>
-              <Text style={styles.settingDescription}>Receba notificações quando novos pacientes se registrarem</Text>
-            </View>
-            <Switch
-              trackColor={{ false: "#ddd", true: "#a5d6a7" }}
-              thumbColor={"#4CAF50"}
-              value={notificationSettings.newPatientAlerts}
-              onValueChange={() => toggleNotificationSetting("newPatientAlerts")}
-            />
-          </View>
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Notificações de Mensagens</Text>
-              <Text style={styles.settingDescription}>Receba notificações de novas mensagens</Text>
-            </View>
-            <Switch
-              trackColor={{ false: "#ddd", true: "#a5d6a7" }}
-              thumbColor={"#4CAF50"}
-              value={notificationSettings.messageNotifications}
-              onValueChange={() => toggleNotificationSetting("messageNotifications")}
-            />
-          </View>
-          <View style={styles.settingItem}>
+          <View style={[
+            styles.settingItem,
+            { borderBottomWidth: 0 }
+          ]}>
             <View style={styles.settingInfo}>
               <Text style={styles.settingTitle}>Alertas de Progresso dos Pacientes</Text>
               <Text style={styles.settingDescription}>Receba notificações sobre progresso significativo dos pacientes</Text>

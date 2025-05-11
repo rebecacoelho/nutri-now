@@ -79,7 +79,6 @@ export default function NutritionistDashboard(): React.JSX.Element {
               <Text style={styles.statValue}>{appointments.length}</Text>
               <Text style={styles.statLabel}>Consulta(s)</Text>
             </View>
-            <View style={styles.statDivider} />
           </View>
         </View>
 

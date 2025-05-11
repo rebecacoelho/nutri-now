@@ -1,37 +1,34 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { SafeAreaView, StyleSheet, Text, View, ScrollView, TouchableOpacity } from "react-native"
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
 import NutritionistTabBar from "../components/nutritionist-tab-bar"
+import { getAppointments, getNutritionistData } from "../../api"
 
-const patientProgressData = [
-  { month: "Jan", count: 12 },
-  { month: "Fev", count: 15 },
-  { month: "Mar", count: 18 },
-  { month: "Abr", count: 22 },
-  { month: "Mai", count: 25 },
-  { month: "Jun", count: 28 },
-]
-
-const appointmentData = [
-  { day: "Seg", count: 5 },
-  { day: "Ter", count: 7 },
-  { day: "Qua", count: 4 },
-  { day: "Qui", count: 8 },
-  { day: "Sex", count: 6 },
-  { day: "Sáb", count: 3 },
-  { day: "Dom", count: 0 },
-]
-
-const mealPlanComplianceData = {
-  compliant: 68,
-  partial: 22,
-  nonCompliant: 10,
+interface AppointmentStats {
+  totalAppointments: number;
+  appointmentsByDay: {
+    day: string;
+    count: number;
+  }[];
+  recentAppointments: {
+    paciente_nome: string;
+    data_consulta: string;
+  }[];
 }
+
+interface PatientStats {
+  totalPatients: number;
+  patientGrowth: {
+    month: string;
+    count: number;
+  }[];
+}
+
 
 interface BarChartProps {
   data: Array<{ month?: string; day?: string; count: number }>
@@ -39,7 +36,6 @@ interface BarChartProps {
   title: string
   subtitle?: string
 }
-
 
 const BarChart: React.FC<BarChartProps> = ({ data, barColor = "#4CAF50", title, subtitle }) => {
   const maxValue = Math.max(...data.map((item) => item.count))
@@ -96,8 +92,143 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon, color }) => {
 }
 
 export default function Reports(): React.JSX.Element {
-  const router = useRouter()
   const [timeRange, setTimeRange] = useState<"week" | "month" | "quarter" | "year">("month")
+  const [appointmentStats, setAppointmentStats] = useState<AppointmentStats>({
+    totalAppointments: 0,
+    appointmentsByDay: [],
+    recentAppointments: []
+  })
+  const [patientStats, setPatientStats] = useState<PatientStats>({
+    totalPatients: 0,
+    patientGrowth: []
+  })
+  const [loading, setLoading] = useState(true)
+
+  const getPatientGrowthData = (appointments: any[]) => {
+    const now = new Date()
+    const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
+    
+    const getUniquePatients = (startDate: Date, endDate: Date) => {
+      const uniquePatients = new Set(
+        appointments
+          .filter(app => {
+            const appDate = new Date(app.data_consulta)
+            return appDate >= startDate && appDate <= endDate
+          })
+          .map(app => app.paciente_nome)
+      )
+      return uniquePatients.size
+    }
+
+    if (timeRange === "week") {
+      const days = []
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(now)
+        date.setDate(now.getDate() - i)
+        const startOfDay = new Date(date.setHours(0, 0, 0, 0))
+        const endOfDay = new Date(date.setHours(23, 59, 59, 999))
+        days.push({
+          month: date.toLocaleDateString('pt-BR', { weekday: 'short' }),
+          count: getUniquePatients(startOfDay, endOfDay)
+        })
+      }
+      return days
+    } else if (timeRange === "month") {
+      const months = []
+      for (let i = 5; i >= 0; i--) {
+        const date = new Date(now)
+        date.setMonth(now.getMonth() - i)
+        const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1)
+        const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0)
+        months.push({
+          month: monthNames[startOfMonth.getMonth()],
+          count: getUniquePatients(startOfMonth, endOfMonth)
+        })
+      }
+      return months
+    } else if (timeRange === "quarter") {
+      const quarters = []
+      for (let i = 3; i >= 0; i--) {
+        const date = new Date(now)
+        date.setMonth(now.getMonth() - (i * 3))
+        const startOfQuarter = new Date(date.getFullYear(), Math.floor(date.getMonth() / 3) * 3, 1)
+        const endOfQuarter = new Date(startOfQuarter.getFullYear(), startOfQuarter.getMonth() + 3, 0)
+        quarters.push({
+          month: `${monthNames[startOfQuarter.getMonth()]}-${monthNames[endOfQuarter.getMonth()]}`,
+          count: getUniquePatients(startOfQuarter, endOfQuarter)
+        })
+      }
+      return quarters
+    } else {
+      const year = []
+      for (let i = 3; i >= 0; i--) {
+        const date = new Date(now)
+        date.setMonth(now.getMonth() - (i * 3))
+        const startOfQuarter = new Date(date.getFullYear(), Math.floor(date.getMonth() / 3) * 3, 1)
+        const endOfQuarter = new Date(startOfQuarter.getFullYear(), startOfQuarter.getMonth() + 3, 0)
+        year.push({
+          month: `${monthNames[startOfQuarter.getMonth()]}-${monthNames[endOfQuarter.getMonth()]}`,
+          count: getUniquePatients(startOfQuarter, endOfQuarter)
+        })
+      }
+      return year
+    }
+  }
+
+  const processAppointmentData = (appointments: any[]) => {
+    const days = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"]
+    const appointmentsByDay = days.map(day => ({ day, count: 0 }))
+    
+    appointments.forEach(appointment => {
+      const date = new Date(appointment.data_consulta)
+      const dayIndex = date.getDay()
+      appointmentsByDay[dayIndex].count++
+    })
+
+    const recentAppointments = appointments
+      .sort((a, b) => new Date(b.data_consulta).getTime() - new Date(a.data_consulta).getTime())
+      .slice(0, 3)
+
+    return {
+      totalAppointments: appointments.length,
+      appointmentsByDay,
+      recentAppointments
+    }
+  }
+
+  const loadData = async () => {
+    try {
+      setLoading(true)
+      const appointments = await getAppointments()
+
+      const stats = processAppointmentData(appointments)
+      setAppointmentStats(stats)
+
+      const growth = getPatientGrowthData(appointments)
+      setPatientStats({
+        totalPatients: new Set(appointments.map((app: any) => app.paciente_nome)).size,
+        patientGrowth: growth
+      })
+    } catch (error) {
+      console.error("Erro ao carregar dados:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadData()
+  }, [timeRange])
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text>Carregando...</Text>
+        </View>
+      </SafeAreaView>
+    )
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -142,55 +273,54 @@ export default function Reports(): React.JSX.Element {
       
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.statsContainer}>
-          <StatCard title="Total de Pacientes" value="32" icon="people" color="#4CAF50" />
-          <StatCard title="Consultas" value="18" icon="calendar" color="#2196F3" />
-          <StatCard title="Planos Alimentares" value="24" icon="restaurant" color="#FF9800" />
+          <StatCard 
+            title="Total de Pacientes" 
+            value={patientStats.totalPatients.toString()} 
+            icon="people" 
+            color="#4CAF50" 
+          />
+          <StatCard 
+            title="Consultas" 
+            value={appointmentStats.totalAppointments.toString()} 
+            icon="calendar" 
+            color="#2196F3" 
+          />
         </View>
 
-        <BarChart data={patientProgressData} title="Crescimento de Pacientes" subtitle="Número de pacientes ao longo do tempo" />
+        <BarChart 
+          data={patientStats.patientGrowth} 
+          title="Crescimento de Pacientes" 
+          subtitle="Pacientes únicos por período" 
+          barColor="#4CAF50"
+        />
 
-        <BarChart data={appointmentData} title="Consultas Semanais" barColor="#2196F3" />
+        <BarChart 
+          data={appointmentStats.appointmentsByDay} 
+          title="Consultas Semanais" 
+          barColor="#2196F3" 
+        />
 
         <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Atividade Recente</Text>
-          <TouchableOpacity>
-            <Text style={styles.viewAllText}>Ver Tudo</Text>
-          </TouchableOpacity>
-        </View>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Atividade Recente</Text>
+          </View>
 
-          <View style={styles.activityItem}>
-            <View style={[styles.activityIcon, { backgroundColor: "#E3F2FD" }]}>
+          {appointmentStats.recentAppointments.map((appointment, index) => (
+            <View key={index} style={styles.activityItem}>
+              <View style={[styles.activityIcon, { backgroundColor: "#E3F2FD" }]}>
                 <Ionicons name="calendar" size={20} color="#2196F3" />
+              </View>
+              <View style={styles.activityContent}>
+                <Text style={styles.activityTitle}>Consulta Agendada</Text>
+                <Text style={styles.activityDescription}>
+                  {appointment.paciente_nome} - {new Date(appointment.data_consulta).toLocaleDateString()}
+                </Text>
+              </View>
+              <Text style={styles.activityTime}>
+                {new Date(appointment.data_consulta).toLocaleTimeString()}
+              </Text>
             </View>
-            <View style={styles.activityContent}>
-              <Text style={styles.activityTitle}>Nova Consulta</Text>
-              <Text style={styles.activityDescription}>Sarah Johnson agendou para 18 de março, às 14:00</Text>
-            </View>
-            <Text style={styles.activityTime}>Há 2 horas</Text>
-          </View>
-
-          <View style={styles.activityItem}>
-            <View style={[styles.activityIcon, { backgroundColor: "#E8F5E9" }]}>
-              <Ionicons name="restaurant" size={20} color="#4CAF50" />
-            </View>
-            <View style={styles.activityContent}>
-              <Text style={styles.activityTitle}>Plano Alimentar Criado</Text>
-              <Text style={styles.activityDescription}>Plano de Perda de Peso criado para Michael Brown</Text>
-            </View>
-            <Text style={styles.activityTime}>Há 5 horas</Text>
-          </View>
-
-          <View style={styles.activityItem}>
-            <View style={[styles.activityIcon, { backgroundColor: "#FFF3E0" }]}>
-              <Ionicons name="chatbubbles" size={20} color="#FF9800" />
-            </View>
-            <View style={styles.activityContent}>
-              <Text style={styles.activityTitle}>Nova Mensagem</Text>
-              <Text style={styles.activityDescription}>Emily Davis enviou uma mensagem para você</Text>
-            </View>
-            <Text style={styles.activityTime}>Há 1 dia</Text>
-          </View>
+          ))}
         </View>
       </ScrollView>
 
@@ -453,6 +583,11 @@ const styles = StyleSheet.create({
   activityTime: {
     fontSize: 12,
     color: "#999",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 })
 
