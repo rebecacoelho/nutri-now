@@ -13,6 +13,7 @@ interface PatientData {
   genero: string;
   endereco: string;
   plano_alimentar: string;
+  telefone: string;
 }
 
 interface PatientContextData {

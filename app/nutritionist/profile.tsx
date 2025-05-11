@@ -30,13 +30,7 @@ interface Appointment {
 
 export default function NutritionistProfile(): React.JSX.Element {
   const router = useRouter()
-  const [isEditing, setIsEditing] = useState<boolean>(false)
   const { nutritionistData } = useNutritionist()
-  const [profileData, setProfileData] = useState({
-    name: "Dra. Emily Johnson",
-    email: "dra.johnson@nutricare.com",
-    phone: "+1 (555) 987-6543",
-  })
 
   // Configurações de notificações
   const [notificationSettings, setNotificationSettings] = useState({
@@ -98,11 +92,6 @@ export default function NutritionistProfile(): React.JSX.Element {
 
   }
 
-  const handleSaveProfile = (): void => {
-    Alert.alert("Sucesso", "Perfil atualizado com sucesso")
-    setIsEditing(false)
-  }
-
   const toggleNotificationSetting = (setting: keyof typeof notificationSettings): void => {
     setNotificationSettings({
       ...notificationSettings,
@@ -131,26 +120,9 @@ export default function NutritionistProfile(): React.JSX.Element {
         <View style={styles.profileHeader}>
           <View style={styles.profileImageContainer}>
             <Image source={{ uri: "/placeholder.svg?height=150&width=150" }} style={styles.profileImage} />
-            {!isEditing && (
-              <TouchableOpacity style={styles.editImageButton}>
-                <Ionicons name="camera-outline" size={20} color="#fff" />
-              </TouchableOpacity>
-            )}
           </View>
           <Text style={styles.profileName}>{nutritionistData?.nome}</Text>
           <Text style={styles.profileEmail}>{nutritionistData?.email}</Text>
-
-          {!isEditing ? (
-            <TouchableOpacity style={styles.editProfileButton} onPress={() => setIsEditing(true)}>
-              <Ionicons name="create-outline" size={18} color="#fff" />
-              <Text style={styles.editProfileButtonText}>Editar Perfil</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity style={styles.saveProfileButton} onPress={handleSaveProfile}>
-              <Ionicons name="save-outline" size={18} color="#fff" />
-              <Text style={styles.saveProfileButtonText}>Salvar Alterações</Text>
-            </TouchableOpacity>
-          )}
         </View>
 
         <View style={styles.section}>

@@ -20,29 +20,9 @@ import { Ionicons } from "@expo/vector-icons"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { usePatient } from "../contexts/PatientContext"
 
-interface Appointment {
-  id: string
-  nutritionist: string
-  date: string
-  time: string
-  type: string
-}
-
 export default function PatientProfile(): React.JSX.Element {
   const router = useRouter()
-  const [isEditing, setIsEditing] = useState<boolean>(false)
   const { patientData, appointments } = usePatient()
-  const [profileData, setProfileData] = useState({
-    name: "Sarah Johnson",
-    email: "sarah.johnson@example.com",
-    phone: "(98) 92474-2384",
-    dateOfBirth: "05/12/1990",
-    height: "1,68 m",
-    weight: "75 kg",
-    allergies: "Amendoim, Frutos do mar",
-    medicalConditions: "Nenhuma",
-    dietaryRestrictions: "Vegetariano",
-  })
 
   // Configurações de notificação
   const [notificationSettings, setNotificationSettings] = useState({
@@ -81,12 +61,6 @@ export default function PatientProfile(): React.JSX.Element {
 
   }
 
-  const handleSaveProfile = (): void => {
-    // Em um app real, você salvaria os dados no backend
-    Alert.alert("Sucesso", "Perfil atualizado com sucesso")
-    setIsEditing(false)
-  }
-
   const toggleNotificationSetting = (setting: keyof typeof notificationSettings): void => {
     setNotificationSettings({
       ...notificationSettings,
@@ -116,90 +90,19 @@ export default function PatientProfile(): React.JSX.Element {
         <View style={styles.profileHeader}>
           <View style={styles.profileImageContainer}>
             <Image source={{ uri: "/placeholder.svg?height=150&width=150" }} style={styles.profileImage} />
-            {!isEditing && (
-              <TouchableOpacity style={styles.editImageButton}>
-                <Ionicons name="camera-outline" size={20} color="#fff" />
-              </TouchableOpacity>
-            )}
           </View>
           <Text style={styles.profileName}>{patientData?.nome}</Text>
           <Text style={styles.profileEmail}>{patientData?.email}</Text>
-
-          {!isEditing ? (
-            <TouchableOpacity style={styles.editProfileButton} onPress={() => setIsEditing(true)}>
-              <Ionicons name="create-outline" size={18} color="#fff" />
-              <Text style={styles.editProfileButtonText}>Editar Perfil</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity style={styles.saveProfileButton} onPress={handleSaveProfile}>
-              <Ionicons name="save-outline" size={18} color="#fff" />
-              <Text style={styles.saveProfileButtonText}>Salvar Alterações</Text>
-            </TouchableOpacity>
-          )}
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Informações Pessoais</Text>
-          {isEditing ? (
-            <View style={styles.editForm}>
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Nome Completo</Text>
-                <TextInput
-                  style={styles.formInput}
-                  value={profileData.name}
-                  onChangeText={(text) => setProfileData({ ...profileData, name: text })}
-                />
-              </View>
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>E-mail</Text>
-                <TextInput
-                  style={styles.formInput}
-                  value={profileData.email}
-                  onChangeText={(text) => setProfileData({ ...profileData, email: text })}
-                  keyboardType="email-address"
-                />
-              </View>
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Telefone</Text>
-                <TextInput
-                  style={styles.formInput}
-                  value={profileData.phone}
-                  onChangeText={(text) => setProfileData({ ...profileData, phone: text })}
-                  keyboardType="phone-pad"
-                />
-              </View>
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Data de Nascimento</Text>
-                <TextInput
-                  style={styles.formInput}
-                  value={profileData.dateOfBirth}
-                  onChangeText={(text) => setProfileData({ ...profileData, dateOfBirth: text })}
-                />
-              </View>
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Gênero</Text>
-                <TextInput
-                  style={styles.formInput}
-                  value={profileData.dateOfBirth}
-                  onChangeText={(text) => setProfileData({ ...profileData, dateOfBirth: text })}
-                />
-              </View>
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Idade</Text>
-                <TextInput
-                  style={styles.formInput}
-                  value={profileData.dateOfBirth}
-                  onChangeText={(text) => setProfileData({ ...profileData, dateOfBirth: text })}
-                />
-              </View>
-            </View>
-          ) : (
             <View style={styles.infoList}>
               <View style={styles.infoItem}>
                 <Ionicons name="call-outline" size={20} color="#4CAF50" style={styles.infoIcon} />
                 <View style={styles.infoContent}>
                   <Text style={styles.infoLabel}>Telefone</Text>
-                  <Text style={styles.infoValue}>{profileData.phone}</Text>
+                  <Text style={styles.infoValue}>{patientData?.telefone}</Text>
                 </View>
               </View>
               <View style={styles.infoItem}>
@@ -210,31 +113,10 @@ export default function PatientProfile(): React.JSX.Element {
                 </View>
               </View>
             </View>
-          )}
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Informações de Saúde</Text>
-          {isEditing ? (
-            <View style={styles.editForm}>
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Altura</Text>
-                <TextInput
-                  style={styles.formInput}
-                  value={profileData.height}
-                  onChangeText={(text) => setProfileData({ ...profileData, height: text })}
-                />
-              </View>
-              <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Peso</Text>
-                <TextInput
-                  style={styles.formInput}
-                  value={profileData.weight}
-                  onChangeText={(text) => setProfileData({ ...profileData, weight: text })}
-                />
-              </View>
-            </View>
-          ) : (
             <View style={styles.infoList}>
               <View style={styles.infoItem}>
                 <Ionicons name="resize-outline" size={20} color="#4CAF50" style={styles.infoIcon} />
@@ -258,7 +140,6 @@ export default function PatientProfile(): React.JSX.Element {
                 </View>
               </View>
             </View>
-          )}
         </View>
 
         <View style={styles.section}>

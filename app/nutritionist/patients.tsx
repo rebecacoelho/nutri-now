@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   SafeAreaView,
   StyleSheet,
@@ -17,112 +17,72 @@ import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
 import NutritionistTabBar from "../components/nutritionist-tab-bar"
+import { getAppointments } from "../../api"
 
-interface Patient {
-  id: string
-  name: string
-  image: string
-  condition: string
-  lastVisit: string
-  nextAppointment?: string
-  progress: number
-  goal: string
+interface Appointment {
+  id: number
+  data_consulta: string
+  nutricionista_nome: string
+  paciente_nome: string
+  realizada: boolean
+}
+
+interface PatientAppointments {
+  paciente_nome: string
+  consultas: Appointment[]
 }
 
 export default function Patients(): React.JSX.Element {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState<string>("")
-  const [filterCondition, setFilterCondition] = useState<string | null>(null)
+  const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [groupedAppointments, setGroupedAppointments] = useState<PatientAppointments[]>([])
 
-  // Dados de exemplo para pacientes
-  const patients: Patient[] = [
-    {
-      id: "1",
-      name: "Sarah Johnson",
-      image: "/placeholder.svg?height=60&width=60",
-      condition: "Controle de Peso",
-      lastVisit: "10 de Março de 2025",
-      nextAppointment: "17 de Março de 2025",
-      progress: 75,
-      goal: "Perder 7 kg",
-    },
-    {
-      id: "2",
-      name: "Michael Brown",
-      image: "/placeholder.svg?height=60&width=60",
-      condition: "Controle de Diabetes",
-      lastVisit: "8 de Março de 2025",
-      nextAppointment: "22 de Março de 2025",
-      progress: 60,
-      goal: "Estabilizar glicemia",
-    },
-    {
-      id: "3",
-      name: "Emily Davis",
-      image: "/placeholder.svg?height=60&width=60",
-      condition: "Nutrição Esportiva",
-      lastVisit: "5 de Março de 2025",
-      progress: 85,
-      goal: "Melhorar desempenho",
-    },
-    {
-      id: "4",
-      name: "Robert Wilson",
-      image: "/placeholder.svg?height=60&width=60",
-      condition: "Controle de Peso",
-      lastVisit: "3 de Março de 2025",
-      nextAppointment: "18 de Março de 2025",
-      progress: 40,
-      goal: "Perder 9 kg",
-    },
-    {
-      id: "5",
-      name: "Jennifer Lee",
-      image: "/placeholder.svg?height=60&width=60",
-      condition: "Nutrição na Gravidez",
-      lastVisit: "1 de Março de 2025",
-      nextAppointment: "15 de Março de 2025",
-      progress: 90,
-      goal: "Dieta saudável na gravidez",
-    },
-    {
-      id: "6",
-      name: "David Martinez",
-      image: "/placeholder.svg?height=60&width=60",
-      condition: "Controle de Diabetes",
-      lastVisit: "28 de Fevereiro de 2025",
-      progress: 55,
-      goal: "Reduzir níveis de A1C",
-    },
-    {
-      id: "7",
-      name: "Amanda Taylor",
-      image: "/placeholder.svg?height=60&width=60",
-      condition: "Nutrição Esportiva",
-      lastVisit: "25 de Fevereiro de 2025",
-      nextAppointment: "20 de Março de 2025",
-      progress: 70,
-      goal: "Aumentar massa muscular",
-    },
-  ]
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const response = await getAppointments()
+        setAppointments(response)
 
-  const conditions = Array.from(new Set(patients.map((patient) => patient.condition)))
+        const grouped = response.reduce((acc: { [key: string]: Appointment[] }, appointment: Appointment) => {
+          if (!acc[appointment.paciente_nome]) {
+            acc[appointment.paciente_nome] = []
+          }
+          acc[appointment.paciente_nome].push(appointment)
+          return acc
+        }, {} as { [key: string]: Appointment[] })
 
-  const filteredPatients = patients.filter((patient) => {
-    const matchesSearch =
-      patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      patient.condition.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCondition = filterCondition ? patient.condition === filterCondition : true
+        const groupedArray = (Object.entries(grouped) as [string, Appointment[]][]).map(([paciente_nome, consultas]) => ({
+          paciente_nome,
+          consultas: consultas.sort((a: Appointment, b: Appointment) => new Date(b.data_consulta).getTime() - new Date(a.data_consulta).getTime())
+        }))
 
-    return matchesSearch && matchesCondition
-  })
+        setGroupedAppointments(groupedArray)
+      } catch (error) {
+        console.error('Erro ao buscar consultas:', error)
+      }
+    }
 
-  const handlePatientPress = (patientId: string): void => {
-    alert(`Navegar para os detalhes do paciente com ID: ${patientId}`)
+    fetchAppointments()
+  }, [])
+
+  const filteredPatients = groupedAppointments.filter((patient) =>
+    patient.paciente_nome.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const formatDate = (date: string) => {
+    return new Date(date).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    })
   }
 
-  const handleAddPatient = (): void => {
-    router.push("/nutritionist/add-patient")
+  const formatTime = (date: string) => {
+    return new Date(date).toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    })
   }
 
   return (
@@ -130,15 +90,10 @@ export default function Patients(): React.JSX.Element {
       <StatusBar style="dark" />
       <Stack.Screen
         options={{
-          title: "Meus Pacientes",
+          title: "Histórico de Pacientes",
           headerStyle: {
             backgroundColor: "#fff",
           },
-          headerRight: () => (
-            <TouchableOpacity style={styles.headerButton} onPress={handleAddPatient}>
-              <Ionicons name="person-add-outline" size={24} color="#4CAF50" />
-            </TouchableOpacity>
-          ),
         }}
       />
 
@@ -159,95 +114,57 @@ export default function Patients(): React.JSX.Element {
         </View>
       </View>
 
-      <View style={styles.filtersContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <TouchableOpacity
-            style={[styles.filterButton, filterCondition === null && styles.filterButtonActive]}
-            onPress={() => setFilterCondition(null)}
-          >
-            <Text style={[styles.filterButtonText, filterCondition === null && styles.filterButtonTextActive]}>
-              Todos
-            </Text>
-          </TouchableOpacity>
-
-          {conditions.map((condition) => (
-            <TouchableOpacity
-              key={condition}
-              style={[styles.filterButton, filterCondition === condition && styles.filterButtonActive]}
-              onPress={() => setFilterCondition(condition)}
-            >
-              <Text style={[styles.filterButtonText, filterCondition === condition && styles.filterButtonTextActive]}>
-                {condition}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
       <FlatList
         data={filteredPatients}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.paciente_nome}
         contentContainerStyle={styles.patientsList}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.patientCard} onPress={() => handlePatientPress(item.id)}>
-            <Image source={{ uri: item.image }} style={styles.patientImage} />
-
-            <View style={styles.patientInfo}>
-              <Text style={styles.patientName}>{item.name}</Text>
-              <View style={styles.patientConditionContainer}>
-                <Text style={styles.patientCondition}>{item.condition}</Text>
+          <View style={styles.patientCard}>
+            <View style={styles.patientHeader}>
+              <View style={styles.patientInfo}>
+                <Text style={styles.patientName}>{item.paciente_nome}</Text>
+                <Text style={styles.consultCount}>
+                  {item.consultas.length} consulta{item.consultas.length !== 1 ? 's' : ''}
+                </Text>
               </View>
+            </View>
 
-              <View style={styles.patientDetails}>
-                <View style={styles.patientDetail}>
-                  <Ionicons name="calendar-outline" size={14} color="#666" />
-                  <Text style={styles.patientDetailText}>Última: {item.lastVisit}</Text>
-                </View>
-
-                {item.nextAppointment && (
-                  <View style={styles.patientDetail}>
-                    <Ionicons name="time-outline" size={14} color="#666" />
-                    <Text style={styles.patientDetailText}>Próxima: {item.nextAppointment}</Text>
+            <View style={styles.appointmentsContainer}>
+              {item.consultas.map((appointment, index) => (
+                <View 
+                  key={appointment.id} 
+                  style={[
+                    styles.appointmentItem,
+                    index === item.consultas.length - 1 && { borderBottomWidth: 0 }
+                  ]}
+                >
+                  <View style={styles.appointmentDate}>
+                    <Ionicons 
+                      name={appointment.realizada ? "checkmark-circle" : "time"} 
+                      size={20} 
+                      color={appointment.realizada ? "#4CAF50" : "#FFC107"} 
+                    />
+                    <Text style={styles.dateText}>{formatDate(appointment.data_consulta)}</Text>
+                    <Text style={styles.timeText}>{formatTime(appointment.data_consulta)}</Text>
                   </View>
-                )}
-              </View>
-
-              <View style={styles.progressContainer}>
-                <View style={styles.progressBar}>
-                  <View
-                    style={[
-                      styles.progressFill,
-                      {
-                        width: `${item.progress}%`,
-                        backgroundColor: item.progress > 70 ? "#4CAF50" : item.progress > 40 ? "#FFC107" : "#F44336",
-                      },
-                    ]}
-                  />
+                  <View style={styles.appointmentStatus}>
+                    <Text style={[
+                      styles.statusText,
+                      { color: appointment.realizada ? "#4CAF50" : "#FFC107" }
+                    ]}>
+                      {appointment.realizada ? "Realizada" : "Agendada"}
+                    </Text>
+                  </View>
                 </View>
-                <Text style={styles.progressText}>{item.progress}%</Text>
-              </View>
-
-              <Text style={styles.patientGoal}>Objetivo: {item.goal}</Text>
+              ))}
             </View>
-
-            <View style={styles.patientActions}>
-              <TouchableOpacity style={styles.patientAction}>
-                <Ionicons name="create-outline" size={20} color="#4CAF50" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.patientAction}>
-                <Ionicons name="chatbubble-outline" size={20} color="#4CAF50" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.patientAction}>
-                <Ionicons name="restaurant-outline" size={20} color="#4CAF50" />
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
+          </View>
         )}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="people-outline" size={48} color="#ddd" />
             <Text style={styles.emptyText}>Nenhum paciente encontrado</Text>
-            <Text style={styles.emptySubtext}>Tente outro termo de busca ou filtro</Text>
+            <Text style={styles.emptySubtext}>Tente outro termo de busca</Text>
           </View>
         }
       />
@@ -261,9 +178,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f8f8f8",
-  },
-  headerButton: {
-    marginRight: 15,
   },
   searchContainer: {
     backgroundColor: "#fff",
@@ -290,125 +204,73 @@ const styles = StyleSheet.create({
   clearButton: {
     padding: 5,
   },
-  filtersContainer: {
-    backgroundColor: "#fff",
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  filterButton: {
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    marginRight: 10,
-    borderRadius: 20,
-    backgroundColor: "#f0f0f0",
-  },
-  filterButtonActive: {
-    backgroundColor: "#4CAF50",
-  },
-  filterButtonText: {
-    fontSize: 14,
-    color: "#666",
-  },
-  filterButtonTextActive: {
-    color: "#fff",
-    fontWeight: "600",
-  },
   patientsList: {
     padding: 15,
     paddingBottom: 100,
   },
   patientCard: {
-    flexDirection: "row",
     backgroundColor: "#fff",
     borderRadius: 12,
-    padding: 15,
     marginBottom: 15,
+    overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
   },
-  patientImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginRight: 15,
+  patientHeader: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
   },
   patientInfo: {
-    flex: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   patientName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "600",
     color: "#333",
-    marginBottom: 4,
   },
-  patientConditionContainer: {
-    flexDirection: "row",
-    marginBottom: 6,
-  },
-  patientCondition: {
+  consultCount: {
     fontSize: 14,
-    color: "#4CAF50",
-    fontWeight: "500",
+    color: "#666",
   },
-  patientDetails: {
-    flexDirection: "column",
-    marginBottom: 8,
-    gap: 4,
+  appointmentsContainer: {
+    padding: 15,
   },
-  patientDetail: {
+  appointmentItem: {
     flexDirection: "row",
-    alignItems: "center",
-    marginRight: 15,
-  },
-  patientDetailText: {
-    fontSize: 12,
-    color: "#666",
-    marginLeft: 4,
-  },
-  progressContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  progressBar: {
-    flex: 1,
-    height: 6,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 3,
-    marginRight: 10,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    borderRadius: 3,
-  },
-  progressText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#666",
-    width: 35,
-  },
-  patientGoal: {
-    fontSize: 12,
-    color: "#666",
-  },
-  patientActions: {
     justifyContent: "space-between",
-    paddingLeft: 10,
-  },
-  patientAction: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#f0f8f0",
-    justifyContent: "center",
     alignItems: "center",
-    marginBottom: 5,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  appointmentDate: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  dateText: {
+    fontSize: 14,
+    color: "#333",
+  },
+  timeText: {
+    fontSize: 14,
+    color: "#666",
+    marginLeft: 10,
+  },
+  appointmentStatus: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusText: {
+    fontSize: 14,
+    fontWeight: "500",
   },
   emptyContainer: {
     alignItems: "center",

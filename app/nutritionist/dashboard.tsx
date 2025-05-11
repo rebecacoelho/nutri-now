@@ -159,7 +159,7 @@ export default function NutritionistDashboard(): React.JSX.Element {
               <Text style={styles.quickActionText}>Criar Plano Alimentar</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.quickActionItem} onPress={() => router.push("/nutritionist/dashboard")}>
+            <TouchableOpacity style={styles.quickActionItem} onPress={() => router.push("/nutritionist/add-patient")}>
               <View style={styles.quickActionIcon}>
                 <Ionicons name="person-add-outline" size={24} color="#4CAF50" />
               </View>
