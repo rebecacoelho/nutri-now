@@ -102,6 +102,10 @@ export interface MealPlanData {
   dados_json: JsonData;
 }
 
+export interface MealDiaryEntry {
+  [key: string]: string;
+}
+
 const API_URL = "https://nutrinow.onrender.com";
 
 export const formatDateToAPI = (date: string): string => {
@@ -367,11 +371,41 @@ export const getMealPlan = async (mealPlanId: string) => {
       },
     });
 
-    console.log(response);
-
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.detail || 'Erro ao buscar plano alimentar');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Erro na API:', error);
+    throw error;
+  }
+};
+
+export const updateMealDiary = async (pacientId: string, diario_alimentar: MealDiaryEntry[]) => {
+  try {
+    const token = await AsyncStorage.getItem("accessToken");
+
+    if (!pacientId) {
+      return null;
+    }
+
+    const response = await fetch(`${API_URL}/adicionar_alimento_no_diario/`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        id_paciente: String(pacientId),
+        diario_alimentar
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Erro ao adicionar alimento no diário');
     }
 
     return await response.json();

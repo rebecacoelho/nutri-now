@@ -15,7 +15,7 @@ interface SubstitutionModalProps {
   foodName: string
 }
 
-export const SubstitutionModal: React.FC<SubstitutionModalProps> = ({ isVisible, onClose, substitutions, foodName }) => {
+export default function SubstitutionModal({ isVisible, onClose, substitutions, foodName }: SubstitutionModalProps) {
   return (
     <Modal
       animationType="slide"

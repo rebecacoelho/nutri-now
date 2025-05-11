@@ -7,10 +7,10 @@ import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
 import PatientTabBar from "../components/patient-tab-bar"
 import PatientLayout from "../components/patient-layout"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { usePatient } from "../contexts/PatientContext"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { refreshToken, getPatientData } from "../../api"
+import { refreshToken, getPatientData, getMealPlan } from "../../api"
 
 interface MealCardProps {
   title: string
@@ -18,6 +18,17 @@ interface MealCardProps {
   image: string
   calories: string
   completed: boolean
+}
+
+interface MealCompletionState {
+  [key: string]: boolean
+}
+
+interface MealPlanResponse {
+  refeicoes: {
+    nome: string
+    horario: string
+  }[]
 }
 
 const MealCard: React.FC<MealCardProps> = ({ title, time, image, calories, completed }) => {
@@ -40,7 +51,40 @@ const MealCard: React.FC<MealCardProps> = ({ title, time, image, calories, compl
 
 export default function PatientDashboard(): React.JSX.Element {
   const router = useRouter()
-  const { patientData, appointments } = usePatient();
+  const { patientData, appointments } = usePatient()
+  const [mealCompletionState, setMealCompletionState] = useState<MealCompletionState>({})
+  const [mealPlan, setMealPlan] = useState<MealPlanResponse | null>(null)
+
+  useEffect(() => {
+    const fetchMealPlan = async () => {
+      try {
+        if (patientData?.plano_alimentar) {
+          const response = await getMealPlan(patientData.plano_alimentar);
+          setMealPlan(response);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar plano alimentar:', error);
+      }
+    };
+
+    fetchMealPlan();
+  }, [patientData]);
+
+  useEffect(() => {
+    const loadMealCompletionState = async () => {
+      try {
+        const savedState = await AsyncStorage.getItem('mealCompletionState');
+        if (savedState) {
+          setMealCompletionState(JSON.parse(savedState));
+        }
+
+      } catch (error) {
+        console.error('Erro ao carregar estado das refeições:', error);
+      }
+    };
+
+    loadMealCompletionState();
+  }, []);
 
   const upcomingAppointments = appointments.filter(appointment => new Date(appointment.data_consulta) > new Date())
 
@@ -109,27 +153,16 @@ export default function PatientDashboard(): React.JSX.Element {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Plano de Refeições de Hoje</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mealsContainer}>
-              <MealCard
-                title="Café da Manhã"
-                time="7:30 AM"
-                image="/placeholder.svg?height=100&width=100"
-                calories="420"
-                completed={true}
-              />
-              <MealCard
-                title="Almoço"
-                time="12:30 PM"
-                image="/placeholder.svg?height=100&width=100"
-                calories="580"
-                completed={false}
-              />
-              <MealCard
-                title="Jantar"
-                time="7:00 PM"
-                image="/placeholder.svg?height=100&width=100"
-                calories="650"
-                completed={false}
-              />
+              {mealPlan?.refeicoes.map((refeicao, index) => (
+                <MealCard
+                  key={index}
+                  title={refeicao.nome}
+                  time={refeicao.horario}
+                  image="/placeholder.svg?height=100&width=100"
+                  calories="420"
+                  completed={mealCompletionState[refeicao.nome] || false}
+                />
+              ))}
             </ScrollView>
           </View>
 

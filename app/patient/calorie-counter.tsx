@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import {
   SafeAreaView,
   StyleSheet,
@@ -23,6 +23,8 @@ import axios from "axios"
 import DateTimePicker from "@react-native-community/datetimepicker"
 import { format } from "date-fns"
 import PatientTabBar from "../components/patient-tab-bar"
+import { usePatient } from "../contexts/PatientContext"
+import { updateMealDiary, getMealPlan } from "../../api"
 
 interface FoodItem {
   id: string
@@ -36,9 +38,20 @@ interface FoodItem {
 
 interface ConsumedFood extends FoodItem {
   quantity: number
-  mealType: "breakfast" | "lunch" | "dinner" | "snack"
+  mealType: string
   timeAdded: string
   date: Date
+}
+
+interface MealCompletionState {
+  [key: string]: boolean
+}
+
+interface MealPlanResponse {
+  refeicoes: Array<{
+    nome: string
+    horario: string
+  }>
 }
 
 export default function CalorieCounter(): React.JSX.Element {
@@ -56,6 +69,9 @@ export default function CalorieCounter(): React.JSX.Element {
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [isSearching, setIsSearching] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [mealPlan, setMealPlan] = useState<MealPlanResponse | null>(null)
+  const [mealCompletionState, setMealCompletionState] = useState<MealCompletionState>({})
+  const { patientData } = usePatient()
 
   const translateToEnglish = async (text: string) => {
     const options = {
@@ -136,8 +152,34 @@ export default function CalorieCounter(): React.JSX.Element {
   };
 
   useEffect(() => {
-    loadConsumedFoods();
-  }, []);
+    const fetchMealPlan = async () => {
+      try {
+        if (patientData?.plano_alimentar) {
+          const response = await getMealPlan(patientData.plano_alimentar);
+          setMealPlan(response);
+          
+          const initialState: MealCompletionState = {};
+          response.refeicoes.forEach((refeicao: { nome: string }) => {
+            initialState[refeicao.nome] = false;
+          });
+          setMealCompletionState(initialState);
+
+          await loadConsumedFoods();
+          await loadMealCompletionState();
+        }
+      } catch (error) {
+        console.error('Erro ao buscar plano alimentar:', error);
+      }
+    };
+
+    fetchMealPlan();
+  }, [patientData]);
+
+  useEffect(() => {
+    if (mealPlan) {
+      loadConsumedFoods();
+    }
+  }, [selectedDate, mealPlan]);
 
   useEffect(() => {
     let calories = 0;
@@ -173,7 +215,26 @@ export default function CalorieCounter(): React.JSX.Element {
           ...food,
           date: new Date(food.date)
         }));
-        setConsumedFoods(foodsWithDates);
+
+        const selectedDateStr = selectedDate.toDateString();
+        const filteredFoods = foodsWithDates.filter((food: ConsumedFood) => 
+          new Date(food.date).toDateString() === selectedDateStr
+        );
+
+        setConsumedFoods(filteredFoods);
+
+        if (mealPlan) {
+          const newState = { ...mealCompletionState };
+          mealPlan.refeicoes.forEach((refeicao: { nome: string }) => {
+            const foodsForMeal = filteredFoods.filter(
+              (food: ConsumedFood) => food.mealType === refeicao.nome
+            );
+            if (foodsForMeal.length > 0) {
+              newState[refeicao.nome] = true;
+            }
+          });
+          await saveMealCompletionState(newState);
+        }
       }
     } catch (error) {
       console.error('Erro ao carregar histórico de refeições', error);
@@ -192,6 +253,83 @@ export default function CalorieCounter(): React.JSX.Element {
       Alert.alert("Erro", "Não foi possível salvar seu histórico de refeições.");
     }
   };
+
+  const loadMealCompletionState = async () => {
+    try {
+      const savedState = await AsyncStorage.getItem('mealCompletionState');
+      if (savedState && mealPlan) {
+        const parsedState = JSON.parse(savedState);
+        const validState: MealCompletionState = {};
+        mealPlan.refeicoes.forEach((refeicao: { nome: string }) => {
+          validState[refeicao.nome] = parsedState[refeicao.nome] || false;
+        });
+        setMealCompletionState(validState);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar estado das refeições:', error);
+    }
+  };
+
+  const saveMealCompletionState = async (newState: MealCompletionState) => {
+    try {
+      await AsyncStorage.setItem('mealCompletionState', JSON.stringify(newState));
+      setMealCompletionState(newState);
+    } catch (error) {
+      console.error('Erro ao salvar estado das refeições:', error);
+    }
+  };
+
+  const checkMealCompletion = async (mealType: string) => {
+    if (!mealPlan) return;
+
+    try {
+      const newState = { ...mealCompletionState };
+      newState[mealType] = true;
+      await saveMealCompletionState(newState);
+
+      if (patientData?.id) {
+        const diaryEntry: { [key: string]: string } = {};
+        
+        mealPlan.refeicoes.forEach((refeicao: { nome: string }) => {
+          const foods = groupedFoods[refeicao.nome];
+          if (foods?.length > 0) {
+            diaryEntry[refeicao.nome] = foods.map(food => food.name).join(", ");
+          } else {
+            diaryEntry[refeicao.nome] = "";
+          }
+        });
+
+        await updateMealDiary(patientData.id.toString(), [diaryEntry]);
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar estado da refeição:', error);
+      Alert.alert("Erro", "Não foi possível atualizar o estado da refeição.");
+    }
+  };
+
+  const groupedFoods = useMemo(() => {
+    if (!mealPlan) return {};
+
+    const groups: { [key: string]: ConsumedFood[] } = {};
+    mealPlan.refeicoes.forEach((refeicao: { nome: string }) => {
+      groups[refeicao.nome] = consumedFoods.filter(
+        food => food.mealType === refeicao.nome && 
+        new Date(food.date).toDateString() === selectedDate.toDateString()
+      );
+    });
+    return groups;
+  }, [consumedFoods, selectedDate, mealPlan]);
+
+  useEffect(() => {
+    if (!mealPlan) return;
+
+    mealPlan.refeicoes.forEach((refeicao: { nome: string }) => {
+      const foods = groupedFoods[refeicao.nome];
+      if (foods?.length > 0) {
+        checkMealCompletion(refeicao.nome);
+      }
+    });
+  }, [consumedFoods, mealPlan, groupedFoods]);
 
   const handleSearch = (query: string): void => {
     setSearchQuery(query)
@@ -215,7 +353,7 @@ export default function CalorieCounter(): React.JSX.Element {
     }
   }
 
-  const handleAddFood = async (food: FoodItem, mealType: "breakfast" | "lunch" | "dinner" | "snack"): Promise<void> => {
+  const handleAddFood = async (food: FoodItem, mealType: string): Promise<void> => {
     try {
       let translatedName = food.name;
       if (food.id.startsWith('api-')) {
@@ -243,9 +381,11 @@ export default function CalorieCounter(): React.JSX.Element {
       setSearchResults([]);
 
       const mealTypeTranslation = 
-        mealType === "breakfast" ? "café da manhã" : 
-        mealType === "lunch" ? "almoço" : 
-        mealType === "dinner" ? "jantar" : "lanche";
+        mealType === "Café da Manhã" ? "café da manhã" : 
+        mealType === "Lanche da Manhã" ? "lanche da manhã" : 
+        mealType === "Almoço" ? "almoço" : 
+        mealType === "Lanche da Tarde" ? "lanche da tarde" : 
+        mealType === "Jantar" ? "jantar" : "ceia";
         
       Alert.alert("Alimento Adicionado", `${translatedName} adicionado ao seu registro de ${mealTypeTranslation}.`);
     } catch (error) {
@@ -303,25 +443,6 @@ export default function CalorieCounter(): React.JSX.Element {
     setShowDatePicker(!showDatePicker);
   };
 
-  const groupedFoods = {
-    breakfast: consumedFoods.filter((food) => 
-      food.mealType === "breakfast" && 
-      new Date(food.date).toDateString() === selectedDate.toDateString()
-    ),
-    lunch: consumedFoods.filter((food) => 
-      food.mealType === "lunch" && 
-      new Date(food.date).toDateString() === selectedDate.toDateString()
-    ),
-    dinner: consumedFoods.filter((food) => 
-      food.mealType === "dinner" && 
-      new Date(food.date).toDateString() === selectedDate.toDateString()
-    ),
-    snack: consumedFoods.filter((food) => 
-      food.mealType === "snack" && 
-      new Date(food.date).toDateString() === selectedDate.toDateString()
-    ),
-  };
-
   const caloriesRemaining = calorieGoal - totalCalories;
   const formattedDate = format(selectedDate, "dd/MM/yyyy");
 
@@ -338,18 +459,15 @@ export default function CalorieCounter(): React.JSX.Element {
         </View>
       </View>
       <View style={styles.foodItemActions}>
-        <TouchableOpacity style={styles.addButton} onPress={() => handleAddFood(item, "breakfast")}>
-          <Text style={styles.addButtonText}>C</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.addButton} onPress={() => handleAddFood(item, "lunch")}>
-          <Text style={styles.addButtonText}>A</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.addButton} onPress={() => handleAddFood(item, "dinner")}>
-          <Text style={styles.addButtonText}>J</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.addButton} onPress={() => handleAddFood(item, "snack")}>
-          <Text style={styles.addButtonText}>L</Text>
-        </TouchableOpacity>
+        {mealPlan?.refeicoes.map((refeicao, index) => (
+          <TouchableOpacity 
+            key={`add-to-${index}`}
+            style={styles.addButton} 
+            onPress={() => handleAddFood(item, refeicao.nome)}
+          >
+            <Text style={styles.addButtonText}>{refeicao.nome.substring(0, 2)}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
     </View>
   );
@@ -448,229 +566,65 @@ export default function CalorieCounter(): React.JSX.Element {
                 </View>
               </View>
 
-              <View style={styles.mealSection}>
-                <View style={styles.mealHeader}>
-                  <Text style={styles.mealTitle}>Café da Manhã</Text>
-                  <TouchableOpacity
-                    style={styles.addMealButton}
-                    onPress={() => {
-                      setActiveTab("search")
-                    }}
-                  >
-                    <Ionicons name="add" size={20} color="#4CAF50" />
-                  </TouchableOpacity>
-                </View>
+              {mealPlan?.refeicoes.map((refeicao, sectionIndex) => (
+                <View key={`meal-section-${sectionIndex}`} style={styles.mealSection}>
+                  <View style={styles.mealHeader}>
+                    <Text style={styles.mealTitle}>{refeicao.nome}</Text>
+                    <TouchableOpacity
+                      style={styles.addMealButton}
+                      onPress={() => {
+                        setActiveTab("search")
+                      }}
+                    >
+                      <Ionicons name="add" size={20} color="#4CAF50" />
+                    </TouchableOpacity>
+                  </View>
 
-                {groupedFoods.breakfast.length === 0 ? (
-                  <Text style={styles.emptyMealText}>Nenhum alimento registrado ainda</Text>
-                ) : (
-                  groupedFoods.breakfast.map((food, index) => (
-                    <View key={`breakfast-${index}`} style={styles.loggedFoodItem}>
-                      <View style={styles.loggedFoodInfo}>
-                        <Text style={styles.loggedFoodName}>{food.name.charAt(0).toUpperCase() + food.name.slice(1)}</Text>
-                        <View style={styles.servingContainer}>
-                          <Text style={styles.loggedFoodServing}>
-                            {food.serving} ×
-                          </Text>
-                          <View style={styles.quantityControls}>
-                            <TouchableOpacity
-                              style={styles.quantityButton}
-                              onPress={() => handleUpdateFoodQuantity(food, food.quantity - 0.5)}
-                            >
-                              <Ionicons name="remove" size={14} color="#4CAF50" />
-                            </TouchableOpacity>
-                            <Text style={styles.quantityText}>{food.quantity}</Text>
-                            <TouchableOpacity
-                              style={styles.quantityButton}
-                              onPress={() => handleUpdateFoodQuantity(food, food.quantity + 0.5)}
-                            >
-                              <Ionicons name="add" size={14} color="#4CAF50" />
-                            </TouchableOpacity>
+                  {groupedFoods[refeicao.nome]?.length === 0 ? (
+                    <Text style={styles.emptyMealText}>Nenhum alimento registrado ainda</Text>
+                  ) : groupedFoods[refeicao.nome] ? (
+                    groupedFoods[refeicao.nome].map((food, index) => (
+                      <View key={`food-${sectionIndex}-${index}`} style={styles.loggedFoodItem}>
+                        <View style={styles.loggedFoodInfo}>
+                          <Text style={styles.loggedFoodName}>{food.name}</Text>
+                          <View style={styles.servingContainer}>
+                            <Text style={styles.loggedFoodServing}>
+                              {food.serving} ×
+                            </Text>
+                            <View style={styles.quantityControls}>
+                              <TouchableOpacity
+                                style={styles.quantityButton}
+                                onPress={() => handleUpdateFoodQuantity(food, food.quantity - 0.5)}
+                              >
+                                <Ionicons name="remove" size={14} color="#4CAF50" />
+                              </TouchableOpacity>
+                              <Text style={styles.quantityText}>{food.quantity}</Text>
+                              <TouchableOpacity
+                                style={styles.quantityButton}
+                                onPress={() => handleUpdateFoodQuantity(food, food.quantity + 0.5)}
+                              >
+                                <Ionicons name="add" size={14} color="#4CAF50" />
+                              </TouchableOpacity>
+                            </View>
                           </View>
                         </View>
-                      </View>
-                      <View style={styles.loggedFoodNutrition}>
-                        <Text style={styles.loggedFoodCalories}>{(food.calories * food.quantity).toFixed(1)} cal</Text>
-                        <Text style={styles.loggedFoodTime}>{food.timeAdded}</Text>
-                      </View>
-                      <TouchableOpacity
-                        style={styles.removeButton}
-                        onPress={() => handleRemoveFood(consumedFoods.indexOf(food))}
-                      >
-                        <Ionicons name="close" size={16} color="#999" />
-                      </TouchableOpacity>
-                    </View>
-                  ))
-                )}
-              </View>
-
-              <View style={styles.mealSection}>
-                <View style={styles.mealHeader}>
-                  <Text style={styles.mealTitle}>Almoço</Text>
-                  <TouchableOpacity
-                    style={styles.addMealButton}
-                    onPress={() => {
-                      setActiveTab("search")
-                    }}
-                  >
-                    <Ionicons name="add" size={20} color="#4CAF50" />
-                  </TouchableOpacity>
-                </View>
-
-                {groupedFoods.lunch.length === 0 ? (
-                  <Text style={styles.emptyMealText}>Nenhum alimento registrado ainda</Text>
-                ) : (
-                  groupedFoods.lunch.map((food, index) => (
-                    <View key={`lunch-${index}`} style={styles.loggedFoodItem}>
-                      <View style={styles.loggedFoodInfo}>
-                        <Text style={styles.loggedFoodName}>{food.name.charAt(0).toUpperCase() + food.name.slice(1)}</Text>
-                        <View style={styles.servingContainer}>
-                          <Text style={styles.loggedFoodServing}>
-                            {food.serving} ×
-                          </Text>
-                          <View style={styles.quantityControls}>
-                            <TouchableOpacity
-                              style={styles.quantityButton}
-                              onPress={() => handleUpdateFoodQuantity(food, food.quantity - 0.5)}
-                            >
-                              <Ionicons name="remove" size={14} color="#4CAF50" />
-                            </TouchableOpacity>
-                            <Text style={styles.quantityText}>{food.quantity}</Text>
-                            <TouchableOpacity
-                              style={styles.quantityButton}
-                              onPress={() => handleUpdateFoodQuantity(food, food.quantity + 0.5)}
-                            >
-                              <Ionicons name="add" size={14} color="#4CAF50" />
-                            </TouchableOpacity>
-                          </View>
+                        <View style={styles.loggedFoodNutrition}>
+                          <Text style={styles.loggedFoodCalories}>{(food.calories * food.quantity).toFixed(1)} cal</Text>
+                          <Text style={styles.loggedFoodTime}>{food.timeAdded}</Text>
                         </View>
+                        <TouchableOpacity
+                          style={styles.removeButton}
+                          onPress={() => handleRemoveFood(consumedFoods.indexOf(food))}
+                        >
+                          <Ionicons name="close" size={16} color="#999" />
+                        </TouchableOpacity>
                       </View>
-                      <View style={styles.loggedFoodNutrition}>
-                        <Text style={styles.loggedFoodCalories}>{(food.calories * food.quantity).toFixed(1)} cal</Text>
-                        <Text style={styles.loggedFoodTime}>{food.timeAdded}</Text>
-                      </View>
-                      <TouchableOpacity
-                        style={styles.removeButton}
-                        onPress={() => handleRemoveFood(consumedFoods.indexOf(food))}
-                      >
-                        <Ionicons name="close" size={16} color="#999" />
-                      </TouchableOpacity>
-                    </View>
-                  ))
-                )}
-              </View>
-
-              <View style={styles.mealSection}>
-                <View style={styles.mealHeader}>
-                  <Text style={styles.mealTitle}>Jantar</Text>
-                  <TouchableOpacity
-                    style={styles.addMealButton}
-                    onPress={() => {
-                      setActiveTab("search")
-                    }}
-                  >
-                    <Ionicons name="add" size={20} color="#4CAF50" />
-                  </TouchableOpacity>
+                    ))
+                  ) : (
+                    <Text style={styles.emptyMealText}>Nenhum alimento registrado ainda</Text>
+                  )}
                 </View>
-
-                {groupedFoods.dinner.length === 0 ? (
-                  <Text style={styles.emptyMealText}>Nenhum alimento registrado ainda</Text>
-                ) : (
-                  groupedFoods.dinner.map((food, index) => (
-                    <View key={`dinner-${index}`} style={styles.loggedFoodItem}>
-                      <View style={styles.loggedFoodInfo}>
-                        <Text style={styles.loggedFoodName}>{food.name.charAt(0).toUpperCase() + food.name.slice(1)}</Text>
-                        <View style={styles.servingContainer}>
-                          <Text style={styles.loggedFoodServing}>
-                            {food.serving} ×
-                          </Text>
-                          <View style={styles.quantityControls}>
-                            <TouchableOpacity
-                              style={styles.quantityButton}
-                              onPress={() => handleUpdateFoodQuantity(food, food.quantity - 0.5)}
-                            >
-                              <Ionicons name="remove" size={14} color="#4CAF50" />
-                            </TouchableOpacity>
-                            <Text style={styles.quantityText}>{food.quantity}</Text>
-                            <TouchableOpacity
-                              style={styles.quantityButton}
-                              onPress={() => handleUpdateFoodQuantity(food, food.quantity + 0.5)}
-                            >
-                              <Ionicons name="add" size={14} color="#4CAF50" />
-                            </TouchableOpacity>
-                          </View>
-                        </View>
-                      </View>
-                      <View style={styles.loggedFoodNutrition}>
-                        <Text style={styles.loggedFoodCalories}>{(food.calories * food.quantity).toFixed(1)} cal</Text>
-                        <Text style={styles.loggedFoodTime}>{food.timeAdded}</Text>
-                      </View>
-                      <TouchableOpacity
-                        style={styles.removeButton}
-                        onPress={() => handleRemoveFood(consumedFoods.indexOf(food))}
-                      >
-                        <Ionicons name="close" size={16} color="#999" />
-                      </TouchableOpacity>
-                    </View>
-                  ))
-                )}
-              </View>
-
-              <View style={styles.mealSection}>
-                <View style={styles.mealHeader}>
-                  <Text style={styles.mealTitle}>Lanches</Text>
-                  <TouchableOpacity
-                    style={styles.addMealButton}
-                    onPress={() => {
-                      setActiveTab("search")
-                    }}
-                  >
-                    <Ionicons name="add" size={20} color="#4CAF50" />
-                  </TouchableOpacity>
-                </View>
-
-                {groupedFoods.snack.length === 0 ? (
-                  <Text style={styles.emptyMealText}>Nenhum lanche registrado ainda</Text>
-                ) : (
-                  groupedFoods.snack.map((food, index) => (
-                    <View key={`snack-${index}`} style={styles.loggedFoodItem}>
-                      <View style={styles.loggedFoodInfo}>
-                        <Text style={styles.loggedFoodName}>{food.name.charAt(0).toUpperCase() + food.name.slice(1)}</Text>
-                        <View style={styles.servingContainer}>
-                          <Text style={styles.loggedFoodServing}>
-                            {food.serving} ×
-                          </Text>
-                          <View style={styles.quantityControls}>
-                            <TouchableOpacity
-                              style={styles.quantityButton}
-                              onPress={() => handleUpdateFoodQuantity(food, food.quantity - 0.5)}
-                            >
-                              <Ionicons name="remove" size={14} color="#4CAF50" />
-                            </TouchableOpacity>
-                            <Text style={styles.quantityText}>{food.quantity}</Text>
-                            <TouchableOpacity
-                              style={styles.quantityButton}
-                              onPress={() => handleUpdateFoodQuantity(food, food.quantity + 0.5)}
-                            >
-                              <Ionicons name="add" size={14} color="#4CAF50" />
-                            </TouchableOpacity>
-                          </View>
-                        </View>
-                      </View>
-                      <View style={styles.loggedFoodNutrition}>
-                        <Text style={styles.loggedFoodCalories}>{(food.calories * food.quantity).toFixed(1)} cal</Text>
-                        <Text style={styles.loggedFoodTime}>{food.timeAdded}</Text>
-                      </View>
-                      <TouchableOpacity
-                        style={styles.removeButton}
-                        onPress={() => handleRemoveFood(consumedFoods.indexOf(food))}
-                      >
-                        <Ionicons name="close" size={16} color="#999" />
-                      </TouchableOpacity>
-                    </View>
-                  ))
-                )}
-              </View>
+              ))}
             </ScrollView>
           ) : (
             <View style={styles.searchContainer}>
