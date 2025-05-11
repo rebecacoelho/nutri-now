@@ -4,7 +4,7 @@ import { Link, Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
 import MapView, { Marker } from "react-native-maps"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { refreshToken } from "@/api"
 
@@ -69,8 +69,7 @@ export default function WelcomeScreen(): React.JSX.Element {
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={styles.header}>
-        <Image source={{ uri: "/placeholder.svg?height=80&width=80" }} style={styles.logo} />
-        <Text style={styles.appName}>Nutri Now</Text>
+        <Image source={require("../assets/images/logo.png")} style={styles.logo} />
       </View>
 
       <ScrollView style={styles.content}>
@@ -155,20 +154,15 @@ const styles = StyleSheet.create({
   header: {
     display: "flex",
     flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
     paddingTop: 20,
     paddingHorizontal: 20,
   },
   logo: {
-    width: 40,
-    height: 40,
+    width: 120,
+    height: 60,
     borderRadius: 8,
-    marginRight: 10,
-  },
-  appName: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#4CAF50",
   },
   content: {
     flex: 1,
