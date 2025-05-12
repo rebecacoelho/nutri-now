@@ -106,6 +106,11 @@ export interface MealDiaryEntry {
   [key: string]: string;
 }
 
+export interface AvailabilityData {
+  id_nutricionista: number;
+  horarios_disponiveis: Record<string, any>;
+}
+
 const API_URL = "https://nutrinow.onrender.com";
 
 export const formatDateToAPI = (date: string): string => {
@@ -249,6 +254,57 @@ export const makeAppointment = async (appointmentData: AppointmentData): Promise
       throw new Error(errorData.detail || 'Erro ao criar consulta');
     }
     
+    return await response.json();
+  } catch (error) {
+    console.error('Erro na API:', error);
+    throw error;
+  }
+};
+
+export const confirmAppointment = async (appointmentId: string) => {
+  try {
+    const token = await AsyncStorage.getItem("accessToken");
+    const response = await fetch(`${API_URL}/realizar_consulta/`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        id_consulta: appointmentId,
+        realizada: true
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Erro ao confirmar consulta');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Erro na API:', error);
+    throw error;
+  }
+};
+
+export const updateNutritionistAvailability = async (availabilityData: AvailabilityData) => {
+  try {
+    const token = await AsyncStorage.getItem("accessToken");
+    const response = await fetch(`${API_URL}/atualiza_horarios_disponiveis/`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(availabilityData)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Erro ao atualizar disponibilidade');
+    }
+
     return await response.json();
   } catch (error) {
     console.error('Erro na API:', error);

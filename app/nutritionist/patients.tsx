@@ -12,12 +12,14 @@ import {
   TextInput,
   Image,
   FlatList,
+  Alert,
+  Modal,
 } from "react-native"
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
 import NutritionistTabBar from "../components/nutritionist-tab-bar"
-import { getAppointments } from "../../api"
+import { getAppointments, confirmAppointment } from "../../api"
 
 interface Appointment {
   id: number
@@ -32,11 +34,87 @@ interface PatientAppointments {
   consultas: Appointment[]
 }
 
+interface ConfirmationModalProps {
+  visible: boolean
+  onConfirm: () => void
+  onCancel: () => void
+  appointmentDate: string
+  patientName: string
+}
+
+const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
+  visible,
+  onConfirm,
+  onCancel,
+  appointmentDate,
+  patientName,
+}) => (
+  <Modal
+    animationType="fade"
+    transparent={true}
+    visible={visible}
+  >
+    <View style={styles.modalOverlay}>
+      <View style={styles.modalContent}>
+        <Text style={styles.modalTitle}>Confirmar Consulta</Text>
+        <Text style={styles.modalText}>
+          Deseja confirmar a realização da consulta com {patientName} no dia {appointmentDate}?
+        </Text>
+        <View style={styles.modalButtons}>
+          <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={onCancel}>
+            <Text style={styles.modalButtonText}>Cancelar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.modalButton, styles.confirmButton]} onPress={onConfirm}>
+            <Text style={[styles.modalButtonText, styles.confirmButtonText]}>Confirmar</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  </Modal>
+)
+
 export default function Patients(): React.JSX.Element {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState<string>("")
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [groupedAppointments, setGroupedAppointments] = useState<PatientAppointments[]>([])
+  const [modalVisible, setModalVisible] = useState(false)
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
+
+  const handleConfirmAppointment = async (appointment: Appointment) => {
+    setSelectedAppointment(appointment)
+    setModalVisible(true)
+  }
+
+  const handleConfirmationModalConfirm = async () => {
+    if (selectedAppointment) {
+      try {
+        await confirmAppointment(String(selectedAppointment.id))
+        
+        const response = await getAppointments()
+        setAppointments(response)
+
+        const grouped = response.reduce((acc: { [key: string]: Appointment[] }, appointment: Appointment) => {
+          if (!acc[appointment.paciente_nome]) {
+            acc[appointment.paciente_nome] = []
+          }
+          acc[appointment.paciente_nome].push(appointment)
+          return acc
+        }, {} as { [key: string]: Appointment[] })
+
+        const groupedArray = (Object.entries(grouped) as [string, Appointment[]][]).map(([paciente_nome, consultas]) => ({
+          paciente_nome,
+          consultas: consultas.sort((a: Appointment, b: Appointment) => new Date(b.data_consulta).getTime() - new Date(a.data_consulta).getTime())
+        }))
+
+        setGroupedAppointments(groupedArray)
+        setModalVisible(false)
+        setSelectedAppointment(null)
+      } catch (error) {
+        Alert.alert("Erro", "Não foi possível confirmar a consulta. Tente novamente.")
+      }
+    }
+  }
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -97,6 +175,17 @@ export default function Patients(): React.JSX.Element {
         }}
       />
 
+      <ConfirmationModal
+        visible={modalVisible}
+        onConfirm={handleConfirmationModalConfirm}
+        onCancel={() => {
+          setModalVisible(false)
+          setSelectedAppointment(null)
+        }}
+        appointmentDate={selectedAppointment ? formatDate(selectedAppointment.data_consulta) : ''}
+        patientName={selectedAppointment?.paciente_nome || ''}
+      />
+
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
           <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
@@ -147,13 +236,30 @@ export default function Patients(): React.JSX.Element {
                     <Text style={styles.dateText}>{formatDate(appointment.data_consulta)}</Text>
                     <Text style={styles.timeText}>{formatTime(appointment.data_consulta)}</Text>
                   </View>
-                  <View style={styles.appointmentStatus}>
-                    <Text style={[
-                      styles.statusText,
-                      { color: appointment.realizada ? "#4CAF50" : "#FFC107" }
-                    ]}>
-                      {appointment.realizada ? "Realizada" : "Agendada"}
-                    </Text>
+                  <View style={styles.appointmentActions}>
+                    {appointment.realizada ? (
+                      <View style={styles.appointmentStatus}>
+                        <Text style={[styles.statusText, { color: "#4CAF50" }]}>
+                          Realizada
+                        </Text>
+                      </View>
+                    ) : (
+                      <>
+                        <View style={styles.appointmentStatusContainer}>
+                          <View style={styles.appointmentStatus}>
+                            <Text style={[styles.statusText, { color: "#FFC107" }]}>
+                              Agendada
+                            </Text>
+                          </View>
+                          <TouchableOpacity
+                            style={styles.confirmAppointmentButton}
+                            onPress={() => handleConfirmAppointment(appointment)}
+                          >
+                            <Text style={styles.confirmAppointmentButtonText}>Confirmar</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </>
+                    )}
                   </View>
                 </View>
               ))}
@@ -239,7 +345,8 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   appointmentsContainer: {
-    padding: 15,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
   },
   appointmentItem: {
     flexDirection: "row",
@@ -263,12 +370,35 @@ const styles = StyleSheet.create({
     color: "#666",
     marginLeft: 10,
   },
+  appointmentActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  appointmentStatusContainer: {
+    alignItems: "center",
+    gap: 8,
+  },
   appointmentStatus: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
+    backgroundColor: "#f8f8f8",
   },
   statusText: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  confirmAppointmentButton: {
+    backgroundColor: "#4CAF50",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 6,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  confirmAppointmentButtonText: {
+    color: "#fff",
     fontSize: 14,
     fontWeight: "500",
   },
@@ -287,6 +417,54 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#999",
     marginTop: 5,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 20,
+    width: "80%",
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 10,
+  },
+  modalText: {
+    fontSize: 16,
+    color: "#666",
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 10,
+  },
+  modalButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  cancelButton: {
+    backgroundColor: "#f0f0f0",
+  },
+  confirmButton: {
+    backgroundColor: "#4CAF50",
+  },
+  modalButtonText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#666",
+  },
+  confirmButtonText: {
+    color: "#fff",
   },
 })
 
