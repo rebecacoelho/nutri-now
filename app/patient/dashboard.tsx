@@ -15,7 +15,6 @@ import { refreshToken, getPatientData, getMealPlan } from "../../api"
 interface MealCardProps {
   title: string
   time: string
-  image: string
   calories: string
   completed: boolean
 }
@@ -31,11 +30,31 @@ interface MealPlanResponse {
   }[]
 }
 
-const MealCard: React.FC<MealCardProps> = ({ title, time, image, calories, completed }) => {
+function getMealImage(title: string) {
+  if (title.includes("Almoço")) {
+    return require("../../assets/images/lunch.png")
+  }
+
+  if (title.includes("Jantar")) {
+    return require("../../assets/images/dinner.png")
+  }
+
+  if (title.includes("Lanche")) {
+    return require("../../assets/images/meal.png")
+  }
+
+  if (title.includes("Ceia")) {
+    return require("../../assets/images/dinner.png")
+  }
+  
+  return require("../../assets/images/breakfast.png")
+}
+
+const MealCard: React.FC<MealCardProps> = ({ title, time, calories, completed }) => {
   return (
     <View style={styles.mealCard}>
       <View style={styles.mealImageContainer}>
-        <Image source={{ uri: image }} style={styles.mealImage} />
+        <Image source={getMealImage(title)} style={styles.mealImage} />
         {completed && (
           <View style={styles.mealCompletedBadge}>
             <Ionicons name="checkmark" size={16} color="#fff" />
@@ -158,7 +177,6 @@ export default function PatientDashboard(): React.JSX.Element {
                   key={index}
                   title={refeicao.nome}
                   time={refeicao.horario}
-                  image="/placeholder.svg?height=100&width=100"
                   calories="420"
                   completed={mealCompletionState[refeicao.nome] || false}
                 />
@@ -324,6 +342,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
   },
   mealImageContainer: {
     position: "relative",
