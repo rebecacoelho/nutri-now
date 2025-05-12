@@ -1,10 +1,11 @@
 "use client"
 
 import type React from "react"
-import { SafeAreaView, StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, Linking } from "react-native"
+import { SafeAreaView, StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, Linking, Dimensions } from "react-native"
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
+import { LineChart } from "react-native-chart-kit"
 import PatientTabBar from "../components/patient-tab-bar"
 import PatientLayout from "../components/patient-layout"
 import { useEffect, useState } from "react"
@@ -28,6 +29,21 @@ interface MealPlanResponse {
     nome: string
     horario: string
   }[]
+}
+
+interface CaloriesHistory {
+  date: string;
+  calories: number;
+}
+
+interface WeightProjection {
+  date: string;
+  weight: number;
+}
+
+interface ProjectionData {
+  labels: string[];
+  data: number[];
 }
 
 function getMealImage(title: string) {
@@ -68,11 +84,59 @@ const MealCard: React.FC<MealCardProps> = ({ title, time, calories, completed })
   )
 }
 
+function calculateIdealWeight(height: number, gender: string): number {
+  const idealIMC = 22.5;
+  const heightInMeters = height / 100;
+
+  return Number((idealIMC * (heightInMeters * heightInMeters)).toFixed(1));
+}
+
+function calculateDailyCalories(weight: number, height: number, age: number, gender: string): number {
+  // Fórmula de Harris-Benedict
+  let bmr;
+  if (gender.toLowerCase() === "masculino") {
+    bmr = 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
+  } else {
+    bmr = 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
+  }
+  
+  // Fator de atividade moderada (1.55)
+  return Math.round(bmr * 1.55);
+}
+
+function calculateWeightProjection(currentWeight: number, targetWeight: number): WeightProjection[] {
+  const projection: WeightProjection[] = [];
+  const today = new Date();
+  
+  // Perda de peso segura: 0.5kg por semana
+  const weeklyWeightLoss = 0.5;
+  const weeksNeeded = Math.ceil((currentWeight - targetWeight) / weeklyWeightLoss);
+  
+  for (let week = 0; week <= weeksNeeded; week++) {
+    const date = new Date(today);
+    date.setDate(date.getDate() + week * 7);
+    
+    const projectedWeight = Number((currentWeight - (weeklyWeightLoss * week)).toFixed(1));
+    const weight = projectedWeight < targetWeight ? targetWeight : projectedWeight;
+    
+    projection.push({
+      date: date.toISOString().split('T')[0],
+      weight
+    });
+  }
+  
+  return projection;
+}
+
 export default function PatientDashboard(): React.JSX.Element {
   const router = useRouter()
   const { patientData, appointments } = usePatient()
   const [mealCompletionState, setMealCompletionState] = useState<MealCompletionState>({})
   const [mealPlan, setMealPlan] = useState<MealPlanResponse | null>(null)
+  const [weightProjection, setWeightProjection] = useState<WeightProjection[]>([])
+  const [idealWeight, setIdealWeight] = useState(0)
+  const [recommendedCalories, setRecommendedCalories] = useState(0)
+  const [weeksToGoal, setWeeksToGoal] = useState(0)
 
   useEffect(() => {
     const fetchMealPlan = async () => {
@@ -104,6 +168,81 @@ export default function PatientDashboard(): React.JSX.Element {
 
     loadMealCompletionState();
   }, []);
+
+  useEffect(() => {
+    if (patientData) {
+      const birthDate = new Date(patientData.data_nascimento);
+      const today = new Date();
+      const age = today.getFullYear() - birthDate.getFullYear();
+      
+      const ideal = calculateIdealWeight(patientData.altura, patientData.genero);
+      setIdealWeight(ideal);
+      
+      const projection = calculateWeightProjection(patientData.peso, ideal);
+      setWeightProjection(projection);
+      setWeeksToGoal(projection.length - 1);
+      
+      const calories = calculateDailyCalories(patientData.peso, patientData.altura, age, patientData.genero);
+
+      // Déficit calórico de 500kcal para perda de 0.5kg por semana
+      setRecommendedCalories(calories - 500);
+    }
+  }, [patientData]);
+
+  const getProjectionData = (): ProjectionData => {
+    const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const projectionLabels: string[] = [];
+    const projectionData: number[] = [];
+    
+    const totalPoints = Math.min(8, weightProjection.length);
+    const interval = Math.max(1, Math.floor((weightProjection.length - 1) / (totalPoints - 1)));
+    
+    weightProjection.forEach((point, index) => {
+      if (index === 0 || index === weightProjection.length - 1 || index % interval === 0) {
+        const date = new Date(point.date);
+        const label = `${date.getDate()}/${months[date.getMonth()]}`;
+        projectionLabels.push(label);
+        projectionData.push(point.weight);
+      }
+    });
+
+    if (weightProjection.length > 0 && projectionLabels.length < totalPoints) {
+      const lastPoint = weightProjection[weightProjection.length - 1];
+      const date = new Date(lastPoint.date);
+      const label = `${date.getDate()}/${months[date.getMonth()]}`;
+      projectionLabels.push(label);
+      projectionData.push(lastPoint.weight);
+    }
+
+    return { labels: projectionLabels, data: projectionData };
+  };
+
+  const projectionResult = weightProjection.length > 0 
+    ? getProjectionData() 
+    : { labels: [] as string[], data: [] as number[] };
+
+  const chartConfig = {
+    backgroundGradientFrom: "#fff",
+    backgroundGradientTo: "#fff",
+    color: (opacity = 1) => `rgba(76, 175, 80, ${opacity})`,
+    strokeWidth: 2,
+    barPercentage: 0.5,
+    useShadowColorFromDataset: false,
+    decimalPlaces: 1,
+    formatYLabel: (value: string) => `${value}kg`,
+    formatXLabel: (value: string) => value,
+  };
+
+  const weightData = {
+    labels: projectionResult.labels,
+    datasets: [
+      {
+        data: projectionResult.data,
+        color: (opacity = 1) => `rgba(76, 175, 80, ${opacity})`,
+        strokeWidth: 2
+      }
+    ]
+  };
 
   const upcomingAppointments = appointments.filter(appointment => new Date(appointment.data_consulta) > new Date())
 
@@ -156,17 +295,6 @@ export default function PatientDashboard(): React.JSX.Element {
               <Text style={styles.greeting}>Olá, {patientData?.nome}</Text>
               <Text style={styles.date}>{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</Text>
             </View>
-            <View style={styles.statsContainer}>
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>1.850</Text>
-                <Text style={styles.statLabel}>Calorias</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>75g</Text>
-                <Text style={styles.statLabel}>Proteínas</Text>
-              </View>
-            </View>
           </View>
 
           <View style={styles.section}>
@@ -205,18 +333,18 @@ export default function PatientDashboard(): React.JSX.Element {
                     })}</Text>
                   </View>
                   <View style={styles.appointmentContent}>
-                <Text style={styles.appointmentTitle}>Consulta de Nutrição</Text>
-                <Text style={styles.appointmentDoctor}>{appointment.nutricionista_nome}</Text>
-              </View>
-              <View style={styles.appointmentActions}>
-                <TouchableOpacity
-                  style={[styles.appointmentButton, styles.appointmentButtonFilled]}
-                  onPress={() => Linking.openURL(`https://wa.me/+559891931960`)}
-                >
-                  <Ionicons name="logo-whatsapp" size={20} color="#ffffff" />
-                  <Text style={styles.appointmentButtonTextFilled}>Dúvidas</Text>
-                </TouchableOpacity>
-              </View>
+                    <Text style={styles.appointmentTitle}>Consulta de Nutrição</Text>
+                    <Text style={styles.appointmentDoctor}>{appointment.nutricionista_nome}</Text>
+                  </View>
+                  <View style={styles.appointmentActions}>
+                    <TouchableOpacity
+                      style={[styles.appointmentButton, styles.appointmentButtonFilled]}
+                      onPress={() => Linking.openURL(`https://wa.me/+559891931960`)}
+                    >
+                      <Ionicons name="logo-whatsapp" size={20} color="#ffffff" />
+                      <Text style={styles.appointmentButtonTextFilled}>Dúvidas</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               ))
             ) : (
@@ -225,45 +353,64 @@ export default function PatientDashboard(): React.JSX.Element {
                 <Text style={styles.emptyStateText}>Nenhuma consulta agendada</Text>
               </View>
             )}
-            
           </View>
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Acompanhamento de Progresso</Text>
             <View style={styles.progressCard}>
               <View style={styles.progressHeader}>
-                <Text style={styles.progressTitle}>Progresso de Peso</Text>
+                <Text style={styles.progressTitle}>Projeção de Peso</Text>
                 <TouchableOpacity>
                   <Text style={styles.progressViewAll}>Ver Tudo</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.progressChart}>
-                <View style={styles.chartPlaceholder}>
-                  <Text style={styles.chartPlaceholderText}>Gráfico de Peso</Text>
-                </View>
+                <LineChart
+                  data={weightData}
+                  width={Dimensions.get("window").width - 70}
+                  height={180}
+                  chartConfig={chartConfig}
+                  bezier
+                  style={{
+                    marginVertical: 8,
+                    borderRadius: 8
+                  }}
+                  withVerticalLines={false}
+                  withHorizontalLines={true}
+                  withDots={true}
+                  withShadow={false}
+                  yAxisSuffix="kg"
+                />
               </View>
               <View style={styles.progressStats}>
                 <View style={styles.progressStat}>
-                  <Text style={styles.progressStatValue}>165 kg</Text>
-                  <Text style={styles.progressStatLabel}>Atual</Text>
+                  <Text style={styles.progressStatValue}>{patientData?.peso} kg</Text>
+                  <Text style={styles.progressStatLabel}>Peso Atual</Text>
                 </View>
                 <View style={styles.progressStat}>
-                  <Text style={styles.progressStatValue}>-5 kg</Text>
-                  <Text style={styles.progressStatLabel}>Este Mês</Text>
+                  <Text style={styles.progressStatValue}>{idealWeight} kg</Text>
+                  <Text style={styles.progressStatLabel}>Peso Ideal</Text>
                 </View>
                 <View style={styles.progressStat}>
-                  <Text style={styles.progressStatValue}>150 kg</Text>
-                  <Text style={styles.progressStatLabel}>Meta</Text>
+                  <Text style={styles.progressStatValue}>{weeksToGoal} sem</Text>
+                  <Text style={styles.progressStatLabel}>Tempo Estimado</Text>
                 </View>
+              </View>
+              <View style={styles.caloriesRecommendation}>
+                <Text style={styles.recommendationText}>
+                  Consumo recomendado: {recommendedCalories} kcal/dia
+                </Text>
+                <Text style={styles.recommendationSubtext}>
+                  Para atingir o objetivo em {weeksToGoal} semanas
+                </Text>
               </View>
             </View>
           </View>
         </ScrollView>
-
-      <PatientTabBar activeTab="inicio" /> 
+        <PatientTabBar activeTab="inicio" />
       </SafeAreaView>
     </PatientLayout>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -292,32 +439,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     marginTop: 5,
-  },
-  statsContainer: {
-    flexDirection: "row",
-    backgroundColor: "#f0f8f0",
-    borderRadius: 12,
-    padding: 15,
-    marginTop: 15,
-  },
-  statItem: {
-    flex: 1,
-    alignItems: "center",
-  },
-  statValue: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  statLabel: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 5,
-  },
-  statDivider: {
-    width: 1,
-    backgroundColor: "#ddd",
-    marginHorizontal: 15,
   },
   section: {
     padding: 20,
@@ -491,6 +612,7 @@ const styles = StyleSheet.create({
   },
   progressChart: {
     marginBottom: 15,
+    alignItems: 'center'
   },
   chartPlaceholder: {
     height: 150,
@@ -553,6 +675,24 @@ const styles = StyleSheet.create({
     color: "#999",
     marginTop: 10,
     marginBottom: 15,
+  },
+  caloriesRecommendation: {
+    marginTop: 15,
+    padding: 15,
+    backgroundColor: "#f0f8f0",
+    borderRadius: 8,
+  },
+  recommendationText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+    textAlign: "center",
+  },
+  recommendationSubtext: {
+    fontSize: 12,
+    color: "#666",
+    textAlign: "center",
+    marginTop: 5,
   },
 })
 
