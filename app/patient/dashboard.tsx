@@ -31,11 +31,6 @@ interface MealPlanResponse {
   }[]
 }
 
-interface CaloriesHistory {
-  date: string;
-  calories: number;
-}
-
 interface WeightProjection {
   date: string;
   weight: number;

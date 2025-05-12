@@ -40,7 +40,6 @@ export default function ScheduleAppointment(): React.JSX.Element {
   const [selectedFormattedDate, setSelectedFormattedDate] = useState<string>("")
   const [selectedNutritionist, setSelectedNutritionist] = useState<Nutritionist | null>(null)
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>("")
-  const [nutritionists, setNutritionists] = useState<Nutritionist[]>([])
   const [sortedNutritionists, setSortedNutritionists] = useState<Nutritionist[]>([])
   const [currentPage, setCurrentPage] = useState<number>(0)
   const [loading, setLoading] = useState<boolean>(true)
@@ -69,13 +68,9 @@ export default function ScheduleAppointment(): React.JSX.Element {
 
   const defaultTimeSlots: TimeSlot[] = [
     { id: "1", time: "09:00", available: true },
-    { id: "2", time: "10:00", available: true },
-    { id: "3", time: "11:00", available: true },
-    { id: "4", time: "13:00", available: true },
-    { id: "5", time: "14:00", available: true },
-    { id: "6", time: "15:00", available: true },
-    { id: "7", time: "16:00", available: true },
-    { id: "8", time: "17:00", available: true },
+    { id: "2", time: "11:00", available: true },
+    { id: "3", time: "13:00", available: true },
+    { id: "4", time: "16:00", available: true },
   ];
 
   LocaleConfig.locales['pt-br'] = {
@@ -149,7 +144,6 @@ export default function ScheduleAppointment(): React.JSX.Element {
       try {
         setLoading(true);
         const data = await getAllNutritionists();
-        setNutritionists(data);
         
         const sorted = [...data].sort((a, b) => {
           const aHasSlots = Array.isArray(a.horarios_disponiveis) && a.horarios_disponiveis.length > 0;
@@ -179,12 +173,22 @@ export default function ScheduleAppointment(): React.JSX.Element {
       if (Array.isArray(selectedNutritionist.horarios_disponiveis) && 
           selectedNutritionist.horarios_disponiveis.length > 0) {
         
-        const slots = selectedNutritionist.horarios_disponiveis.map((time, index) => ({
-          id: String(index + 1),
-          time,
-          available: true
-        }));
-        
+            const now = new Date();
+            const todayString = now.toISOString().split("T")[0];
+            
+            const currentTime = now.toTimeString().slice(0, 5); 
+            
+            const slots = selectedNutritionist.horarios_disponiveis.map((time, index) => {
+              const isToday = selectedDate === todayString;
+              const isPast = isToday && time <= currentTime;
+            
+              return {
+                id: String(index + 1),
+                time,
+                available: !isPast
+              };
+            });
+
         setAvailableTimeSlots(slots);
       } else {
         setAvailableTimeSlots(defaultTimeSlots.map(slot => ({...slot, available: false})));
@@ -192,7 +196,7 @@ export default function ScheduleAppointment(): React.JSX.Element {
     } else {
       setAvailableTimeSlots(defaultTimeSlots);
     }
-  }, [selectedNutritionist]);
+  }, [selectedNutritionist, selectedDate]);
 
   const handleDateSelect = (date: any) => {
     setSelectedDate(date.dateString);
@@ -323,7 +327,7 @@ export default function ScheduleAppointment(): React.JSX.Element {
                     {Array.isArray(nutritionist.horarios_disponiveis) && 
                     nutritionist.horarios_disponiveis.length > 0 ? (
                       <Text style={styles.availabilityInfo}>
-                        {nutritionist.horarios_disponiveis.length} horários disponíveis
+                        {nutritionist.horarios_disponiveis.length} horários disponíveis ao dia
                       </Text>
                     ) : (
                       <Text style={styles.noAvailabilityInfo}>
@@ -539,6 +543,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f0f0",
     marginBottom: 10,
     alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1,
     borderColor: "#ddd",
   },

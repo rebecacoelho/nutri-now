@@ -9,9 +9,6 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  Image,
-  TextInput,
-  Switch,
   Alert,
 } from "react-native"
 import { Stack, useRouter } from "expo-router"
@@ -88,9 +85,6 @@ export default function PatientProfile(): React.JSX.Element {
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.profileHeader}>
-          <View style={styles.profileImageContainer}>
-            <Image source={{ uri: "/placeholder.svg?height=150&width=150" }} style={styles.profileImage} />
-          </View>
           <Text style={styles.profileName}>{patientData?.nome}</Text>
           <Text style={styles.profileEmail}>{patientData?.email}</Text>
         </View>
@@ -184,30 +178,6 @@ const styles = StyleSheet.create({
   profileHeader: {
     alignItems: "center",
     marginBottom: 20,
-  },
-  profileImageContainer: {
-    position: "relative",
-    marginBottom: 15,
-  },
-  profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 3,
-    borderColor: "#4CAF50",
-  },
-  editImageButton: {
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    backgroundColor: "#4CAF50",
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: "#fff",
   },
   profileName: {
     fontSize: 22,
