@@ -18,7 +18,7 @@ import {
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
-import { getAppointments, getNutritionistData, getPatientData, loginUser } from "../api"
+import { getNutritionistData, getPatientData, loginUser } from "../api"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useNutritionist } from "./contexts/NutritionistContext"
 import { usePatient } from "./contexts/PatientContext"
@@ -31,7 +31,6 @@ export default function LoginScreen(): React.JSX.Element {
   const [loading, setLoading] = useState<boolean>(false)
   const { setNutritionistData } = useNutritionist();
   const { setPatientData } = usePatient();
-
 
   const router = useRouter()
 
@@ -74,9 +73,6 @@ export default function LoginScreen(): React.JSX.Element {
         if (userType === "patient") {
           const patientData = await getPatientData()
           await AsyncStorage.setItem("@paciente/data", JSON.stringify(patientData))
-
-          const appointments = await getAppointments()
-          await AsyncStorage.setItem("@paciente/appointments", JSON.stringify(appointments))
           setPatientData(patientData)
 
           router.replace("/patient/dashboard")
@@ -86,8 +82,6 @@ export default function LoginScreen(): React.JSX.Element {
           const nutritionistData = await getNutritionistData()
           await AsyncStorage.setItem("@nutricionista/data", JSON.stringify(nutritionistData))
 
-          const appointments = await getAppointments()
-          await AsyncStorage.setItem("@nutricionista/appointments", JSON.stringify(appointments))
           setNutritionistData(nutritionistData)
           router.replace("/nutritionist/dashboard")
         }

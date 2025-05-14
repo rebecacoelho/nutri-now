@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AppointmentsResponse } from '@/api';
+import { AppointmentsResponse, getAppointments } from '@/api';
 
 interface PatientData {
   id: number;
@@ -20,7 +20,7 @@ interface PatientContextData {
   patientData: PatientData | null;
   appointments: AppointmentsResponse[];
   setPatientData: (data: PatientData) => Promise<void>;
-  setAppointments: (appointments: AppointmentsResponse[]) => Promise<void>;
+  fetchAppointments: () => Promise<void>;
   loading: boolean;
 }
 
@@ -37,18 +37,13 @@ export default function PatientProvider({ children }: { children: ReactNode }) {
 
   const loadInitialData = async () => {
     try {
-      const [patientDataStr, appointmentsStr] = await Promise.all([
-        AsyncStorage.getItem('@paciente/data'),
-        AsyncStorage.getItem('@paciente/appointments')
-      ]);
+      const patientDataStr = await AsyncStorage.getItem('@paciente/data');
 
       if (patientDataStr) {
         setPatientDataState(JSON.parse(patientDataStr));
       }
 
-      if (appointmentsStr) {
-        setAppointmentsState(JSON.parse(appointmentsStr));
-      }
+      await fetchAppointments();
     } catch (error) {
       console.error('Erro ao carregar dados iniciais:', error);
     } finally {
@@ -65,12 +60,12 @@ export default function PatientProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const setAppointments = async (newAppointments: AppointmentsResponse[]) => {
+  const fetchAppointments = async () => {
     try {
-      await AsyncStorage.setItem('@paciente/appointments', JSON.stringify(newAppointments));
-      setAppointmentsState(newAppointments);
+      const response = await getAppointments();
+      setAppointmentsState(response);
     } catch (error) {
-      console.error('Erro ao salvar consultas:', error);
+      console.error('Erro ao buscar consultas:', error);
     }
   };
 
@@ -80,7 +75,7 @@ export default function PatientProvider({ children }: { children: ReactNode }) {
         patientData,
         appointments,
         setPatientData,
-        setAppointments,
+        fetchAppointments,
         loading
       }}
     >

@@ -15,7 +15,7 @@ interface SubstitutionModalProps {
   foodName: string
 }
 
-export default function SubstitutionModal({ isVisible, onClose, substitutions, foodName }: SubstitutionModalProps) {
+export function SubstitutionModal({ isVisible, onClose, substitutions, foodName }: SubstitutionModalProps) {
   return (
     <Modal
       animationType="slide"

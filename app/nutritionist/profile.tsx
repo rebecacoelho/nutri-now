@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   SafeAreaView,
   StyleSheet,
@@ -17,6 +17,7 @@ import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useNutritionist } from "../contexts/NutritionistContext"
+import { updateNutritionistAvailability } from "../../api"
 
 interface Appointment {
   id: string
@@ -38,30 +39,14 @@ export default function NutritionistProfile(): React.JSX.Element {
     patientProgressAlerts: true,
   })
 
-  // Consultas futuras de exemplo
-  const upcomingAppointments: Appointment[] = [
-    {
-      id: "1",
-      patient: "Sarah Johnson",
-      date: "18 de Março de 2025",
-      time: "10:30 AM",
-      type: "Consulta de Nutrição",
-    },
-    {
-      id: "2",
-      patient: "Michael Brown",
-      date: "18 de Março de 2025",
-      time: "2:00 PM",
-      type: "Revisão de Progresso",
-    },
-    {
-      id: "3",
-      patient: "Emily Davis",
-      date: "19 de Março de 2025",
-      time: "11:00 AM",
-      type: "Avaliação Inicial",
-    },
-  ]
+  const [isSelectingHours, setIsSelectingHours] = useState(false)
+  const [selectedHours, setSelectedHours] = useState<string[]>([])
+
+  useEffect(() => {
+    if (nutritionistData?.horarios_disponiveis) {
+      setSelectedHours(nutritionistData.horarios_disponiveis);
+    }
+  }, [nutritionistData]);
 
   const handleLogout = async () => {
     Alert.alert(
@@ -96,6 +81,34 @@ export default function NutritionistProfile(): React.JSX.Element {
       [setting]: !notificationSettings[setting],
     })
   }
+
+  const toggleHourSelector = () => {
+    setIsSelectingHours(!isSelectingHours)
+  }
+
+  const handleHourSelection = (hour: string) => {
+    setSelectedHours((prev) =>
+      prev.includes(hour) ? prev.filter((h) => h !== hour) : [...prev, hour]
+    )
+  }
+
+  const updateAvailability = async () => {
+    if (!nutritionistData?.id) {
+      Alert.alert("Erro", "ID do nutricionista não encontrado.");
+      return;
+    }
+    try {
+      await updateNutritionistAvailability({
+        id_nutricionista: nutritionistData.id,
+        horarios_disponiveis: selectedHours
+      });
+      Alert.alert("Sucesso", "Horários atualizados com sucesso!");
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível atualizar os horários.");
+    }
+  };
+
+  const availableHours = Array.from({ length: 11 }, (_, i) => `${8 + i}:00`)
 
   return (
     <SafeAreaView style={styles.container}>
@@ -151,6 +164,29 @@ export default function NutritionistProfile(): React.JSX.Element {
           </View>
         </View>
 
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Horários de Atendimento</Text>
+          <TouchableOpacity style={styles.editProfileButton} onPress={toggleHourSelector}>
+            <Text style={styles.editProfileButtonText}>Editar Horários</Text>
+          </TouchableOpacity>
+          {isSelectingHours && (
+            <View style={styles.hourSelector}>
+              {availableHours.map((hour) => (
+                <TouchableOpacity
+                  key={hour}
+                  style={selectedHours.includes(hour) ? styles.selectedHour : styles.hourButton}
+                  onPress={() => handleHourSelection(hour)}
+                >
+                  <Text style={selectedHours.includes(hour) ? styles.hourSelectedText : styles.hourText}>{hour}</Text>
+                </TouchableOpacity>
+              ))}
+              <TouchableOpacity style={styles.saveProfileButton} onPress={updateAvailability}>
+                <Text style={styles.saveProfileButtonText}>Salvar</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Ionicons name="log-out-outline" size={20} color="#fff" />
           <Text style={styles.logoutButtonText}>Sair</Text>
@@ -195,28 +231,27 @@ const styles = StyleSheet.create({
   editProfileButton: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     backgroundColor: "#4CAF50",
     paddingHorizontal: 15,
     paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: 10,
   },
   editProfileButtonText: {
     color: "#fff",
     fontWeight: "600",
-    marginLeft: 5,
   },
   saveProfileButton: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#4CAF50",
-    paddingHorizontal: 15,
-    paddingVertical: 8,
+    padding: 10,
+    margin: 5,
     borderRadius: 20,
   },
   saveProfileButtonText: {
     color: "#fff",
     fontWeight: "600",
-    marginLeft: 5,
   },
   section: {
     backgroundColor: "#fff",
@@ -439,6 +474,36 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     marginLeft: 8,
+  },
+  hourSelector: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 10,
+    justifyContent: "space-between",
+  },
+  hourButton: {
+    backgroundColor: "#f0f0f0",
+    borderRadius: 8,
+    padding: 10,
+    margin: 5,
+    width: "20%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  selectedHour: {
+    backgroundColor: "#4CAF50",
+    borderRadius: 8,
+    padding: 10,
+    margin: 5,
+    width: "20%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  hourText: {
+    color: "#333",
+  },
+  hourSelectedText: {
+    color: "#fff",
   },
 })
 

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AppointmentsResponse } from '@/api';
+import { AppointmentsResponse, getAppointments } from '@/api';
 
 interface NutritionistData {
   id: number;
@@ -13,7 +13,7 @@ interface NutritionistContextData {
   nutritionistData: NutritionistData | null;
   appointments: AppointmentsResponse[];
   setNutritionistData: (data: NutritionistData) => Promise<void>;
-  setAppointments: (appointments: AppointmentsResponse[]) => Promise<void>;
+  fetchAppointments: () => Promise<void>;
   loading: boolean;
 }
 
@@ -30,18 +30,13 @@ export default function NutritionistProvider({ children }: { children: ReactNode
 
   const loadInitialData = async () => {
     try {
-      const [nutritionistDataStr, appointmentsStr] = await Promise.all([
-        AsyncStorage.getItem('@nutricionista/data'),
-        AsyncStorage.getItem('@nutricionista/appointments')
-      ]);
+      const nutritionistDataStr = await AsyncStorage.getItem('@nutricionista/data');
 
       if (nutritionistDataStr) {
         setNutritionistDataState(JSON.parse(nutritionistDataStr));
       }
 
-      if (appointmentsStr) {
-        setAppointmentsState(JSON.parse(appointmentsStr));
-      }
+      await fetchAppointments();
     } catch (error) {
       console.error('Erro ao carregar dados iniciais:', error);
     } finally {
@@ -58,12 +53,12 @@ export default function NutritionistProvider({ children }: { children: ReactNode
     }
   };
 
-  const setAppointments = async (newAppointments: AppointmentsResponse[]) => {
+  const fetchAppointments = async () => {
     try {
-      await AsyncStorage.setItem('@nutricionista/appointments', JSON.stringify(newAppointments));
-      setAppointmentsState(newAppointments);
+      const response = await getAppointments();
+      setAppointmentsState(response);
     } catch (error) {
-      console.error('Erro ao salvar consultas:', error);
+      console.error('Erro ao buscar consultas:', error);
     }
   };
 
@@ -73,7 +68,7 @@ export default function NutritionistProvider({ children }: { children: ReactNode
         nutritionistData,
         appointments,
         setNutritionistData,
-        setAppointments,
+        fetchAppointments,
         loading
       }}
     >
