@@ -1,50 +1,70 @@
-# Welcome to your Expo app 👋
+# NutriNow 🥗
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+NutriNow é uma aplicação móvel desenvolvida com Expo e React Native que conecta nutricionistas e pacientes, facilitando o acompanhamento nutricional e a gestão de planos alimentares.
 
-## Get started
+## Funcionalidades
 
-1. Install dependencies
+### Para Nutricionistas
+- **Dashboard**: Visualização de estatísticas e informações importantes
+- **Gestão de Pacientes**: Adicionar e gerenciar pacientes
+- **Criação de Planos Alimentares**: Elaborar planos personalizados
+- **Agendamento**: Gerenciar consultas e compromissos
+- **Relatórios**: Gerar e visualizar relatórios de progresso
+- **Perfil Profissional**: Gerenciar informações pessoais
 
+### Para Pacientes
+- **Dashboard**: Visão geral do progresso e planos alimentares
+- **Contador de Calorias**: Registro e monitoramento da ingestão calórica
+- **Planos Alimentares**: Acesso aos planos criados pelo nutricionista
+- **Agendamento de Consultas**: Marcar novas consultas
+- **Progresso**: Acompanhamento da evolução
+- **Perfil**: Gerenciamento de informações pessoais
+
+## Tecnologias Utilizadas
+
+- **Expo**: Framework para desenvolvimento React Native
+- **React Native**: Desenvolvimento de aplicações móveis
+- **TypeScript**: Tipagem estática para JavaScript
+- **Expo Router**: Navegação baseada em arquivos
+- **AsyncStorage**: Armazenamento local de dados
+- **Axios**: Cliente HTTP para requisições API
+- **React Native Maps**: Integração com mapas
+- **React Native Calendars**: Componentes de calendário
+- **React Native Chart Kit**: Visualização de dados em gráficos
+- **Expo Vector Icons**: Biblioteca de ícones
+
+## Instalação
+
+1. Clone o repositório:
+   ```bash
+   git clone [URL_DO_REPOSITÓRIO]
+   cd nutri-now
+   ```
+
+2. Instale as dependências:
    ```bash
    npm install
    ```
 
-2. Start the app
-
+3. Inicie o aplicativo:
    ```bash
-    npx expo start
+   npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+## Estrutura do Projeto
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- **/app**: Contém os arquivos principais da aplicação
+  - **/components**: Componentes reutilizáveis
+  - **/contexts**: Contextos React para gerenciamento de estado
+  - **/nutritionist**: Telas específicas para nutricionistas
+  - **/patient**: Telas específicas para pacientes
+  - **/utils**: Funções utilitárias
+  - **index.tsx**: Página inicial
+  - **login.tsx**: Tela de login
+  - **register.tsx**: Tela de registro
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Requisitos
 
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- Node.js 14.0 ou superior
+- npm ou yarn
+- Expo CLI
