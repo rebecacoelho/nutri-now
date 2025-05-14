@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppointmentsResponse, getAppointments } from '@/api';
+import { onTokenRefreshed } from '../utils/tokenEvents';
 
 interface PatientData {
   id: number;
@@ -32,24 +33,27 @@ export default function PatientProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadInitialData();
-  }, []);
-
-  const loadInitialData = async () => {
-    try {
-      const patientDataStr = await AsyncStorage.getItem('@paciente/data');
-
-      if (patientDataStr) {
-        setPatientDataState(JSON.parse(patientDataStr));
+    const loadPatientData = async () => {
+      try {
+        const patientDataStr = await AsyncStorage.getItem('@paciente/data');
+        if (patientDataStr) {
+          setPatientDataState(JSON.parse(patientDataStr));
+        }
+      } catch (error) {
+        console.error('Erro ao carregar dados do paciente:', error);
       }
+    };
 
-      await fetchAppointments();
-    } catch (error) {
-      console.error('Erro ao carregar dados iniciais:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    loadPatientData();
+
+    const unsubscribe = onTokenRefreshed(() => {
+      fetchAppointments();
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   const setPatientData = async (data: PatientData) => {
     try {
@@ -66,6 +70,8 @@ export default function PatientProvider({ children }: { children: ReactNode }) {
       setAppointmentsState(response);
     } catch (error) {
       console.error('Erro ao buscar consultas:', error);
+    } finally {
+      setLoading(false);
     }
   };
 

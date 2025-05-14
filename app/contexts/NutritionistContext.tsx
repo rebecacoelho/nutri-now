@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppointmentsResponse, getAppointments } from '@/api';
+import { onTokenRefreshed } from '../utils/tokenEvents';
 
 interface NutritionistData {
   id: number;
@@ -25,24 +26,27 @@ export default function NutritionistProvider({ children }: { children: ReactNode
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadInitialData();
-  }, []);
-
-  const loadInitialData = async () => {
-    try {
-      const nutritionistDataStr = await AsyncStorage.getItem('@nutricionista/data');
-
-      if (nutritionistDataStr) {
-        setNutritionistDataState(JSON.parse(nutritionistDataStr));
+    const loadNutritionistData = async () => {
+      try {
+        const nutritionistDataStr = await AsyncStorage.getItem('@nutricionista/data');
+        if (nutritionistDataStr) {
+          setNutritionistDataState(JSON.parse(nutritionistDataStr));
+        }
+      } catch (error) {
+        console.error('Erro ao carregar dados do nutricionista:', error);
       }
+    };
 
-      await fetchAppointments();
-    } catch (error) {
-      console.error('Erro ao carregar dados iniciais:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    loadNutritionistData();
+
+    const unsubscribe = onTokenRefreshed(() => {
+      fetchAppointments();
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   const setNutritionistData = async (data: NutritionistData) => {
     try {
@@ -59,6 +63,8 @@ export default function NutritionistProvider({ children }: { children: ReactNode
       setAppointmentsState(response);
     } catch (error) {
       console.error('Erro ao buscar consultas:', error);
+    } finally {
+      setLoading(false);
     }
   };
 

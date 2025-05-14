@@ -11,7 +11,7 @@ import PatientLayout from "../components/patient-layout"
 import { useEffect, useState } from "react"
 import { usePatient } from "../contexts/PatientContext"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { refreshToken, getPatientData, getMealPlan } from "../../api"
+import { refreshToken, getPatientData, getMealPlan, AppointmentsResponse, getAppointments } from "../../api"
 
 interface MealCardProps {
   title: string
@@ -125,13 +125,14 @@ function calculateWeightProjection(currentWeight: number, targetWeight: number):
 
 export default function PatientDashboard(): React.JSX.Element {
   const router = useRouter()
-  const { patientData, appointments } = usePatient()
+  const { patientData } = usePatient()
   const [mealCompletionState, setMealCompletionState] = useState<MealCompletionState>({})
   const [mealPlan, setMealPlan] = useState<MealPlanResponse | null>(null)
   const [weightProjection, setWeightProjection] = useState<WeightProjection[]>([])
   const [idealWeight, setIdealWeight] = useState(0)
   const [recommendedCalories, setRecommendedCalories] = useState(0)
   const [weeksToGoal, setWeeksToGoal] = useState(0)
+  const [appointments, setAppointments] = useState<AppointmentsResponse[]>([])
 
   useEffect(() => {
     const fetchMealPlan = async () => {
@@ -147,6 +148,15 @@ export default function PatientDashboard(): React.JSX.Element {
 
     fetchMealPlan();
   }, [patientData]);
+
+  useEffect(() => {
+    const fetchAppointmentsAndSet = async () => {
+      const appointments = await getAppointments();
+      setAppointments(appointments);
+    };
+
+    fetchAppointmentsAndSet();
+  }, [appointments]);
 
   useEffect(() => {
     const loadMealCompletionState = async () => {

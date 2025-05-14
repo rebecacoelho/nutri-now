@@ -7,6 +7,7 @@ import MapView, { Marker } from "react-native-maps"
 import { useEffect } from "react"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { refreshToken } from "@/api"
+import { notifyTokenRefreshed } from "./utils/tokenEvents"
 
 interface FeatureItemProps {
   icon: keyof typeof Ionicons.glyphMap
@@ -29,21 +30,26 @@ export default function WelcomeScreen(): React.JSX.Element {
 
   useEffect(() => {
     const checkLogin = async () => {
-      const userType = await AsyncStorage.getItem('userType')
-      const isLoggedIn = await AsyncStorage.getItem('refreshToken') && userType
+      try {
+        const userType = await AsyncStorage.getItem('userType')
+        const isLoggedIn = await AsyncStorage.getItem('refreshToken') && userType
 
-      if (isLoggedIn) {
-        const response = await refreshToken()
+        if (isLoggedIn) {
+          const response = await refreshToken()
 
-        if (response.access) {
-          await AsyncStorage.setItem("accessToken", response.access)
+          if (response.access) {
+            await AsyncStorage.setItem("accessToken", response.access)
+            notifyTokenRefreshed();
 
-          if (userType === 'patient') {
-            router.replace('/patient/dashboard')
-          } else if (userType === 'nutritionist') {
-            router.replace('/nutritionist/dashboard')
+            if (userType === 'patient') {
+              router.replace('/patient/dashboard')
+            } else if (userType === 'nutritionist') {
+              router.replace('/nutritionist/dashboard')
+            }
           }
         }
+      } catch (error) {
+        console.error('Erro ao verificar login:', error);
       }
     }
 

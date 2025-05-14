@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { SafeAreaView, StyleSheet, Text, View, ScrollView, TouchableOpacity, Image } from "react-native"
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
@@ -9,11 +9,20 @@ import { Ionicons } from "@expo/vector-icons"
 import NutritionistTabBar from "../components/nutritionist-tab-bar"
 import { useNutritionist } from "../contexts/NutritionistContext"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { getNutritionistData, refreshToken } from "@/api"
+import { AppointmentsResponse, getNutritionistData, refreshToken, getAppointments } from "@/api"
 
 export default function NutritionistDashboard(): React.JSX.Element {
   const router = useRouter()
-  const { nutritionistData, appointments } = useNutritionist();
+  const { nutritionistData } = useNutritionist();
+  const [appointments, setAppointments] = useState<AppointmentsResponse[]>([]);
+
+  useEffect(() => {
+    const fetchAndSetAppointments = async () => {
+      const appointments = await getAppointments();
+      setAppointments(appointments);
+    };
+    fetchAndSetAppointments();
+  }, [appointments]);
 
   if (!nutritionistData) {
     const handleMissingData = async () => {
