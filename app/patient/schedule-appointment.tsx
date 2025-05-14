@@ -19,7 +19,7 @@ import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
 import { Calendar, LocaleConfig } from 'react-native-calendars'
 import PatientTabBar from "../components/patient-tab-bar"
-import { getAllNutritionists, makeAppointment } from "../../api"
+import { getAllNutritionists, makeAppointment, getAppointments, AppointmentsResponse } from "../../api"
 
 interface Nutritionist {
   id: number;
@@ -197,6 +197,33 @@ export default function ScheduleAppointment(): React.JSX.Element {
       setAvailableTimeSlots(defaultTimeSlots);
     }
   }, [selectedNutritionist, selectedDate]);
+
+  useEffect(() => {
+    const checkExistingAppointments = async () => {
+      try {
+        const appointments = await getAppointments();
+        const hasPendingAppointment = appointments.some((appointment: AppointmentsResponse) => !appointment.realizada);
+
+        if (hasPendingAppointment) {
+          Alert.alert(
+            "Consulta Pendente",
+            "Você já possui uma consulta agendada que ainda não foi realizada. Você poderá agendar uma nova consulta após a realização da consulta pendente :)",
+            [
+              {
+                text: "OK",
+                onPress: () => router.push("/patient/dashboard"),
+              },
+            ],
+          );
+        }
+      } catch (error) {
+        console.error("Erro ao verificar consultas existentes:", error);
+        Alert.alert("Erro", "Não foi possível verificar suas consultas. Por favor, tente novamente mais tarde.");
+      }
+    };
+
+    checkExistingAppointments();
+  }, []);
 
   const handleDateSelect = (date: any) => {
     setSelectedDate(date.dateString);
