@@ -15,14 +15,28 @@ export default function NutritionistDashboard(): React.JSX.Element {
   const router = useRouter()
   const { nutritionistData } = useNutritionist();
   const [appointments, setAppointments] = useState<AppointmentsResponse[]>([]);
+  const [recentActivities, setRecentActivities] = useState<Array<{
+    type: 'appointment' | 'meal_plan';
+    data: any;
+    date: Date;
+  }>>([]);
 
   useEffect(() => {
     const fetchAndSetAppointments = async () => {
       const appointments = await getAppointments();
       setAppointments(appointments);
+
+      const activities = appointments.map((appointment: AppointmentsResponse) => ({
+        type: 'appointment' as const,
+        data: appointment,
+        date: new Date(appointment.data_consulta)
+      }));
+
+      activities.sort((a: { date: Date }, b: { date: Date }) => b.date.getTime() - a.date.getTime());
+      setRecentActivities(activities);
     };
     fetchAndSetAppointments();
-  }, [appointments]);
+  }, []);
 
   if (!nutritionistData) {
     const handleMissingData = async () => {
@@ -115,44 +129,51 @@ export default function NutritionistDashboard(): React.JSX.Element {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Atividade Recente dos Pacientes</Text>
-          <View style={styles.activityCard}>
-            <View style={styles.activityHeader}>
-              <Image source={{ uri: "/placeholder.svg?height=40&width=40" }} style={styles.activityPatientImage} />
-              <View>
-                <Text style={styles.activityPatientName}>Sarah Johnson</Text>
-                <Text style={styles.activityTime}>2 horas atrás</Text>
+          <Text style={styles.sectionTitle}>Atividades Recentes com Pacientes</Text>
+          {recentActivities.slice(0, 3).map((activity, index) => (
+            <View key={`activity-${index}`} style={styles.activityCard}>
+              <View style={styles.activityHeader}>
+                <View style={styles.activityPatientImage}>
+                  <Text style={styles.patientInitial}>
+                    {activity.type === 'appointment' 
+                      ? activity.data.paciente_nome.charAt(0)
+                      : activity.data.paciente_nome.charAt(0)}
+                  </Text>
+                </View>
+                <View>
+                  <Text style={styles.activityPatientName}>
+                    {activity.type === 'appointment' 
+                      ? activity.data.paciente_nome
+                      : activity.data.paciente_nome}
+                  </Text>
+                  <Text style={styles.activityTime}>
+                    {activity.date.toLocaleDateString('pt-BR')}
+                  </Text>
+                </View>
               </View>
-              <TouchableOpacity style={styles.activityButton}>
-                <Text style={styles.activityButtonText}>Ver</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.activityContent}>
-              <Text style={styles.activityTitle}>Adesão ao Plano Alimentar</Text>
-              <Text style={styles.activityDescription}>Completou 2/3 refeições hoje. Pulou o jantar.</Text>
-            </View>
-          </View>
-
-          <View style={styles.activityCard}>
-            <View style={styles.activityHeader}>
-              <Image source={{ uri: "/placeholder.svg?height=40&width=40" }} style={styles.activityPatientImage} />
-              <View>
-                <Text style={styles.activityPatientName}>Robert Davis</Text>
-                <Text style={styles.activityTime}>Ontem</Text>
+              <View style={styles.activityContent}>
+                <Text style={styles.activityTitle}>
+                  {activity.type === 'appointment'
+                    ? (activity.data.realizada ? "Consulta Realizada" : "Consulta Agendada")
+                    : "Plano Alimentar Criado"}
+                </Text>
+                <Text style={styles.activityDescription}>
+                  {activity.type === 'appointment'
+                    ? activity.date.toLocaleTimeString('pt-BR', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      })
+                    : `${activity.data.total_calorias} kcal/dia`}
+                </Text>
               </View>
-              <TouchableOpacity style={styles.activityButton}>
-                <Text style={styles.activityButtonText}>Ver</Text>
-              </TouchableOpacity>
             </View>
-            <View style={styles.activityContent}>
-              <Text style={styles.activityTitle}>Atualização de Peso</Text>
-              <Text style={styles.activityDescription}>Registrou novo peso: 78 kg (-1 kg esta semana)</Text>
-            </View>
-          </View>
+          ))}
 
-          <TouchableOpacity style={styles.viewAllButton}>
-            <Text style={styles.viewAllButtonText}>Ver Todas as Atividades</Text>
-          </TouchableOpacity>
+          {recentActivities.length === 0 && (
+            <View style={styles.noActivities}>
+              <Text style={styles.noActivitiesText}>Nenhuma atividade recente para exibir</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.section}>
@@ -173,13 +194,6 @@ export default function NutritionistDashboard(): React.JSX.Element {
                 <Ionicons name="person-add-outline" size={24} color="#4CAF50" />
               </View>
               <Text style={styles.quickActionText}>Adicionar Paciente</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.quickActionItem} onPress={() => router.push("/nutritionist/schedule")}>
-              <View style={styles.quickActionIcon}>
-                <Ionicons name="calendar-outline" size={24} color="#4CAF50" />
-              </View>
-              <Text style={styles.quickActionText}>Agenda</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.quickActionItem} onPress={() => router.push("/nutritionist/reports")}>
@@ -303,15 +317,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
   },
-  viewAllButton: {
-    alignItems: "center",
-    padding: 10,
-  },
-  viewAllButtonText: {
-    color: "#4CAF50",
-    fontSize: 14,
-    fontWeight: "600",
-  },
   activityCard: {
     backgroundColor: "#fff",
     borderRadius: 12,
@@ -332,7 +337,15 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
+    backgroundColor: '#e8f5e9',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 10,
+  },
+  patientInitial: {
+    fontSize: 18,
+    color: '#4CAF50',
+    fontWeight: '600',
   },
   activityPatientName: {
     fontSize: 16,
@@ -438,6 +451,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     textAlign: "center",
+  },
+  noActivities: {
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 12,
+    marginBottom: 15,
+  },
+  noActivitiesText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
   },
 })
 

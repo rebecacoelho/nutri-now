@@ -7,7 +7,7 @@ import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
 import NutritionistTabBar from "../components/nutritionist-tab-bar"
-import { createMealPlan, MealPlanData, Meal, MealItem, Substitution, SubstitutionItem } from "../../api"
+import { createMealPlan, MealPlanData, Meal, MealItem, Substitution, SubstitutionItem, getAppointments } from "../../api"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 
 interface Patient {
@@ -74,56 +74,64 @@ const MealEditor: React.FC<MealEditorProps> = ({ title, defaultTime, onMealChang
       </View>
 
       <View style={styles.foodsContainer}>
-        <View style={styles.foodHeader}>
-          <Text style={[styles.foodHeaderText, { flex: 2 }]}>Alimento</Text>
-          <Text style={[styles.foodHeaderText, { flex: 1 }]}>Quantidade</Text>
-          <Text style={[styles.foodHeaderText, { flex: 1 }]}>Calorias</Text>
-          <Text style={[styles.foodHeaderText, { flex: 1 }]}>Grupo</Text>
-        </View>
-
         {foods.map((food, index) => (
           <View key={food.id} style={styles.foodRow}>
-            <TextInput 
-              style={[styles.foodInput, { flex: 2 }]} 
-              placeholder="ex: Aveia"
-              value={food.name}
-              onChangeText={(text) => {
-                const newFoods = [...foods]
-                newFoods[index].name = text
-                setFoods(newFoods)
-              }}
-            />
-            <TextInput 
-              style={[styles.foodInput, { flex: 1 }]} 
-              placeholder="ex: 1 xícara"
-              value={food.amount}
-              onChangeText={(text) => {
-                const newFoods = [...foods]
-                newFoods[index].amount = text
-                setFoods(newFoods)
-              }}
-            />
-            <TextInput 
-              style={[styles.foodInput, { flex: 1 }]} 
-              placeholder="ex: 150" 
-              keyboardType="number-pad"
-              value={food.calories}
-              onChangeText={(text) => {
-                const newFoods = [...foods]
-                newFoods[index].calories = text
-                setFoods(newFoods)
-              }}
-            />
-            <TextInput 
-              style={[styles.foodInput, { flex: 1 }]} 
-              placeholder="ex: Carboidratos" 
-              value={food.group}
-              onChangeText={(text) => {
-                const newFoods = [...foods]
-                newFoods[index].group = text
-                setFoods(newFoods)
-              }}
-            />
+            <View style={styles.foodInputContainer}>
+              <Text style={styles.foodInputLabel}>Alimento</Text>
+              <TextInput 
+                style={styles.foodInput}
+                placeholder="ex: Aveia"
+                value={food.name}
+                onChangeText={(text) => {
+                  const newFoods = [...foods]
+                  newFoods[index].name = text
+                  setFoods(newFoods)
+                }}
+              />
+            </View>
+
+            <View style={styles.foodInputContainer}>
+              <Text style={styles.foodInputLabel}>Quantidade</Text>
+              <TextInput 
+                style={styles.foodInput}
+                placeholder="ex: 1 xícara"
+                value={food.amount}
+                onChangeText={(text) => {
+                  const newFoods = [...foods]
+                  newFoods[index].amount = text
+                  setFoods(newFoods)
+                }}
+              />
+            </View>
+
+            <View style={styles.foodInputContainer}>
+              <Text style={styles.foodInputLabel}>Calorias</Text>
+              <TextInput 
+                style={styles.foodInput}
+                placeholder="ex: 150" 
+                keyboardType="number-pad"
+                value={food.calories}
+                onChangeText={(text) => {
+                  const newFoods = [...foods]
+                  newFoods[index].calories = text
+                  setFoods(newFoods)
+                }}
+              />
+            </View>
+
+            <View style={styles.foodInputContainer}>
+              <Text style={styles.foodInputLabel}>Grupo</Text>
+              <TextInput 
+                style={styles.foodInput}
+                placeholder="ex: Carboidratos" 
+                value={food.group}
+                onChangeText={(text) => {
+                  const newFoods = [...foods]
+                  newFoods[index].group = text
+                  setFoods(newFoods)
+                }}
+              />
+            </View>
           </View>
         ))}
 
@@ -139,7 +147,6 @@ const MealEditor: React.FC<MealEditorProps> = ({ title, defaultTime, onMealChang
 export default function CreateMealPlan(): React.JSX.Element {
   const router = useRouter()
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
-  const [selectedDay, setSelectedDay] = useState<string>("Segunda-feira")
   const [meals, setMeals] = useState<Meal[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [patients, setPatients] = useState<Patient[]>([])
@@ -153,13 +160,30 @@ export default function CreateMealPlan(): React.JSX.Element {
   }, [meals])
 
   useEffect(() => {
-    // Aqui você deve implementar a chamada para buscar os pacientes da API
     const fetchPatients = async () => {
-      // Implementar a busca de pacientes
-    }
+      try {
+        const response = await getAppointments();
+        
+        const uniquePatients = response.reduce((acc: Patient[], appointment: any) => {
+          const patientExists = acc.some(patient => patient.name === appointment.paciente_nome);
+          
+          if (!patientExists) {
+            acc.push({
+              id: String(appointment.paciente_id),
+              name: appointment.paciente_nome
+            });
+          }
+          
+          return acc;
+        }, []);
+
+        setPatients(uniquePatients);
+      } catch (error) {
+        console.error('Erro ao buscar pacientes:', error);
+      }
+    };
     fetchPatients()
   }, [])
-
 
   const handleMealChange = (updatedMeal: Meal) => {
     setMeals(currentMeals => {
@@ -395,14 +419,27 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   foodRow: {
-    flexDirection: "row",
-    marginBottom: 10,
+    flexDirection: "column",
+    marginBottom: 20,
+    backgroundColor: "#f9f9f9",
+    padding: 15,
+    borderRadius: 8,
+  },
+  foodInputContainer: {
+    marginBottom: 12,
+  },
+  foodInputLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 6,
   },
   foodInput: {
-    backgroundColor: "#f0f0f0",
+    backgroundColor: "#fff",
     borderRadius: 8,
-    padding: 10,
-    marginHorizontal: 5,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
   },
   addFoodButton: {
     flexDirection: "row",

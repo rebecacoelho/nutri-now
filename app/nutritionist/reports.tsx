@@ -299,29 +299,6 @@ export default function Reports(): React.JSX.Element {
           title="Consultas Semanais" 
           barColor="#2196F3" 
         />
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Atividade Recente</Text>
-          </View>
-
-          {appointmentStats.recentAppointments.map((appointment, index) => (
-            <View key={index} style={styles.activityItem}>
-              <View style={[styles.activityIcon, { backgroundColor: "#E3F2FD" }]}>
-                <Ionicons name="calendar" size={20} color="#2196F3" />
-              </View>
-              <View style={styles.activityContent}>
-                <Text style={styles.activityTitle}>Consulta Agendada</Text>
-                <Text style={styles.activityDescription}>
-                  {appointment.paciente_nome} - {new Date(appointment.data_consulta).toLocaleDateString()}
-                </Text>
-              </View>
-              <Text style={styles.activityTime}>
-                {new Date(appointment.data_consulta).toLocaleTimeString()}
-              </Text>
-            </View>
-          ))}
-        </View>
       </ScrollView>
 
       <NutritionistTabBar activeTab="relatorios" />
@@ -554,35 +531,6 @@ const styles = StyleSheet.create({
     color: "#333",
     width: 40,
     textAlign: "right",
-  },
-  activityItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 15,
-  },
-  activityIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 10,
-  },
-  activityContent: {
-    flex: 1,
-  },
-  activityTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#333",
-  },
-  activityDescription: {
-    fontSize: 12,
-    color: "#666",
-  },
-  activityTime: {
-    fontSize: 12,
-    color: "#999",
   },
   loadingContainer: {
     flex: 1,

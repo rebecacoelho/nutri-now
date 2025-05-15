@@ -49,15 +49,6 @@ export default function NutritionistTabBar({ activeTab }: NutritionistTabBarProp
         />
         <Text style={[styles.tabLabel, activeTab === "planoAlimentar" && styles.tabLabelActive]}>Novo plano</Text>
       </TouchableOpacity>
-
-      <TouchableOpacity style={styles.tabItem} onPress={() => router.push("/nutritionist/schedule")}>
-        <Ionicons
-          name={activeTab === "agenda" ? "calendar" : "calendar-outline"}
-          size={24}
-          color={activeTab === "agenda" ? "#4CAF50" : "#999"}
-        />
-        <Text style={[styles.tabLabel, activeTab === "agenda" && styles.tabLabelActive]}>Agenda</Text>
-      </TouchableOpacity>
     </View>
   )
 }

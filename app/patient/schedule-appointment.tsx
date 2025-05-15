@@ -45,6 +45,7 @@ export default function ScheduleAppointment(): React.JSX.Element {
   const [loading, setLoading] = useState<boolean>(true)
   const [markedDates, setMarkedDates] = useState<Record<string, any>>({})
   const [availableTimeSlots, setAvailableTimeSlots] = useState<TimeSlot[]>([])
+  const [hasPendingAppointment, setHasPendingAppointment] = useState<boolean>(false)
 
   const nutritionistsPerPage = 3;
   const totalPages = Math.ceil(sortedNutritionists.length / nutritionistsPerPage);
@@ -202,20 +203,9 @@ export default function ScheduleAppointment(): React.JSX.Element {
     const checkExistingAppointments = async () => {
       try {
         const appointments = await getAppointments();
-        const hasPendingAppointment = appointments.some((appointment: AppointmentsResponse) => !appointment.realizada);
+        const hasPending = appointments.some((appointment: AppointmentsResponse) => !appointment.realizada);
+        setHasPendingAppointment(hasPending);
 
-        if (hasPendingAppointment) {
-          Alert.alert(
-            "Consulta Pendente",
-            "Você já possui uma consulta agendada que ainda não foi realizada. Você poderá agendar uma nova consulta após a realização da consulta pendente :)",
-            [
-              {
-                text: "OK",
-                onPress: () => router.push("/patient/dashboard"),
-              },
-            ],
-          );
-        }
       } catch (error) {
         console.error("Erro ao verificar consultas existentes:", error);
         Alert.alert("Erro", "Não foi possível verificar suas consultas. Por favor, tente novamente mais tarde.");
@@ -292,15 +282,24 @@ export default function ScheduleAppointment(): React.JSX.Element {
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        {hasPendingAppointment && (
+          <View style={styles.warningContainer}>
+            <Ionicons name="alert-circle" size={24} color="#FF6B6B" />
+            <Text style={styles.warningText}>
+              Você já possui uma consulta pendente. Aguarde a realização desta consulta para agendar uma nova.
+            </Text>
+          </View>
+        )}
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Selecione a Data</Text>
           <Calendar
             markedDates={markedDates}
-            onDayPress={handleDateSelect}
+            onDayPress={!hasPendingAppointment ? handleDateSelect : undefined}
             minDate={new Date().toISOString().split('T')[0]}
             maxDate={new Date(new Date().setDate(new Date().getDate() + 30)).toISOString().split('T')[0]}
             firstDay={0} 
-            disableAllTouchEventsForDisabledDays={true}
+            disableAllTouchEventsForDisabledDays={hasPendingAppointment}
             theme={{
               calendarBackground: '#ffffff',
               textSectionTitleColor: '#4CAF50',
@@ -341,8 +340,10 @@ export default function ScheduleAppointment(): React.JSX.Element {
                   style={[
                     styles.nutritionistCard,
                     selectedNutritionist?.id === nutritionist.id && styles.selectedNutritionistCard,
+                    hasPendingAppointment && styles.disabledCard
                   ]}
-                  onPress={() => setSelectedNutritionist(nutritionist)}
+                  onPress={() => !hasPendingAppointment && setSelectedNutritionist(nutritionist)}
+                  disabled={hasPendingAppointment}
                 >
                   <Image 
                     source={{ uri: "https://ui-avatars.com/api/?name=" + encodeURIComponent(nutritionist.nome) }} 
@@ -408,9 +409,10 @@ export default function ScheduleAppointment(): React.JSX.Element {
                       styles.timeSlot,
                       !slot.available && styles.unavailableTimeSlot,
                       selectedTimeSlot === slot.time && styles.selectedTimeSlot,
+                      hasPendingAppointment && styles.disabledTimeSlot
                     ]}
-                    onPress={() => slot.available && setSelectedTimeSlot(slot.time)}
-                    disabled={!slot.available}
+                    onPress={() => !hasPendingAppointment && slot.available && setSelectedTimeSlot(slot.time)}
+                    disabled={!slot.available || hasPendingAppointment}
                   >
                     <Text
                       style={[
@@ -457,8 +459,18 @@ export default function ScheduleAppointment(): React.JSX.Element {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.scheduleButton} onPress={handleScheduleAppointment}>
-          <Text style={styles.scheduleButtonText}>Agendar Consulta</Text>
+        <TouchableOpacity 
+          style={[
+            styles.scheduleButton,
+            hasPendingAppointment && styles.disabledButton
+          ]} 
+          onPress={handleScheduleAppointment}
+          disabled={hasPendingAppointment}
+        >
+          <Text style={[
+            styles.scheduleButtonText,
+            hasPendingAppointment && styles.disabledButtonText
+          ]}>Agendar Consulta</Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -686,12 +698,40 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
   },
   disabledButton: {
-    backgroundColor: "#f5f5f5",
-    opacity: 0.7,
+    backgroundColor: "#cccccc",
+    opacity: 0.5,
   },
   paginationInfo: {
     fontSize: 14,
     color: "#666",
+    fontWeight: "500",
+  },
+  disabledCard: {
+    opacity: 0.5,
+    backgroundColor: "#f5f5f5",
+  },
+  disabledTimeSlot: {
+    opacity: 0.5,
+    backgroundColor: "#f5f5f5",
+  },
+  disabledButtonText: {
+    color: "#666666",
+  },
+  warningContainer: {
+    backgroundColor: "#FFE5E5",
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#FF6B6B",
+  },
+  warningText: {
+    color: "#FF6B6B",
+    fontSize: 14,
+    marginLeft: 10,
+    flex: 1,
     fontWeight: "500",
   },
 })
