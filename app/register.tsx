@@ -100,8 +100,7 @@ export default function RegisterScreen(): React.JSX.Element {
       await AsyncStorage.setItem("userType", userType);
             
       const userData: RegisterUserData = {
-        username: email,
-        email: name,
+        email,
         password: password,
         is_paciente: userType === "patient",
         is_nutricionista: userType === "nutritionist",

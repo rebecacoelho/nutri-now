@@ -51,7 +51,7 @@ export default function LoginScreen(): React.JSX.Element {
       setLoading(true)
 
       const loginData = {
-        username: email, 
+        email: email, 
         password: password,
       }
 
