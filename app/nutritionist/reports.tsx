@@ -7,7 +7,7 @@ import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
 import NutritionistTabBar from "../components/nutritionist-tab-bar"
-import { getAppointments, getNutritionistData } from "../../api"
+import { getAppointments } from "../../api"
 
 interface AppointmentStats {
   totalAppointments: number;
@@ -28,7 +28,6 @@ interface PatientStats {
     count: number;
   }[];
 }
-
 
 interface BarChartProps {
   data: Array<{ month?: string; day?: string; count: number }>

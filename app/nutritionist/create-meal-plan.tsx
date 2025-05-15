@@ -2,12 +2,12 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { SafeAreaView, StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Switch, Alert } from "react-native"
+import { SafeAreaView, StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert } from "react-native"
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
 import NutritionistTabBar from "../components/nutritionist-tab-bar"
-import { createMealPlan, MealPlanData, Meal, MealItem, Substitution, SubstitutionItem, getAppointments } from "../../api"
+import { createMealPlan, MealPlanData, Meal, MealItem, getAppointments } from "../../api"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 
 interface Patient {

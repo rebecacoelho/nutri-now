@@ -19,14 +19,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useNutritionist } from "../contexts/NutritionistContext"
 import { updateNutritionistAvailability } from "../../api"
 
-interface Appointment {
-  id: string
-  patient: string
-  date: string
-  time: string
-  type: string
-}
-
 export default function NutritionistProfile(): React.JSX.Element {
   const router = useRouter()
   const { nutritionistData } = useNutritionist()

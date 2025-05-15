@@ -11,7 +11,6 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
-  Switch,
 } from "react-native"
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
@@ -58,7 +57,6 @@ export default function AddPatient(): React.JSX.Element {
     age: "",
   })
 
-  // Atualizar campo do formulário
   const updateField = (field: keyof FormData, value: string | boolean): void => {
     setFormData((prev) => ({
       ...prev,

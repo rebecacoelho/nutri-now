@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
 import {
   SafeAreaView,
   StyleSheet,
@@ -20,14 +19,6 @@ import { usePatient } from "../contexts/PatientContext"
 export default function PatientProfile(): React.JSX.Element {
   const router = useRouter()
   const { patientData, appointments } = usePatient()
-
-  // Configurações de notificação
-  const [notificationSettings, setNotificationSettings] = useState({
-    appointmentReminders: true,
-    mealPlanUpdates: true,
-    messageNotifications: true,
-    progressReports: false,
-  })
 
   const upcomingAppointments = appointments.filter(appointment => new Date(appointment.data_consulta) > new Date())
 
@@ -57,14 +48,6 @@ export default function PatientProfile(): React.JSX.Element {
     )
 
   }
-
-  const toggleNotificationSetting = (setting: keyof typeof notificationSettings): void => {
-    setNotificationSettings({
-      ...notificationSettings,
-      [setting]: !notificationSettings[setting],
-    })
-  }
-
 
   return (
   <SafeAreaView style={styles.container}>

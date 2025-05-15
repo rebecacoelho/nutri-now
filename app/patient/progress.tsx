@@ -14,10 +14,8 @@ import {
 } from "react-native"
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
-import { Ionicons } from "@expo/vector-icons"
 import PatientTabBar from "../components/patient-tab-bar"
 
-// Mock data for progress charts
 interface ProgressData {
   date: string
   value: number
@@ -122,46 +120,37 @@ export default function ProgressScreen(): React.JSX.Element {
     },
   ]
 
-  // Get the current active metric
   const currentMetric = progressMetrics.find((metric) => metric.id === activeMetric) || progressMetrics[0]
 
-  // Filter data based on time range
   const getFilteredData = (): ProgressData[] => {
     const now = new Date()
     const filteredData = [...currentMetric.data]
 
     if (timeRange === "week") {
-      // Get last 7 entries or fewer
       return filteredData.slice(-7)
     } else if (timeRange === "month") {
-      // Get last 30 entries or fewer
       return filteredData.slice(-30)
     }
 
-    // Year - return all data
     return filteredData
   }
 
   const filteredData = getFilteredData()
 
-  // Calculate min and max values for the chart
   const values = filteredData.map((item) => item.value)
-  const minValue = Math.min(...values) * 0.95 // Add some padding
+  const minValue = Math.min(...values) * 0.95
   const maxValue = Math.max(...values) * 1.05
   const valueRange = maxValue - minValue
 
-  // Calculate chart dimensions
   const screenWidth = Dimensions.get("window").width
-  const chartWidth = screenWidth - 40 // Accounting for padding
+  const chartWidth = screenWidth - 40
   const chartHeight = 200
 
-  // Calculate the latest value and change
   const latestValue = filteredData.length > 0 ? filteredData[filteredData.length - 1].value : 0
   const previousValue = filteredData.length > 1 ? filteredData[filteredData.length - 2].value : latestValue
   const change = latestValue - previousValue
   const percentChange = previousValue !== 0 ? (change / previousValue) * 100 : 0
 
-  // Calculate progress towards goal
   const goalProgress = currentMetric.goal
     ? ((currentMetric.goal - latestValue) / (currentMetric.goal - values[0])) * 100
     : 0
