@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { SafeAreaView, StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, Linking, Dimensions } from "react-native"
+import { SafeAreaView, StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, Linking, Dimensions, ActivityIndicator } from "react-native"
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
@@ -133,21 +133,29 @@ export default function PatientDashboard(): React.JSX.Element {
   const [recommendedCalories, setRecommendedCalories] = useState(0)
   const [weeksToGoal, setWeeksToGoal] = useState(0)
   const [appointments, setAppointments] = useState<AppointmentsResponse[]>([])
+  const [isLoadingMealPlan, setIsLoadingMealPlan] = useState(true)
 
   useEffect(() => {
     const fetchMealPlan = async () => {
       try {
+        setIsLoadingMealPlan(true)
         if (patientData?.plano_alimentar) {
-          const response = await getMealPlan(patientData.plano_alimentar);
-          setMealPlan(response);
+          const response = await getMealPlan(patientData.plano_alimentar)
+          if (response) {
+            setMealPlan(response)
+          }
         }
       } catch (error) {
-        console.error('Erro ao buscar plano alimentar:', error);
+        console.error('Erro ao buscar plano alimentar:', error)
+      } finally {
+        setIsLoadingMealPlan(false)
       }
-    };
+    }
 
-    fetchMealPlan();
-  }, [patientData]);
+    if (patientData) {
+      fetchMealPlan()
+    }
+  }, [patientData?.plano_alimentar])
 
   useEffect(() => {
     const fetchAppointmentsAndSet = async () => {
@@ -305,15 +313,26 @@ export default function PatientDashboard(): React.JSX.Element {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Plano de Refeições de Hoje</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mealsContainer}>
-              {mealPlan?.refeicoes.map((refeicao, index) => (
-                <MealCard
-                  key={index}
-                  title={refeicao.nome}
-                  time={refeicao.horario}
-                  calories="420"
-                  completed={mealCompletionState[refeicao.nome] || false}
-                />
-              ))}
+              {isLoadingMealPlan ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color="#4CAF50" />
+                  <Text style={styles.loadingText}>Carregando refeições...</Text>
+                </View>
+              ) : mealPlan?.refeicoes && mealPlan.refeicoes.length > 0 ? (
+                mealPlan.refeicoes.map((refeicao, index) => (
+                  <MealCard
+                    key={index}
+                    title={refeicao.nome}
+                    time={refeicao.horario}
+                    calories="420"
+                    completed={mealCompletionState[refeicao.nome] || false}
+                  />
+                ))
+              ) : (
+                <View style={styles.emptyMealsContainer}>
+                  <Text style={styles.emptyMealsText}>Nenhuma refeição encontrada</Text>
+                </View>
+              )}
             </ScrollView>
           </View>
 
@@ -698,6 +717,25 @@ const styles = StyleSheet.create({
     color: "#666",
     textAlign: "center",
     marginTop: 5,
+  },
+  loadingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  loadingText: {
+    fontSize: 14,
+    color: "#4CAF50",
+    marginLeft: 10,
+  },
+  emptyMealsContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyMealsText: {
+    fontSize: 14,
+    color: "#999",
   },
 })
 
