@@ -136,6 +136,53 @@ export const formatDateToDisplay = (date: string): string => {
   return date;
 };
 
+interface ApiRequestConfig {
+  method: string;
+  headers?: Record<string, string>;
+  body?: string;
+}
+
+const makeApiRequest = async (
+  url: string,
+  config: ApiRequestConfig,
+  retryCount = 0
+): Promise<any> => {
+  try {
+    const token = await AsyncStorage.getItem("accessToken");
+    
+    if (token) {
+      config.headers = {
+        ...config.headers,
+        'Authorization': `Bearer ${token}`
+      };
+    }
+
+    const response = await fetch(`${API_URL}${url}`, config);
+
+    if (response.status === 401 && retryCount === 0) {
+      try {
+        const refreshResponse = await refreshToken();
+        if (refreshResponse.access) {
+          return makeApiRequest(url, config, retryCount + 1);
+        }
+      } catch (error) {
+        console.error('Erro ao atualizar token:', error);
+        throw new Error('Sessão expirada. Por favor, faça login novamente.');
+      }
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Erro na requisição');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Erro na API:', error);
+    throw error;
+  }
+};
+
 export const registerUser = async (userData: RegisterUserData): Promise<ApiResponse> => {
   try {
     const response = await fetch(`${API_URL}/registrar_usuario/`, {
@@ -210,261 +257,120 @@ export const refreshToken = async (): Promise<TokenResponse> => {
 };
 
 export const getAllNutritionists = async () => {
-  try {
-    const token = await AsyncStorage.getItem("accessToken");
-    const response = await fetch(`${API_URL}/listar_nutricionistas/`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || 'Erro ao buscar nutricionistas');
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Erro na API:', error);
-    throw error;
-  }
+  return makeApiRequest('/listar_nutricionistas/', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
 };
 
 export const makeAppointment = async (appointmentData: AppointmentData): Promise<AppointmentResponse> => {
-  try {
-    const token = await AsyncStorage.getItem("accessToken");
-    const response = await fetch(`${API_URL}/criar_consulta/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        nutricionista: String(appointmentData.nutricionista),
-        data_consulta: appointmentData.data_consulta
-      })
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || 'Erro ao criar consulta');
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Erro na API:', error);
-    throw error;
-  }
+  return makeApiRequest('/criar_consulta/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      nutricionista: String(appointmentData.nutricionista),
+      data_consulta: appointmentData.data_consulta
+    })
+  });
 };
 
 export const confirmAppointment = async (appointmentId: string) => {
-  try {
-    const token = await AsyncStorage.getItem("accessToken");
-    const response = await fetch(`${API_URL}/realizar_consulta/`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        id_consulta: appointmentId,
-        realizada: true
-      })
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || 'Erro ao confirmar consulta');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Erro na API:', error);
-    throw error;
-  }
+  return makeApiRequest('/realizar_consulta/', {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      id_consulta: appointmentId,
+      realizada: true
+    })
+  });
 };
 
 export const updateNutritionistAvailability = async (availabilityData: AvailabilityData) => {
-  try {
-    const token = await AsyncStorage.getItem("accessToken");
-    const response = await fetch(`${API_URL}/atualiza_horarios_disponiveis/`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(availabilityData)
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || 'Erro ao atualizar disponibilidade');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Erro na API:', error);
-    throw error;
-  }
+  return makeApiRequest('/atualiza_horarios_disponiveis/', {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(availabilityData)
+  });
 };
 
 export const getAppointments = async () => {
-  try {
-    const token = await AsyncStorage.getItem("accessToken");
-    const nutritionistId = await AsyncStorage.getItem("@nutricionista/userId");
-    const patientId = await AsyncStorage.getItem("@paciente/userId");
-
-    const response = await fetch(`${API_URL}/lista_consultas/${nutritionistId ?? patientId}/`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || 'Erro ao buscar informações das consultas');
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Erro na API:', error);
-    throw error;
-  }
+  const nutritionistId = await AsyncStorage.getItem("@nutricionista/userId");
+  const patientId = await AsyncStorage.getItem("@paciente/userId");
+  
+  return makeApiRequest(`/lista_consultas/${nutritionistId ?? patientId}/`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
 };
 
 export const getPatientData = async () => {
-  try {
-    const token = await AsyncStorage.getItem("accessToken");
-    const patientId = await AsyncStorage.getItem("@paciente/userId");
-    const response = await fetch(`${API_URL}/info_paciente/${patientId}/`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || 'Erro ao buscar informações do paciente');
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Erro na API:', error);
-    throw error;
-  }
+  const patientId = await AsyncStorage.getItem("@paciente/userId");
+  
+  return makeApiRequest(`/info_paciente/${patientId}/`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
 };
 
 export const getNutritionistData = async () => {
-  try {
-    const token = await AsyncStorage.getItem("accessToken");
-    const nutritionistId = await AsyncStorage.getItem("@nutricionista/userId");
-
-    const response = await fetch(`${API_URL}/info_nutricionista/${nutritionistId}/`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || 'Erro ao buscar informações do nutricionista');
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Erro na API:', error);
-    throw error;
-  }
+  const nutritionistId = await AsyncStorage.getItem("@nutricionista/userId");
+  
+  return makeApiRequest(`/info_nutricionista/${nutritionistId}/`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
 };
 
 export const createMealPlan = async (mealPlanData: MealPlanData) => {
-  try {
-    const token = await AsyncStorage.getItem("accessToken");
-    const response = await fetch(`${API_URL}/criar_plano_alimentar/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(mealPlanData)
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || 'Erro ao criar plano alimentar');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Erro na API:', error);
-    throw error;
-  }
+  return makeApiRequest('/criar_plano_alimentar/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(mealPlanData)
+  });
 };
 
 export const getMealPlan = async (mealPlanId: string) => {
-  try {
-    const token = await AsyncStorage.getItem("accessToken");
-
-    if (!mealPlanId) {
-      return null;
-    }
-
-    const response = await fetch(`${API_URL}/retorna_plano_alimentar/${mealPlanId}/`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || 'Erro ao buscar plano alimentar');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Erro na API:', error);
-    throw error;
+  if (!mealPlanId) {
+    return null;
   }
+
+  return makeApiRequest(`/retorna_plano_alimentar/${mealPlanId}/`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
 };
 
 export const updateMealDiary = async (pacientId: string, diario_alimentar: MealDiaryEntry[]) => {
-  try {
-    const token = await AsyncStorage.getItem("accessToken");
-
-    if (!pacientId) {
-      return null;
-    }
-
-    const response = await fetch(`${API_URL}/adicionar_alimento_no_diario/`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        id_paciente: String(pacientId),
-        diario_alimentar
-      })
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || 'Erro ao adicionar alimento no diário');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Erro na API:', error);
-    throw error;
+  if (!pacientId) {
+    return null;
   }
+
+  return makeApiRequest('/adicionar_alimento_no_diario/', {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      id_paciente: String(pacientId),
+      diario_alimentar
+    })
+  });
 };
