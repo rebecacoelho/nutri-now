@@ -15,7 +15,7 @@ import {
   Platform,
   ActivityIndicator
 } from "react-native"
-import { Stack, useRouter } from "expo-router"
+import { Stack } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
 import AsyncStorage from "@react-native-async-storage/async-storage"
@@ -55,7 +55,6 @@ interface MealPlanResponse {
 }
 
 export default function CalorieCounter(): React.JSX.Element {
-  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState<string>("")
   const [searchResults, setSearchResults] = useState<FoodItem[]>([])
   const [consumedFoods, setConsumedFoods] = useState<ConsumedFood[]>([])

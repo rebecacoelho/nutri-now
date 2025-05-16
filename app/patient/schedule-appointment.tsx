@@ -9,7 +9,6 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   Image,
   Alert,
   ActivityIndicator,

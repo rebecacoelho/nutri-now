@@ -12,7 +12,7 @@ import {
   Dimensions,
   Alert,
 } from "react-native"
-import { Stack, useRouter } from "expo-router"
+import { Stack } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import PatientTabBar from "../components/patient-tab-bar"
 
@@ -31,7 +31,6 @@ interface ProgressMetric {
 }
 
 export default function ProgressScreen(): React.JSX.Element {
-  const router = useRouter()
   const [activeMetric, setActiveMetric] = useState<string>("weight")
   const [timeRange, setTimeRange] = useState<"week" | "month" | "year">("month")
   const [newEntryValue, setNewEntryValue] = useState<string>("")
