@@ -409,6 +409,7 @@ export default function ProgressScreen(): React.JSX.Element {
               <TextInput
                 style={styles.addEntryInput}
                 placeholder={`${currentMetric.name.toLowerCase()}`}
+                placeholderTextColor="rgba(0, 0, 0, 0.4)"
                 value={newEntryValue}
                 onChangeText={setNewEntryValue}
                 keyboardType="numeric"

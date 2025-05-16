@@ -19,10 +19,12 @@ import { usePatient } from "../contexts/PatientContext"
 import { useState, useEffect, useRef } from "react"
 import { registerForPushNotificationsAsync, NotificationSettings, defaultPatientSettings } from "../utils/notifications"
 import * as Notifications from 'expo-notifications';
+import { getAppointments } from "@/api"
 
 export default function PatientProfile(): React.JSX.Element {
   const router = useRouter()
-  const { patientData, appointments } = usePatient()
+  const { patientData } = usePatient()
+  const [appointments, setAppointments] = useState<any[]>([]);
   const [expoPushToken, setExpoPushToken] = useState<string | undefined>();
   const notificationListener = useRef<Notifications.EventSubscription>(null);
   const responseListener = useRef<Notifications.EventSubscription>(null);
@@ -67,6 +69,15 @@ export default function PatientProfile(): React.JSX.Element {
       }
     };
   }, []);
+
+  useEffect(() => {
+    const fetchAppointmentsAndSet = async () => {
+      const appointments = await getAppointments();
+      setAppointments(appointments);
+    };
+
+    fetchAppointmentsAndSet();
+  }, [appointments]);
 
   const handleLogout = async () => {
     Alert.alert(
@@ -228,32 +239,6 @@ export default function PatientProfile(): React.JSX.Element {
               thumbColor={"#4CAF50"}
               value={notificationSettings.mealReminders}
               onValueChange={() => toggleNotificationSetting("mealReminders")}
-            />
-          </View>
-
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Alertas de Progresso</Text>
-              <Text style={styles.settingDescription}>Receba notificações sobre seu progresso</Text>
-            </View>
-            <Switch
-              trackColor={{ false: "#ddd", true: "#a5d6a7" }}
-              thumbColor={"#4CAF50"}
-              value={notificationSettings.progressAlerts}
-              onValueChange={() => toggleNotificationSetting("progressAlerts")}
-            />
-          </View>
-
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Novas Mensagens</Text>
-              <Text style={styles.settingDescription}>Receba notificações de novas mensagens</Text>
-            </View>
-            <Switch
-              trackColor={{ false: "#ddd", true: "#a5d6a7" }}
-              thumbColor={"#4CAF50"}
-              value={notificationSettings.newMessages}
-              onValueChange={() => toggleNotificationSetting("newMessages")}
             />
           </View>
         </View>

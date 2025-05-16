@@ -186,6 +186,7 @@ export default function Patients(): React.JSX.Element {
           <TextInput
             style={styles.searchInput}
             placeholder="Buscar pacientes..."
+            placeholderTextColor="rgba(0, 0, 0, 0.4)"
             value={searchQuery}
             onChangeText={setSearchQuery}
           />

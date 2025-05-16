@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { SafeAreaView, StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert } from "react-native"
+import { SafeAreaView, StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Alert, Modal } from "react-native"
 import { Stack, useRouter } from "expo-router"
 import { StatusBar } from "expo-status-bar"
 import { Ionicons } from "@expo/vector-icons"
@@ -15,12 +15,21 @@ interface Patient {
   name: string
 }
 
+interface FoodSubstitution {
+  id: string;
+  name: string;
+  amount: string;
+  calories: string;
+  group: string;
+}
+
 interface FoodItem {
-  id: string
-  name: string
-  amount: string
-  calories: string
-  group: string
+  id: string;
+  name: string;
+  amount: string;
+  calories: string;
+  group: string;
+  substitutions: FoodSubstitution[];
 }
 
 interface MealEditorProps {
@@ -29,31 +38,141 @@ interface MealEditorProps {
   onMealChange: (meal: Meal) => void
 }
 
+const SubstitutionForm = ({ onSubmit, onClose }: { onSubmit: (substitution: FoodSubstitution) => void, onClose: () => void }) => {
+  const [name, setName] = useState("");
+  const [amount, setAmount] = useState("");
+  const [calories, setCalories] = useState("");
+  const [group, setGroup] = useState("Outros");
+
+  const handleSubmit = () => {
+    if (!name || !amount || !calories) {
+      Alert.alert("Erro", "Por favor, preencha todos os campos obrigatórios");
+      return;
+    }
+
+    onSubmit({
+      id: Date.now().toString(),
+      name,
+      amount,
+      calories,
+      group
+    });
+
+    setName("");
+    setAmount("");
+    setCalories("");
+    setGroup("Outros");
+    onClose();
+  };
+
+  return (
+    <View style={styles.modalForm}>
+      <TextInput
+        style={styles.modalInput}
+        placeholder="Nome do Alimento"
+        placeholderTextColor="rgba(0, 0, 0, 0.4)"
+        value={name}
+        onChangeText={setName}
+      />
+      <TextInput
+        style={styles.modalInput}
+        placeholder="Quantidade (ex: 1 xícara)"
+        value={amount}
+        onChangeText={setAmount}
+        placeholderTextColor="rgba(0, 0, 0, 0.4)"
+      />
+      <TextInput
+        style={styles.modalInput}
+        placeholder="Calorias"
+        value={calories}
+        keyboardType="number-pad"
+        onChangeText={setCalories}
+        placeholderTextColor="rgba(0, 0, 0, 0.4)"
+      />
+      <TextInput
+        style={styles.modalInput}
+        placeholder="Grupo Alimentar"
+        value={group}
+        onChangeText={setGroup}
+        placeholderTextColor="rgba(0, 0, 0, 0.4)"
+      />
+      <View style={styles.modalButtons}>
+        <TouchableOpacity
+          style={[styles.modalButton, styles.modalCancelButton]}
+          onPress={onClose}
+        >
+          <Text style={styles.modalButtonText}>Cancelar</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.modalButton, styles.modalSubmitButton]}
+          onPress={handleSubmit}
+        >
+          <Text style={styles.modalButtonText}>Adicionar</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
 const MealEditor: React.FC<MealEditorProps> = ({ title, defaultTime, onMealChange }) => {
-  const [foods, setFoods] = useState<FoodItem[]>([{ id: "1", name: "", amount: "", calories: "", group: "Outros" }])
+  const [foods, setFoods] = useState<FoodItem[]>([{ id: "1", name: "", amount: "", calories: "", group: "Outros", substitutions: [] }])
   const [time, setTime] = useState(defaultTime)
+  const [selectedFoodId, setSelectedFoodId] = useState<string | null>(null)
+  const [showSubstitutionsModal, setShowSubstitutionsModal] = useState(false)
 
   const addFood = (): void => {
     const newId = (Number.parseInt(foods[foods.length - 1].id) + 1).toString()
-    setFoods([...foods, { id: newId, name: "", amount: "", calories: "", group: "Outros" }])
+    setFoods([...foods, { id: newId, name: "", amount: "", calories: "", group: "Outros", substitutions: [] }])
   }
+
+  const addSubstitution = (foodId: string): void => {
+    setSelectedFoodId(foodId)
+    setShowSubstitutionsModal(true)
+  }
+
+  const handleAddSubstitution = (foodId: string, substitution: FoodSubstitution): void => {
+    const newFoods = [...foods]
+    const foodIndex = newFoods.findIndex(food => food.id === foodId)
+    if (foodIndex !== -1) {
+      newFoods[foodIndex].substitutions.push(substitution)
+      setFoods(newFoods)
+    }
+  }
+
+  const removeSubstitution = (foodId: string, substitutionId: string) => {
+    const newFoods = [...foods];
+    const foodIndex = newFoods.findIndex(food => food.id === foodId);
+    if (foodIndex !== -1) {
+      newFoods[foodIndex].substitutions = newFoods[foodIndex].substitutions.filter(
+        sub => sub.id !== substitutionId
+      );
+      setFoods(newFoods);
+    }
+  };
 
   const updateMeal = (newFoods: FoodItem[], newTime: string) => {
     const mealItems: MealItem[] = newFoods.map(food => ({
       descricao: `${food.name} - ${food.amount}`,
       kcal: parseInt(food.calories) || 0,
       grupo: food.group,
-      substituicoes: []
-    }))
+      substituicoes: food.substitutions.map(sub => ({
+        descrição: `Substituição - ${sub.name}`,
+        items: [{
+          descricao: `${sub.name} - ${sub.amount}`,
+          kcal: parseInt(sub.calories) || 0,
+          grupo: sub.group
+        }]
+      }))
+    }));
 
     const meal: Meal = {
       horario: newTime,
       nome: title,
       items: mealItems
-    }
+    };
 
-    onMealChange(meal)
-  }
+    onMealChange(meal);
+  };
 
   useEffect(() => {
     updateMeal(foods, time)
@@ -81,6 +200,7 @@ const MealEditor: React.FC<MealEditorProps> = ({ title, defaultTime, onMealChang
               <TextInput 
                 style={styles.foodInput}
                 placeholder="ex: Aveia"
+                placeholderTextColor="rgba(0, 0, 0, 0.4)"
                 value={food.name}
                 onChangeText={(text) => {
                   const newFoods = [...foods]
@@ -95,6 +215,7 @@ const MealEditor: React.FC<MealEditorProps> = ({ title, defaultTime, onMealChang
               <TextInput 
                 style={styles.foodInput}
                 placeholder="ex: 1 xícara"
+                placeholderTextColor="rgba(0, 0, 0, 0.4)"
                 value={food.amount}
                 onChangeText={(text) => {
                   const newFoods = [...foods]
@@ -109,6 +230,7 @@ const MealEditor: React.FC<MealEditorProps> = ({ title, defaultTime, onMealChang
               <TextInput 
                 style={styles.foodInput}
                 placeholder="ex: 150" 
+                placeholderTextColor="rgba(0, 0, 0, 0.4)"
                 keyboardType="number-pad"
                 value={food.calories}
                 onChangeText={(text) => {
@@ -124,6 +246,7 @@ const MealEditor: React.FC<MealEditorProps> = ({ title, defaultTime, onMealChang
               <TextInput 
                 style={styles.foodInput}
                 placeholder="ex: Carboidratos" 
+                placeholderTextColor="rgba(0, 0, 0, 0.4)"
                 value={food.group}
                 onChangeText={(text) => {
                   const newFoods = [...foods]
@@ -132,6 +255,35 @@ const MealEditor: React.FC<MealEditorProps> = ({ title, defaultTime, onMealChang
                 }}
               />
             </View>
+
+            <TouchableOpacity 
+              style={styles.addSubstitutionButton}
+              onPress={() => addSubstitution(food.id)}
+            >
+              <Ionicons name="swap-horizontal" size={20} color="#4CAF50" />
+              <Text style={styles.addSubstitutionText}>Adicionar Substituição</Text>
+            </TouchableOpacity>
+
+            {food.substitutions.length > 0 && (
+              <View style={styles.substitutionsList}>
+                <Text style={styles.substitutionsTitle}>Substituições:</Text>
+                {food.substitutions.map((sub, subIndex) => (
+                  <View key={subIndex} style={styles.substitutionItem}>
+                    <View style={styles.substitutionContent}>
+                      <Text style={styles.substitutionText}>
+                        {sub.name} - {sub.amount} ({sub.calories} cal)
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.removeSubstitutionButton}
+                        onPress={() => removeSubstitution(food.id, sub.id)}
+                      >
+                        <Ionicons name="trash-outline" size={20} color="#ff4444" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
         ))}
 
@@ -140,6 +292,28 @@ const MealEditor: React.FC<MealEditorProps> = ({ title, defaultTime, onMealChang
           <Text style={styles.addFoodButtonText}>Adicionar Alimento</Text>
         </TouchableOpacity>
       </View>
+
+      <Modal
+        visible={showSubstitutionsModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowSubstitutionsModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Adicionar Substituição</Text>
+            <SubstitutionForm
+              onSubmit={(substitution) => {
+                if (selectedFoodId) {
+                  handleAddSubstitution(selectedFoodId, substitution);
+                }
+                setShowSubstitutionsModal(false);
+              }}
+              onClose={() => setShowSubstitutionsModal(false)}
+            />
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }
@@ -481,6 +655,96 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 10,
     paddingLeft: 50,
-  }
+  },
+  addSubstitutionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    backgroundColor: '#f0f8f0',
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  addSubstitutionText: {
+    marginLeft: 8,
+    color: '#4CAF50',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  substitutionsList: {
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
+  },
+  substitutionsTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 5,
+  },
+  substitutionItem: {
+    padding: 5,
+  },
+  substitutionText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 12,
+    width: '90%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 15,
+  },
+  modalForm: {
+    gap: 10,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 10,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  modalButton: {
+    flex: 1,
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  modalCancelButton: {
+    backgroundColor: '#ff4444',
+  },
+  modalSubmitButton: {
+    backgroundColor: '#4CAF50',
+  },
+  modalButtonText: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  substitutionContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flex: 1,
+  },
+  removeSubstitutionButton: {
+    padding: 5,
+  },
 })
 

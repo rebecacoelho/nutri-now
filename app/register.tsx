@@ -223,7 +223,7 @@ export default function RegisterScreen(): React.JSX.Element {
               <TextInput
                 style={styles.input}
                 placeholder="Nome completo"
-                placeholderTextColor={"#999"}
+                placeholderTextColor="rgba(0, 0, 0, 0.4)"
                 value={name}
                 onChangeText={setName}
               />
@@ -234,7 +234,7 @@ export default function RegisterScreen(): React.JSX.Element {
               <TextInput
                 style={styles.input}
                 placeholder="Endereço de Email"
-                placeholderTextColor={"#999"}
+                placeholderTextColor="rgba(0, 0, 0, 0.4)"
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -247,7 +247,7 @@ export default function RegisterScreen(): React.JSX.Element {
               <TextInput
                 style={styles.input}
                 placeholder="Senha"
-                placeholderTextColor={"#999"}
+                placeholderTextColor="rgba(0, 0, 0, 0.4)"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
@@ -259,7 +259,7 @@ export default function RegisterScreen(): React.JSX.Element {
               <TextInput
                 style={styles.input}
                 placeholder="Telefone"
-                placeholderTextColor={"#999"}
+                placeholderTextColor="rgba(0, 0, 0, 0.4)"
                 value={phone}
                 onChangeText={setPhone}
                 keyboardType="phone-pad"
@@ -271,7 +271,7 @@ export default function RegisterScreen(): React.JSX.Element {
               <TextInput
                 style={styles.input}
                 placeholder="Endereço"
-                placeholderTextColor={"#999"}
+                placeholderTextColor="rgba(0, 0, 0, 0.4)"
                 value={address}
                 onChangeText={setAddress}
               />
@@ -284,7 +284,7 @@ export default function RegisterScreen(): React.JSX.Element {
                   <TextInput
                     style={styles.input}
                     placeholder="Data de Nascimento (DD/MM/AAAA)"
-                    placeholderTextColor={"#999"}
+                    placeholderTextColor="rgba(0, 0, 0, 0.4)"
                     value={displayBirthDate}
                     onChangeText={handleBirthDateChange}
                     keyboardType="numeric"
@@ -296,7 +296,7 @@ export default function RegisterScreen(): React.JSX.Element {
                   <TextInput
                     style={styles.input}
                     placeholder="Idade"
-                    placeholderTextColor={"#999"}
+                    placeholderTextColor="rgba(0, 0, 0, 0.4)"
                     value={age}
                     onChangeText={setAge}
                     keyboardType="numeric"
@@ -308,7 +308,7 @@ export default function RegisterScreen(): React.JSX.Element {
                   <TextInput
                     style={styles.input}
                     placeholder="Peso (kg)"
-                    placeholderTextColor={"#999"}
+                    placeholderTextColor="rgba(0, 0, 0, 0.4)"
                     value={weight}
                     onChangeText={setWeight}
                     keyboardType="decimal-pad"
@@ -320,7 +320,7 @@ export default function RegisterScreen(): React.JSX.Element {
                   <TextInput
                     style={styles.input}
                     placeholder="Altura (m)"
-                    placeholderTextColor={"#999"}
+                    placeholderTextColor="rgba(0, 0, 0, 0.4)"
                     value={height}
                     onChangeText={setHeight}
                     keyboardType="decimal-pad"

@@ -197,18 +197,6 @@ export default function NutritionistProfile(): React.JSX.Element {
               onValueChange={() => toggleNotificationSetting("newPatients")}
             />
           </View>
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Novas Mensagens</Text>
-              <Text style={styles.settingDescription}>Receba notificações de novas mensagens</Text>
-            </View>
-            <Switch
-              trackColor={{ false: "#ddd", true: "#a5d6a7" }}
-              thumbColor={"#4CAF50"}
-              value={notificationSettings.newMessages}
-              onValueChange={() => toggleNotificationSetting("newMessages")}
-            />
-          </View>
         </View>
 
         <View style={styles.section}>

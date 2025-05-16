@@ -641,6 +641,7 @@ export default function CalorieCounter(): React.JSX.Element {
                 <TextInput
                   style={styles.searchInput}
                   placeholder="Buscar um alimento..."
+                  placeholderTextColor="rgba(0, 0, 0, 0.4)"
                   value={searchQuery}
                   onChangeText={handleSearch}
                   onSubmitEditing={executeSearch}

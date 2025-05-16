@@ -83,26 +83,6 @@ export async function scheduleMealReminder() {
   }
 }
 
-export async function sendProgressNotification(achievement: string) {
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: 'Parabéns pelo seu progresso! 🎉',
-      body: achievement,
-    },
-    trigger: null,
-  });
-}
-
-export async function sendNewMessageNotification(senderName: string, message: string) {
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: `Nova mensagem de ${senderName}`,
-      body: message,
-    },
-    trigger: null,
-  });
-}
-
 export async function sendNewPatientNotification(patientName: string) {
   await Notifications.scheduleNotificationAsync({
     content: {

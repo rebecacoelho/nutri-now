@@ -117,7 +117,8 @@ interface MealItem {
 interface Meal {
   nome: string
   horario: string
-  itens: MealItem[]
+  itens?: MealItem[]
+  items?: MealItem[]
 }
 
 interface MealPlanResponse {
@@ -126,9 +127,6 @@ interface MealPlanResponse {
 
 interface NutrientTotals {
   calories: number
-  proteins: number
-  fats: number
-  carbs: number
 }
 
 export default function PatientMealPlans(): React.JSX.Element {
@@ -136,9 +134,6 @@ export default function PatientMealPlans(): React.JSX.Element {
   const { patientData } = usePatient()
   const [totalNutrients, setTotalNutrients] = useState<NutrientTotals>({
     calories: 0,
-    proteins: 0,
-    fats: 0,
-    carbs: 0
   })
 
 
@@ -147,17 +142,15 @@ export default function PatientMealPlans(): React.JSX.Element {
       try {
         const response = await getMealPlan(patientData?.plano_alimentar ?? '')
         setMealPlan(response)
-        
+
         if (response?.refeicoes) {
           const totals = response.refeicoes.reduce((acc: NutrientTotals, meal: Meal) => {
-            const mealCalories = meal.itens.reduce((sum: number, item: MealItem) => sum + item.kcal, 0)
+            const mealItems = meal.itens || meal.items || [];
+            const mealCalories = mealItems.reduce((sum: number, item: MealItem) => sum + item.kcal, 0)
             return {
               calories: acc.calories + mealCalories,
-              proteins: acc.proteins + 0, // Adicionar quando a API fornecer esses dados
-              fats: acc.fats + 0, // Adicionar quando a API fornecer esses dados
-              carbs: acc.carbs + 0 // Adicionar quando a API fornecer esses dados
             }
-          }, { calories: 0, proteins: 0, fats: 0, carbs: 0 })
+          }, { calories: 0 })
           
           setTotalNutrients(totals)
         }
@@ -188,38 +181,12 @@ export default function PatientMealPlans(): React.JSX.Element {
               <Text style={styles.nutritionValue}>{totalNutrients.calories}</Text>
               <Text style={styles.nutritionLabel}>Calorias</Text>
             </View>
-          {totalNutrients.proteins > 0 && (
-            <>
-              <View style={styles.nutritionDivider} />
-              <View style={styles.nutritionItem}>
-                <Text style={styles.nutritionValue}>{totalNutrients.proteins}g</Text>
-                <Text style={styles.nutritionLabel}>Proteínas</Text>
-              </View>
-            </>
-          )}
-          {totalNutrients.fats > 0 && (
-            <>
-              <View style={styles.nutritionDivider} />
-              <View style={styles.nutritionItem}>
-              <Text style={styles.nutritionValue}>{totalNutrients.fats}g</Text>
-                <Text style={styles.nutritionLabel}>Gorduras</Text>
-              </View>
-            </>
-          )}
-          {totalNutrients.carbs > 0 && (
-            <>
-              <View style={styles.nutritionDivider} />
-              <View style={styles.nutritionItem}>
-                <Text style={styles.nutritionValue}>{totalNutrients.carbs}g</Text>
-                <Text style={styles.nutritionLabel}>Carboidratos</Text>
-              </View>
-            </>
-          )}
           </View>
 
           {mealPlan?.refeicoes?.map((meal: Meal, index: number) => {
-            const totalCalories = meal.itens.reduce((sum: number, item: MealItem) => sum + item.kcal, 0)
-            const foods: FoodItem[] = meal.itens.map(item => ({
+            const mealItems = meal.itens || meal.items || [];
+            const totalCalories = mealItems.reduce((sum: number, item: MealItem) => sum + item.kcal, 0)
+            const foods: FoodItem[] = mealItems.map(item => ({
               name: item.descricao,
               calories: item.kcal,
               grupo: item.grupo,

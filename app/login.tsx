@@ -145,7 +145,7 @@ export default function LoginScreen(): React.JSX.Element {
               <TextInput
                 style={styles.input}
                 placeholder="Endereço de e-mail"
-                placeholderTextColor={"#999"}
+                placeholderTextColor="rgba(0, 0, 0, 0.4)"
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -158,7 +158,7 @@ export default function LoginScreen(): React.JSX.Element {
               <TextInput
                 style={styles.input}
                 placeholder="Senha"
-                placeholderTextColor={"#999"}
+                placeholderTextColor="rgba(0, 0, 0, 0.4)"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry

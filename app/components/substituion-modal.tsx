@@ -6,7 +6,12 @@ interface SubstitutionModalProps {
   onClose: () => void
   substitutions: Array<{
     descricao: string
-    itens: Array<{
+    itens?: Array<{
+      descricao: string
+      kcal: number
+      grupo: string
+    }>
+    items?: Array<{
       descricao: string
       kcal: number
       grupo: string
@@ -36,7 +41,7 @@ export function SubstitutionModal({ isVisible, onClose, substitutions, foodName 
             {substitutions.map((substitution, index) => (
               <View key={index} style={styles.substitutionGroup}>
                 <Text style={styles.substitutionGroupTitle}>{substitution.descricao}</Text>
-                {substitution.itens.map((item, itemIndex) => (
+                {(substitution.itens || substitution.items || []).map((item, itemIndex) => (
                   <View key={itemIndex} style={styles.substitutionItem}>
                     <Text style={styles.substitutionName}>{item.descricao}</Text>
                     <Text style={styles.substitutionCalories}>{item.kcal} cal</Text>

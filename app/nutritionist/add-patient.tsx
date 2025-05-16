@@ -144,6 +144,7 @@ export default function AddPatient(): React.JSX.Element {
               <TextInput
                 style={styles.input}
                 placeholder="João"
+                placeholderTextColor="rgba(0, 0, 0, 0.4)"
                 value={formData.firstName}
                 onChangeText={(value) => updateField("firstName", value)}
               />
@@ -156,6 +157,7 @@ export default function AddPatient(): React.JSX.Element {
               <TextInput
                 style={styles.input}
                 placeholder="Silva"
+                placeholderTextColor="rgba(0, 0, 0, 0.4)"
                 value={formData.lastName}
                 onChangeText={(value) => updateField("lastName", value)}
               />
@@ -168,6 +170,7 @@ export default function AddPatient(): React.JSX.Element {
           <TextInput
             style={styles.input}
             placeholder="email@exemplo.com"
+            placeholderTextColor="rgba(0, 0, 0, 0.4)"
             keyboardType="email-address"
             autoCapitalize="none"
             value={formData.email}
@@ -178,6 +181,7 @@ export default function AddPatient(): React.JSX.Element {
           <TextInput
             style={styles.input}
             placeholder="+55 (11) 91234-5678"
+            placeholderTextColor="rgba(0, 0, 0, 0.4)"
             keyboardType="phone-pad"
             value={formData.phone}
             onChangeText={(value) => updateField("phone", value)}
@@ -187,6 +191,7 @@ export default function AddPatient(): React.JSX.Element {
           <TextInput
             style={styles.input}
             placeholder="DD/MM/AAAA"
+            placeholderTextColor="rgba(0, 0, 0, 0.4)"
             value={formData.dateOfBirth}
             onChangeText={(value) => updateField("dateOfBirth", value)}
           />
@@ -223,7 +228,7 @@ export default function AddPatient(): React.JSX.Element {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Informações de Saúde</Text>
+          <Text style={styles.sectionTitle}>Informações Físicas</Text>
 
           <View style={styles.formRow}>
             <View style={styles.formColumn}>
@@ -231,6 +236,7 @@ export default function AddPatient(): React.JSX.Element {
               <TextInput
                 style={styles.input}
                 placeholder="cm"
+                placeholderTextColor="rgba(0, 0, 0, 0.4)"
                 value={formData.height}
                 onChangeText={(value) => updateField("height", value)}
               />
@@ -241,55 +247,12 @@ export default function AddPatient(): React.JSX.Element {
               <TextInput
                 style={styles.input}
                 placeholder="kg"
+                placeholderTextColor="rgba(0, 0, 0, 0.4)"
                 value={formData.weight}
                 onChangeText={(value) => updateField("weight", value)}
               />
             </View>
           </View>
-
-          <Text style={styles.inputLabel}>Condições Médicas</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="Liste quaisquer condições médicas"
-            multiline
-            numberOfLines={3}
-            value={formData.medicalConditions}
-            onChangeText={(value) => updateField("medicalConditions", value)}
-          />
-
-          <Text style={styles.inputLabel}>Alergias</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="Liste quaisquer alergias"
-            multiline
-            numberOfLines={3}
-            value={formData.allergies}
-            onChangeText={(value) => updateField("allergies", value)}
-          />
-
-          <Text style={styles.inputLabel}>Restrições Alimentares</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="Liste quaisquer restrições alimentares"
-            multiline
-            numberOfLines={3}
-            value={formData.dietaryRestrictions}
-            onChangeText={(value) => updateField("dietaryRestrictions", value)}
-          />
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Objetivos</Text>
-
-          <Text style={styles.inputLabel}>Objetivo de Fitness/Nutrição</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="Descreva os objetivos do paciente"
-            multiline
-            numberOfLines={3}
-            value={formData.fitnessGoal}
-            onChangeText={(value) => updateField("fitnessGoal", value)}
-          />
         </View>
 
         <View style={styles.section}>
@@ -298,6 +261,7 @@ export default function AddPatient(): React.JSX.Element {
           <TextInput
             style={styles.input}
             placeholder="Digite o endereço completo"
+            placeholderTextColor="rgba(0, 0, 0, 0.4)"
             value={formData.address}
             onChangeText={(value) => updateField("address", value)}
           />
@@ -306,6 +270,7 @@ export default function AddPatient(): React.JSX.Element {
           <TextInput
             style={styles.input}
             placeholder="Digite a idade"
+            placeholderTextColor="rgba(0, 0, 0, 0.4)"
             keyboardType="numeric"
             value={formData.age}
             onChangeText={(value) => updateField("age", value)}
