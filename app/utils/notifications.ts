@@ -136,7 +136,7 @@ export interface NotificationSettings {
   mealReminders: boolean;
   progressAlerts: boolean;
   newMessages: boolean;
-  newPatients?: boolean; // Apenas para nutricionistas
+  newPatients?: boolean;  
 }
 
 export const defaultPatientSettings: NotificationSettings = {
