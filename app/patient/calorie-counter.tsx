@@ -168,6 +168,8 @@ export default function CalorieCounter(): React.JSX.Element {
         }
       } catch (error) {
         console.error('Erro ao buscar plano alimentar:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -564,6 +566,13 @@ export default function CalorieCounter(): React.JSX.Element {
                   <Text style={styles.macroLabel}>Gordura</Text>
                 </View>
               </View>
+
+              {mealPlan?.refeicoes.length === 0 || !mealPlan && (
+                <View style={styles.noMealPlanContainer}>
+                  <Text style={styles.noMealPlanText}>Nenhum plano alimentar encontrado. Quando um plano alimentar for criado, você poderá adicionar alimentos ao seu diário de refeições.</Text>
+                  <Text style={styles.noMealPlanText}>Por enquanto, você utilizar o contador de calorias para visualizar informações nutricionais dos alimentos.</Text>
+                </View>
+              )}
 
               {mealPlan?.refeicoes.map((refeicao, sectionIndex) => (
                 <View key={`meal-section-${sectionIndex}`} style={styles.mealSection}>
@@ -1074,6 +1083,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#4CAF50",
     marginTop: 10,
+  },
+  noMealPlanContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingBottom: 80,
+  },
+  noMealPlanText: {
+    fontSize: 18,
+    color: "#999",
+    marginTop: 10,
+    textAlign: "center",
   },
 })
 
