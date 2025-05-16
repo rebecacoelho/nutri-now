@@ -23,7 +23,6 @@ export interface NutricionistaData {
 }
 
 export interface RegisterUserData {
-  username: string;
   email: string;
   password: string;
   is_paciente: boolean;
@@ -33,13 +32,12 @@ export interface RegisterUserData {
 }
 
 export interface LoginUserData {
-  username: string;
+  email: string;
   password: string;
 }
 
 export interface ApiResponse {
   id?: number;
-  username?: string;
   mensagem?: string;
   [key: string]: any;
 }

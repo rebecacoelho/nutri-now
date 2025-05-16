@@ -312,7 +312,7 @@ export default function PatientDashboard(): React.JSX.Element {
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Plano de Refeições de Hoje</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mealsContainer}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {isLoadingMealPlan ? (
                 <View style={styles.loadingContainer}>
                   <ActivityIndicator size="large" color="#4CAF50" />
@@ -472,9 +472,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 15,
     color: "#333",
-  },
-  mealsContainer: {
-    marginLeft: -5,
   },
   mealCard: {
     backgroundColor: "#fff",

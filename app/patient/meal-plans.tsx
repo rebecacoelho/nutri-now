@@ -181,63 +181,67 @@ export default function PatientMealPlans(): React.JSX.Element {
         }}
       />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.nutritionSummary}>
-          <View style={styles.nutritionItem}>
-            <Text style={styles.nutritionValue}>{totalNutrients.calories}</Text>
-            <Text style={styles.nutritionLabel}>Calorias</Text>
+      {mealPlan ? (
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.nutritionSummary}>
+            <View style={styles.nutritionItem}>
+              <Text style={styles.nutritionValue}>{totalNutrients.calories}</Text>
+              <Text style={styles.nutritionLabel}>Calorias</Text>
+            </View>
+          {totalNutrients.proteins > 0 && (
+            <>
+              <View style={styles.nutritionDivider} />
+              <View style={styles.nutritionItem}>
+                <Text style={styles.nutritionValue}>{totalNutrients.proteins}g</Text>
+                <Text style={styles.nutritionLabel}>Proteínas</Text>
+              </View>
+            </>
+          )}
+          {totalNutrients.fats > 0 && (
+            <>
+              <View style={styles.nutritionDivider} />
+              <View style={styles.nutritionItem}>
+              <Text style={styles.nutritionValue}>{totalNutrients.fats}g</Text>
+                <Text style={styles.nutritionLabel}>Gorduras</Text>
+              </View>
+            </>
+          )}
+          {totalNutrients.carbs > 0 && (
+            <>
+              <View style={styles.nutritionDivider} />
+              <View style={styles.nutritionItem}>
+                <Text style={styles.nutritionValue}>{totalNutrients.carbs}g</Text>
+                <Text style={styles.nutritionLabel}>Carboidratos</Text>
+              </View>
+            </>
+          )}
           </View>
-         {totalNutrients.proteins > 0 && (
-           <>
-            <View style={styles.nutritionDivider} />
-            <View style={styles.nutritionItem}>
-              <Text style={styles.nutritionValue}>{totalNutrients.proteins}g</Text>
-              <Text style={styles.nutritionLabel}>Proteínas</Text>
-            </View>
-           </>
-         )}
-         {totalNutrients.fats > 0 && (
-           <>
-            <View style={styles.nutritionDivider} />
-            <View style={styles.nutritionItem}>
-            <Text style={styles.nutritionValue}>{totalNutrients.fats}g</Text>
-              <Text style={styles.nutritionLabel}>Gorduras</Text>
-            </View>
-          </>
-         )}
-         {totalNutrients.carbs > 0 && (
-          <>
-            <View style={styles.nutritionDivider} />
-            <View style={styles.nutritionItem}>
-              <Text style={styles.nutritionValue}>{totalNutrients.carbs}g</Text>
-              <Text style={styles.nutritionLabel}>Carboidratos</Text>
-            </View>
-          </>
-         )}
-        </View>
 
-        {mealPlan?.refeicoes?.map((meal: Meal, index: number) => {
-          const totalCalories = meal.itens.reduce((sum: number, item: MealItem) => sum + item.kcal, 0)
-          const foods: FoodItem[] = meal.itens.map(item => ({
-            name: item.descricao,
-            calories: item.kcal,
-            grupo: item.grupo,
-            substituicoes: item.substituicoes
-          }))
+          {mealPlan?.refeicoes?.map((meal: Meal, index: number) => {
+            const totalCalories = meal.itens.reduce((sum: number, item: MealItem) => sum + item.kcal, 0)
+            const foods: FoodItem[] = meal.itens.map(item => ({
+              name: item.descricao,
+              calories: item.kcal,
+              grupo: item.grupo,
+              substituicoes: item.substituicoes
+            }))
 
-          return (
-            <MealSection
-              key={index}
-              title={meal.nome}
-              time={meal.horario}
-              calories={totalCalories}
-              image="/placeholder.svg?height=150&width=150"
-              foods={foods}
-              defaultExpanded={index === 0}
-            />
-          )
-        })}
-      </ScrollView>
+            return (
+              <MealSection
+                key={index}
+                title={meal.nome}
+                time={meal.horario}
+                calories={totalCalories}
+                image="/placeholder.svg?height=150&width=150"
+                foods={foods}
+                defaultExpanded={index === 0}
+              />
+            )
+          })}
+        </ScrollView>
+      ) : (
+          <Text style={styles.noMealPlanText}>Nenhum plano alimentar encontrado</Text>
+      )}
 
       <PatientTabBar activeTab="refeicoes" /> 
     </SafeAreaView>
@@ -416,6 +420,12 @@ const styles = StyleSheet.create({
   substitutionButton: {
     padding: 8,
     marginLeft: 8,
+  },
+  noMealPlanText: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    marginTop: 20,
   }
 })
 

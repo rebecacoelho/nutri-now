@@ -35,8 +35,10 @@ export default function NutritionistProfile(): React.JSX.Element {
   const [selectedHours, setSelectedHours] = useState<string[]>([])
 
   useEffect(() => {
-    if (nutritionistData?.horarios_disponiveis) {
+    if (Array.isArray(nutritionistData?.horarios_disponiveis)) {
       setSelectedHours(nutritionistData.horarios_disponiveis);
+    } else {
+      setSelectedHours([]);
     }
   }, [nutritionistData]);
 

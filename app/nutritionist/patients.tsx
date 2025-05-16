@@ -268,7 +268,6 @@ export default function Patients(): React.JSX.Element {
           <View style={styles.emptyContainer}>
             <Ionicons name="people-outline" size={48} color="#ddd" />
             <Text style={styles.emptyText}>Nenhum paciente encontrado</Text>
-            <Text style={styles.emptySubtext}>Tente outro termo de busca</Text>
           </View>
         }
       />
@@ -410,11 +409,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#999",
     marginTop: 10,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: "#999",
-    marginTop: 5,
   },
   modalOverlay: {
     flex: 1,

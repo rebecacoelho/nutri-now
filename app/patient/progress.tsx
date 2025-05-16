@@ -316,12 +316,10 @@ export default function ProgressScreen(): React.JSX.Element {
                 />
               )}
 
-              {/* Data points and lines */}
               {filteredData.map((dataPoint, index) => {
                 const x = (index / (filteredData.length - 1)) * chartWidth
                 const y = chartHeight - ((dataPoint.value - minValue) / valueRange) * chartHeight
 
-                // Draw line to next point
                 const nextPoint = index < filteredData.length - 1 ? filteredData[index + 1] : null
                 let lineTo = null
 
@@ -357,7 +355,7 @@ export default function ProgressScreen(): React.JSX.Element {
                       style={[
                         styles.dataPoint,
                         {
-                          left: x - 4, // Center the 8px dot
+                          left: x - 4, 
                           top: y - 4,
                           backgroundColor: currentMetric.color,
                         },

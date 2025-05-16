@@ -264,6 +264,9 @@ export default function CreateMealPlan(): React.JSX.Element {
                 </Text>
               </TouchableOpacity>
             ))}
+            {patients.length === 0 && (
+              <Text style={styles.noPatientText}>Nenhum paciente encontrado</Text>
+            )}
           </ScrollView>
         </View>
 
@@ -471,6 +474,13 @@ const styles = StyleSheet.create({
   disabledButton: {
     opacity: 0.7,
     backgroundColor: "#999"
+  },
+  noPatientText: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    marginTop: 10,
+    paddingLeft: 50,
   }
 })
 

@@ -64,10 +64,6 @@ export default function AddPatient(): React.JSX.Element {
     }))
   }
 
-  const handleDocumentTypeSelect = (type: "id" | "passport" | "other"): void => {
-    updateField("documentType", type)
-  }
-
   const handleGenderSelect = (gender: "male" | "female" | "other"): void => {
     updateField("gender", gender)
   }
@@ -102,7 +98,6 @@ export default function AddPatient(): React.JSX.Element {
           telefone: formData.phone
         },
         password: "nutrinow",
-        username: formData.email.split("@")[0]
       }
 
       await registerUser(userData)
