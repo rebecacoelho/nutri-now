@@ -72,9 +72,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 )
 
 export default function Patients(): React.JSX.Element {
-  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState<string>("")
-  const [appointments, setAppointments] = useState<Appointment[]>([])
   const [groupedAppointments, setGroupedAppointments] = useState<PatientAppointments[]>([])
   const [modalVisible, setModalVisible] = useState(false)
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
@@ -90,7 +88,6 @@ export default function Patients(): React.JSX.Element {
         await confirmAppointment(String(selectedAppointment.id))
         
         const response = await getAppointments()
-        setAppointments(response)
 
         const grouped = response.reduce((acc: { [key: string]: Appointment[] }, appointment: Appointment) => {
           if (!acc[appointment.paciente_nome]) {
@@ -118,7 +115,6 @@ export default function Patients(): React.JSX.Element {
     const fetchAppointments = async () => {
       try {
         const response = await getAppointments()
-        setAppointments(response)
 
         const grouped = response.reduce((acc: { [key: string]: Appointment[] }, appointment: Appointment) => {
           if (!acc[appointment.paciente_nome]) {

@@ -69,6 +69,8 @@ export default function NutritionistDashboard(): React.JSX.Element {
     return appointmentDate.toDateString() === today.toDateString();
   });
 
+  const uniquePatients = new Set(appointments.map(appointment => appointment.paciente_nome)).size;
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
@@ -94,7 +96,7 @@ export default function NutritionistDashboard(): React.JSX.Element {
           </View>
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>12</Text>
+              <Text style={styles.statValue}>{uniquePatients}</Text>
               <Text style={styles.statLabel}>Pacientes</Text>
             </View>
             <View style={styles.statDivider} />
