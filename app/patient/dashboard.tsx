@@ -103,20 +103,29 @@ function calculateWeightProjection(currentWeight: number, targetWeight: number):
   const projection: WeightProjection[] = [];
   const today = new Date();
   
-  // Perda de peso segura: 0.5kg por semana
-  const weeklyWeightLoss = 0.5;
-  const weeksNeeded = Math.ceil((currentWeight - targetWeight) / weeklyWeightLoss);
+  // Perda ou ganho de peso seguro: 0.5kg por semana
+  const weeklyWeightChange = 0.5;
+  const weightDifference = targetWeight - currentWeight;
+  const weeksNeeded = Math.ceil(Math.abs(weightDifference) / weeklyWeightChange);
   
   for (let week = 0; week <= weeksNeeded; week++) {
     const date = new Date(today);
     date.setDate(date.getDate() + week * 7);
     
-    const projectedWeight = Number((currentWeight - (weeklyWeightLoss * week)).toFixed(1));
-    const weight = projectedWeight < targetWeight ? targetWeight : projectedWeight;
+    let projectedWeight;
+    if (weightDifference > 0) {
+      // Ganho de peso
+      projectedWeight = Number((currentWeight + (weeklyWeightChange * week)).toFixed(1));
+      projectedWeight = projectedWeight > targetWeight ? targetWeight : projectedWeight;
+    } else {
+      // Perda de peso
+      projectedWeight = Number((currentWeight - (weeklyWeightChange * week)).toFixed(1));
+      projectedWeight = projectedWeight < targetWeight ? targetWeight : projectedWeight;
+    }
     
     projection.push({
       date: date.toISOString().split('T')[0],
-      weight
+      weight: projectedWeight
     });
   }
   

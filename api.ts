@@ -166,8 +166,7 @@ const makeApiRequest = async (
           return makeApiRequest(url, config, retryCount + 1);
         }
       } catch (error) {
-        console.error('Erro ao atualizar token:', error);
-        throw new Error('Sessão expirada. Por favor, faça login novamente.');
+        throw error;
       }
     }
 
@@ -178,6 +177,9 @@ const makeApiRequest = async (
 
     return await response.json();
   } catch (error) {
+    if (error instanceof Error && error.message === 'Sessão expirada. Por favor, faça login novamente.') {
+      throw error;
+    }
     console.error('Erro na API:', error);
     throw error;
   }
@@ -220,7 +222,12 @@ export const loginUser = async (userData: LoginUserData) => {
       throw new Error(errorData.detail || 'Erro ao fazer login');
     }
     
-    return await response.json();
+    const data = await response.json();
+    
+    await AsyncStorage.setItem("accessToken", data.access);
+    await AsyncStorage.setItem("refreshToken", data.refresh);
+    
+    return data;
   } catch (error) {
     console.error('Erro na API:', error);
     throw error;
@@ -229,7 +236,11 @@ export const loginUser = async (userData: LoginUserData) => {
 
 export const refreshToken = async (): Promise<TokenResponse> => {
   try {
-    const token = await AsyncStorage.getItem("refreshToken");
+    const refreshToken = await AsyncStorage.getItem("refreshToken");
+
+    if (!refreshToken) {
+      throw new Error('Refresh token não encontrado');
+    }
 
     const response = await fetch(`${API_URL}/api/token/refresh/`, {
       method: 'POST',
@@ -237,13 +248,14 @@ export const refreshToken = async (): Promise<TokenResponse> => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        refresh: token
+        refresh: refreshToken
       })
     });
     
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || 'Erro ao fazer login');
+      await AsyncStorage.removeItem("accessToken");
+      await AsyncStorage.removeItem("refreshToken");
+      throw new Error('Sessão expirada. Por favor, faça login novamente.');
     }
 
     const data = await response.json();
@@ -251,7 +263,9 @@ export const refreshToken = async (): Promise<TokenResponse> => {
     
     return data;
   } catch (error) {
-    console.error('Erro na API:', error);
+    await AsyncStorage.removeItem("accessToken");
+    await AsyncStorage.removeItem("refreshToken");
+    console.error('Erro ao atualizar token:', error);
     throw error;
   }
 };
