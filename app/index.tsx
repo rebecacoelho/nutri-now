@@ -78,75 +78,77 @@ export default function WelcomeScreen(): React.JSX.Element {
         <Image source={require("../assets/images/logo.png")} style={styles.logo} />
       </View>
 
-      <ScrollView style={styles.content}>
-        <Text style={styles.title}>Bem-vindo ao Nutri Now</Text>
-        <Text style={styles.subtitle}>Sua solução completa para gerenciamento nutricional e cuidado com pacientes</Text>
+      <View style={styles.mainContainer}>
+        <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
+          <Text style={styles.title}>Bem-vindo ao Nutri Now</Text>
+          <Text style={styles.subtitle}>Sua solução completa para gerenciamento nutricional e cuidado com pacientes</Text>
 
-        <View style={styles.featureContainer}>
-          <FeatureItem
-            icon="restaurant-outline"
-            title="Planejamento de Refeições"
-            description="Crie e acompanhe planos de refeição personalizados para os pacientes"
-          />
-          <FeatureItem
-            icon="leaf-outline"
-            title="Biblioteca de Alimentos"
-            description="Consulte informações nutricionais detalhadas de diversos alimentos"
-          />
-          <FeatureItem
-            icon="clipboard-outline"
-            title="Consultas"
-            description="Visualize histórico de consultas e os próximos agendamentos"
-          />
-        </View>
-
-        <View>
-          <Text style={styles.locationTitle}>Nossa Localização</Text>
-          <View style={styles.mapContainer}>
-            <MapView 
-              style={styles.map} 
-              initialRegion={clinicLocation}
-            >
-              <Marker 
-                coordinate={{
-                  latitude: clinicLocation.latitude,
-                  longitude: clinicLocation.longitude,
-                }}
-                title="Clínicas Integradas de Saúde UNDB"
-                description="Rua Queopes, 11 - Renascença"
-              />
-            </MapView>
+          <View style={styles.featureContainer}>
+            <FeatureItem
+              icon="restaurant-outline"
+              title="Planejamento de Refeições"
+              description="Crie e acompanhe planos de refeição personalizados para os pacientes"
+            />
+            <FeatureItem
+              icon="leaf-outline"
+              title="Biblioteca de Alimentos"
+              description="Consulte informações nutricionais detalhadas de diversos alimentos"
+            />
+            <FeatureItem
+              icon="clipboard-outline"
+              title="Consultas"
+              description="Visualize histórico de consultas e os próximos agendamentos"
+            />
           </View>
-          <View style={styles.locationInfo}>
-            <Ionicons name="location-outline" size={22} color="#4CAF50" />
-            <View style={styles.locationTextContainer}>
-              <Text style={styles.locationAddress}>
-                Rua Queopes, 11 - Renascença, São Luís - MA, 65.075-800
-              </Text>
-              <Text style={styles.locationDescription}>
-                Clínicas Integradas de Saúde UNDB - Atendimento nutricional especializado em ambiente moderno e acolhedor.
-              </Text>
-              <TouchableOpacity style={styles.directionButton} onPress={openMaps}>
-                <Text style={styles.directionButtonText}>Como chegar</Text>
-                <Ionicons name="navigate-outline" size={16} color="#4CAF50" />
-              </TouchableOpacity>
+
+          <View>
+            <Text style={styles.locationTitle}>Nossa Localização</Text>
+            <View style={styles.mapContainer}>
+              <MapView 
+                style={styles.map} 
+                initialRegion={clinicLocation}
+              >
+                <Marker 
+                  coordinate={{
+                    latitude: clinicLocation.latitude,
+                    longitude: clinicLocation.longitude,
+                  }}
+                  title="Clínicas Integradas de Saúde UNDB"
+                  description="Rua Queopes, 11 - Renascença"
+                />
+              </MapView>
+            </View>
+            <View style={styles.locationInfo}>
+              <Ionicons name="location-outline" size={22} color="#4CAF50" />
+              <View style={styles.locationTextContainer}>
+                <Text style={styles.locationAddress}>
+                  Rua Queopes, 11 - Renascença, São Luís - MA, 65.075-800
+                </Text>
+                <Text style={styles.locationDescription}>
+                  Clínicas Integradas de Saúde UNDB - Atendimento nutricional especializado em ambiente moderno e acolhedor.
+                </Text>
+                <TouchableOpacity style={styles.directionButton} onPress={openMaps}>
+                  <Text style={styles.directionButtonText}>Como chegar</Text>
+                  <Ionicons name="navigate-outline" size={16} color="#4CAF50" />
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
+        </ScrollView>
+
+        <View style={styles.footer}>
+          <Link href="/login" asChild>
+            <TouchableOpacity style={styles.loginButton}>
+              <Text style={styles.loginButtonText}>Entrar</Text>
+            </TouchableOpacity>
+          </Link>
+
+          <Link href="/register" asChild>
+            <TouchableOpacity style={styles.registerButton}>
+              <Text style={styles.registerButtonText}>Cadastrar-se</Text>
+            </TouchableOpacity>
+          </Link>
         </View>
-      </ScrollView>
-
-      <View style={styles.footer}>
-        <Link href="/login" asChild>
-          <TouchableOpacity style={styles.loginButton}>
-            <Text style={styles.loginButtonText}>Entrar</Text>
-          </TouchableOpacity>
-        </Link>
-
-        <Link href="/register" asChild>
-          <TouchableOpacity style={styles.registerButton}>
-            <Text style={styles.registerButtonText}>Cadastrar-se</Text>
-          </TouchableOpacity>
-        </Link>
       </View>
     </SafeAreaView>
   )
@@ -156,6 +158,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+  },
+  mainContainer: {
+    flex: 1,
   },
   header: {
     display: "flex",
@@ -172,6 +177,8 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  contentContainer: {
     padding: 20,
     paddingBottom: 32,
   },
