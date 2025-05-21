@@ -154,6 +154,10 @@ export default function PatientProfile(): React.JSX.Element {
           </View>
         )}
         </View>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Ionicons name="log-out-outline" size={20} color="#fff" />
+          <Text style={styles.logoutButtonText}>Sair</Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   )
