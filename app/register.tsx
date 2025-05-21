@@ -23,7 +23,6 @@ import {
   formatDateToAPI,
 } from "../api"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { registerForPushNotificationsAsync, sendWelcomeNotification } from "./utils/notifications"
 
 type UserType = "patient" | "nutritionist"
 
@@ -144,11 +143,6 @@ export default function RegisterScreen(): React.JSX.Element {
 
           await AsyncStorage.setItem(`user@${userId}`, JSON.stringify(userDataWithoutPassword));
           await AsyncStorage.setItem("userId", userId);
-
-          const token = await registerForPushNotificationsAsync();
-          if (token) {
-            await sendWelcomeNotification(name, userType);
-          }
         }
       }
       

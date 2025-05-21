@@ -18,17 +18,11 @@ import { Ionicons } from "@expo/vector-icons"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useNutritionist } from "../contexts/NutritionistContext"
 import { updateNutritionistAvailability } from "../../api"
-import { registerForPushNotificationsAsync, NotificationSettings, defaultNutritionistSettings } from "../utils/notifications"
-import * as Notifications from 'expo-notifications';
 
 export default function NutritionistProfile(): React.JSX.Element {
   const router = useRouter()
   const { nutritionistData } = useNutritionist()
 
-  const [expoPushToken, setExpoPushToken] = useState<string | undefined>();
-  const notificationListener = useRef<Notifications.EventSubscription>(null);
-  const responseListener = useRef<Notifications.EventSubscription>(null);
-  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(defaultNutritionistSettings);
 
   const [isSelectingHours, setIsSelectingHours] = useState(false)
   const [selectedHours, setSelectedHours] = useState<string[]>([])
@@ -41,43 +35,6 @@ export default function NutritionistProfile(): React.JSX.Element {
     }
   }, [nutritionistData]);
 
-  useEffect(() => {
-    const loadNotificationSettings = async () => {
-      try {
-        const savedSettings = await AsyncStorage.getItem('@notifications/settings');
-        if (savedSettings) {
-          setNotificationSettings(JSON.parse(savedSettings));
-        }
-      } catch (error) {
-        console.error('Erro ao carregar configurações:', error);
-      }
-    };
-
-    registerForPushNotificationsAsync().then(token => {
-      if (token) {
-        setExpoPushToken(token.data);
-      }
-    });
-
-    loadNotificationSettings();
-
-    notificationListener.current = Notifications.addNotificationReceivedListener((notification: Notifications.Notification) => {
-      console.log(notification);
-    });
-
-    responseListener.current = Notifications.addNotificationResponseReceivedListener((response: Notifications.NotificationResponse) => {
-      console.log(response);
-    });
-
-    return () => {
-      if (notificationListener.current) {
-        notificationListener.current.remove();
-      }
-      if (responseListener.current) {
-        responseListener.current.remove();
-      }
-    };
-  }, []);
 
   const handleLogout = async () => {
     Alert.alert(
@@ -105,20 +62,6 @@ export default function NutritionistProfile(): React.JSX.Element {
     )
 
   }
-
-  const toggleNotificationSetting = async (setting: keyof typeof notificationSettings) => {
-    const newSettings = {
-      ...notificationSettings,
-      [setting]: !notificationSettings[setting],
-    };
-    setNotificationSettings(newSettings);
-
-    try {
-      await AsyncStorage.setItem('@notifications/settings', JSON.stringify(newSettings));
-    } catch (error) {
-      console.error('Erro ao salvar configurações de notificação:', error);
-    }
-  };
 
   const toggleHourSelector = () => {
     setIsSelectingHours(!isSelectingHours)
@@ -169,34 +112,6 @@ export default function NutritionistProfile(): React.JSX.Element {
         <View style={styles.profileHeader}>
           <Text style={styles.profileName}>{nutritionistData?.nome}</Text>
           <Text style={styles.profileEmail}>{nutritionistData?.email}</Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Configurações de Notificação</Text>
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Lembretes de Consultas</Text>
-              <Text style={styles.settingDescription}>Receba notificações sobre consultas futuras</Text>
-            </View>
-            <Switch
-              trackColor={{ false: "#ddd", true: "#a5d6a7" }}
-              thumbColor={"#4CAF50"}
-              value={notificationSettings.appointmentReminders}
-              onValueChange={() => toggleNotificationSetting("appointmentReminders")}
-            />
-          </View>
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Novos Pacientes</Text>
-              <Text style={styles.settingDescription}>Receba alertas quando novos pacientes se cadastrarem</Text>
-            </View>
-            <Switch
-              trackColor={{ false: "#ddd", true: "#a5d6a7" }}
-              thumbColor={"#4CAF50"}
-              value={notificationSettings.newPatients}
-              onValueChange={() => toggleNotificationSetting("newPatients")}
-            />
-          </View>
         </View>
 
         <View style={styles.section}>

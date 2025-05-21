@@ -17,58 +17,14 @@ import { Ionicons } from "@expo/vector-icons"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { usePatient } from "../contexts/PatientContext"
 import { useState, useEffect, useRef } from "react"
-import { registerForPushNotificationsAsync, NotificationSettings, defaultPatientSettings } from "../utils/notifications"
-import * as Notifications from 'expo-notifications';
 import { getAppointments } from "@/api"
 
 export default function PatientProfile(): React.JSX.Element {
   const router = useRouter()
   const { patientData } = usePatient()
   const [appointments, setAppointments] = useState<any[]>([]);
-  const [expoPushToken, setExpoPushToken] = useState<string | undefined>();
-  const notificationListener = useRef<Notifications.EventSubscription>(null);
-  const responseListener = useRef<Notifications.EventSubscription>(null);
-  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(defaultPatientSettings);
 
   const upcomingAppointments = appointments.filter(appointment => new Date(appointment.data_consulta) > new Date())
-
-  useEffect(() => {
-    const loadNotificationSettings = async () => {
-      try {
-        const savedSettings = await AsyncStorage.getItem('@notifications/settings');
-        if (savedSettings) {
-          setNotificationSettings(JSON.parse(savedSettings));
-        }
-      } catch (error) {
-        console.error('Erro ao carregar configurações:', error);
-      }
-    };
-
-    registerForPushNotificationsAsync().then(token => {
-      if (token) {
-        setExpoPushToken(token.data);
-      }
-    });
-
-    loadNotificationSettings();
-
-    notificationListener.current = Notifications.addNotificationReceivedListener((notification: Notifications.Notification) => {
-      console.log(notification);
-    });
-
-    responseListener.current = Notifications.addNotificationResponseReceivedListener((response: Notifications.NotificationResponse) => {
-      console.log(response);
-    });
-
-    return () => {
-      if (notificationListener.current) {
-        notificationListener.current.remove()
-      }
-      if (responseListener.current) {
-        responseListener.current.remove()
-      }
-    };
-  }, []);
 
   useEffect(() => {
     const fetchAppointmentsAndSet = async () => {
@@ -105,20 +61,6 @@ export default function PatientProfile(): React.JSX.Element {
     )
 
   }
-
-  const toggleNotificationSetting = async (setting: keyof NotificationSettings) => {
-    const newSettings = {
-      ...notificationSettings,
-      [setting]: !notificationSettings[setting],
-    };
-    setNotificationSettings(newSettings);
-    
-    try {
-      await AsyncStorage.setItem('@notifications/settings', JSON.stringify(newSettings));
-    } catch (error) {
-      console.error('Erro ao salvar configurações:', error);
-    }
-  };
 
   return (
   <SafeAreaView style={styles.container}>
@@ -211,36 +153,6 @@ export default function PatientProfile(): React.JSX.Element {
             </TouchableOpacity>
           </View>
         )}
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Configurações de Notificação</Text>
-          
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Lembretes de Consultas</Text>
-              <Text style={styles.settingDescription}>Receba notificações sobre consultas futuras</Text>
-            </View>
-            <Switch
-              trackColor={{ false: "#ddd", true: "#a5d6a7" }}
-              thumbColor={"#4CAF50"}
-              value={notificationSettings.appointmentReminders}
-              onValueChange={() => toggleNotificationSetting("appointmentReminders")}
-            />
-          </View>
-
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingTitle}>Lembretes de Refeições</Text>
-              <Text style={styles.settingDescription}>Receba lembretes para registrar suas refeições</Text>
-            </View>
-            <Switch
-              trackColor={{ false: "#ddd", true: "#a5d6a7" }}
-              thumbColor={"#4CAF50"}
-              value={notificationSettings.mealReminders}
-              onValueChange={() => toggleNotificationSetting("mealReminders")}
-            />
-          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
