@@ -28,6 +28,7 @@ interface MealPlanResponse {
   refeicoes: {
     nome: string
     horario: string
+    itens: any
   }[]
 }
 
@@ -267,6 +268,7 @@ export default function PatientDashboard(): React.JSX.Element {
   };
 
   const upcomingAppointments = appointments.filter(appointment => new Date(appointment.data_consulta) > new Date())
+  const availableAppointments = upcomingAppointments.filter(appointment => appointment.realizada === false)
 
   if (!patientData) {
     const handleMissingData = async () => {
@@ -333,7 +335,7 @@ export default function PatientDashboard(): React.JSX.Element {
                     key={index}
                     title={refeicao.nome}
                     time={refeicao.horario}
-                    calories="420"
+                    calories={refeicao.itens.reduce((acc: any, item: { kcal: any }) => acc + item.kcal, 0)}
                     completed={mealCompletionState[refeicao.nome] || false}
                   />
                 ))
@@ -348,8 +350,8 @@ export default function PatientDashboard(): React.JSX.Element {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Próximas Consultas</Text>
 
-            {upcomingAppointments && upcomingAppointments.length > 0 ? (
-              upcomingAppointments.map((appointment) => (
+            {availableAppointments && availableAppointments.length > 0 ? (
+              availableAppointments.map((appointment) => (
                 <View style={styles.appointmentCard} key={appointment.id}>
                    <View style={styles.appointmentHeader}>
                     <Ionicons name="calendar-outline" size={24} color="#4CAF50" />
