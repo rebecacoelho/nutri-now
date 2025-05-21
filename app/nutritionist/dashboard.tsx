@@ -80,19 +80,21 @@ export default function NutritionistDashboard(): React.JSX.Element {
           headerStyle: {
             backgroundColor: "#fff",
           },
-          headerRight: () => (
-            <TouchableOpacity style={styles.headerButton} onPress={() => router.push("/nutritionist/profile")}>
-              <Ionicons name="person-circle-outline" size={24} color="#4CAF50" />
-            </TouchableOpacity>
-          ),
         }}
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>Olá, {nutritionistData?.nome ? nutritionistData.nome.charAt(0).toUpperCase() + nutritionistData.nome.slice(1) : ""}</Text>
-            <Text style={styles.date}>{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</Text>
+          <View style={styles.headerContent}>
+            <View>
+              <Text style={styles.greeting}>Olá, {nutritionistData?.nome ? nutritionistData.nome.charAt(0).toUpperCase() + nutritionistData.nome.slice(1) : ""}</Text>
+              <Text style={styles.date}>{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</Text>
+            </View>
+            <View>
+              <TouchableOpacity style={styles.headerButton} onPress={() => router.push("/nutritionist/profile")}>
+                <Ionicons name="person-circle-outline" size={32} color="#4CAF50" />
+              </TouchableOpacity>
+            </View>
           </View>
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
@@ -229,6 +231,11 @@ const styles = StyleSheet.create({
     padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
+  },
+  headerContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   greeting: {
     fontSize: 24,

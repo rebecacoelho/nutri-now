@@ -303,11 +303,6 @@ export default function PatientDashboard(): React.JSX.Element {
             headerStyle: {
               backgroundColor: "#fff",
             },
-            headerRight: () => (
-              <TouchableOpacity style={styles.headerButton} onPress={() => router.push("/patient/profile")}>
-                <Ionicons name="person-circle-outline" size={24} color="#4CAF50" />
-              </TouchableOpacity>
-            ),
           }}
         />
 
@@ -316,6 +311,11 @@ export default function PatientDashboard(): React.JSX.Element {
             <View>
               <Text style={styles.greeting}>Olá, {patientData?.nome}</Text>
               <Text style={styles.date}>{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</Text>
+            </View>
+            <View>
+              <TouchableOpacity style={styles.headerButton} onPress={() => router.push("/patient/profile")}>
+                <Ionicons name="person-circle-outline" size={32} color="#4CAF50" />
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -462,6 +462,9 @@ const styles = StyleSheet.create({
     padding: 20,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   greeting: {
     fontSize: 24,
